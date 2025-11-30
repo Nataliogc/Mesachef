@@ -5,13 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Gestor de Eventos – Guadiana & Cumbria</title>
 
+    <!-- FIREBASE -->
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
-
+    
+    <!-- MARKDOWN -->
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-<style>
+
+    <style>
         :root {
-            --primary: #263238; /* Gris oscuro elegante */
+            --primary: #263238;
             --accent: #546e7a;
             --bg-body: #f0f2f5;
             --surface: #ffffff;
@@ -22,7 +25,7 @@
         
         body { margin: 0; background: var(--bg-body); color: #1a1a1a; font-size: 13px; }
 
-        /* --- NUEVO LANDING PAGE (ESTILO MODERNO) --- */
+        /* --- LANDING PAGE --- */
         #landingPage {
             min-height: 100vh;
             display: flex;
@@ -76,8 +79,13 @@
             background: #fff;
             position: relative;
             overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
         }
         .h-card:hover { transform: translateY(-4px); box-shadow: 0 12px 24px rgba(0,0,0,0.06); border-color: #90a4ae; }
+        .h-card img { max-height: 50px; margin-bottom: 15px; object-fit: contain; }
         .h-card h3 { margin: 0 0 8px; font-size: 18px; color: #1f2937; }
         .h-card p { margin: 0 0 20px; color: #6b7280; font-size: 13px; line-height: 1.5; }
         .h-tag {
@@ -89,29 +97,76 @@
 
         /* --- APP LAYOUT --- */
         #appContainer { display: none; min-height: 100vh; flex-direction: column; }
+        
         .app-header {
             background: #fff; border-bottom: 1px solid var(--border);
-            padding: 10px 24px; display: flex; justify-content: space-between; align-items: center;
+            padding: 10px 24px; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            gap: 20px;
+            flex-wrap: wrap; 
         }
-        .controls-bar { padding: 15px 24px; display: flex; gap: 10px; flex-wrap: wrap; align-items: center; justify-content: space-between; }
         
-        /* --- TABLA & FILAS MÁS ALTAS --- */
+        .header-left { 
+            display: flex; 
+            align-items: center; 
+            gap: 14px; 
+            flex-shrink: 0; 
+        }
+        
+        .header-right { 
+            display: flex; 
+            align-items: center; 
+            gap: 10px; 
+            flex-wrap: wrap; 
+            justify-content: flex-end;
+            flex-grow: 1;
+        } 
+
+        .btn-back {
+            width: 34px; height: 34px; border-radius: 50%; border: 1px solid #cfd8dc; background: #f5f5f5;
+            display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 16px;
+        }
+        .header-title { font-size: 18px; font-weight: 700; color: var(--primary); margin: 0; white-space: nowrap; }
+        #headerLogo { max-height: 36px; object-fit: contain; }
+        
+        .connection-badge {
+            display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: 999px;
+            font-size: 11px; font-weight: 600; border: 1px solid transparent; white-space: nowrap;
+        }
+        .status-dot { width: 8px; height: 8px; border-radius: 50%; }
+        .status-online { background: #e8f5e9; color: #1b5e20; border-color: #a5d6a7; }
+        .status-online .status-dot { background: #2e7d32; }
+        .status-offline { background: #ffebee; color: #c62828; border-color: #ef9a9a; }
+        .status-offline .status-dot { background: #c62828; }
+
+        .module-tabs { display: flex; gap: 6px; background: #f5f5f5; padding: 4px; border-radius: 999px; flex-wrap: wrap; }
+        .tab-btn {
+            border: none; background: transparent; padding: 6px 14px; border-radius: 999px; font-size: 12px; cursor: pointer;
+            display: inline-flex; align-items: center; gap: 4px; color: #37474f; white-space: nowrap;
+        }
+        .tab-btn.active { background: var(--primary); color: #fff; box-shadow: 0 2px 6px rgba(0,0,0,0.2); }
+
+        .controls-bar { padding: 15px 24px; display: flex; gap: 10px; flex-wrap: wrap; align-items: center; justify-content: space-between; }
+        .left-controls { display: flex; align-items: center; gap: 10px; }
+
+        /* --- TABLA --- */
         .table-wrapper { margin: 0 20px 20px; background: #fff; border-radius: 12px; box-shadow: var(--shadow); overflow: auto; }
         table { border-collapse: collapse; width: 100%; }
         th { background: #f8fafc; padding: 12px; text-align: left; border-bottom: 1px solid var(--border); color: #64748b; font-weight: 600; font-size: 11px; text-transform: uppercase;}
         td { border-bottom: 1px solid #f1f5f9; vertical-align: top; }
         
-        /* AQUÍ ESTÁ EL CAMBIO DE ALTURA */
+        /* CELDAS SALONES */
         .split-cell {
             display: flex; flex-direction: column;
-            height: 140px; /* AUMENTADO DE 60px A 140px */
+            height: 90px;
             width: 100%; position: relative;
         }
         .split-zone { flex: 1; border-bottom: 1px dotted #e2e8f0; display: flex; align-items: center; padding: 0 4px; transition: 0.1s; cursor: pointer; }
         .split-zone:last-child { border-bottom: none; }
         .split-zone:hover { background: #f8fafc; }
 
-        /* Estilos Eventos */
         .evt-full-day {
             position: absolute; top: 2px; left: 2px; right: 2px; bottom: 2px;
             background: #dbeafe; color: #1e40af; border-left: 4px solid #2563eb;
@@ -122,49 +177,91 @@
             width: 100%; height: 90%; border-radius: 4px; padding: 4px 6px; font-size: 11px;
             display: flex; align-items: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
         }
-        .evt-manana { background: #fef3c7; color: #92400e; border-left: 3px solid #d97706; }
-        .evt-tarde { background: #f3e8ff; color: #6b21a8; border-left: 3px solid #9333ea; }
+        
+        /* ESTILOS DE ESTADO RESTAURANTE */
+        .mesa-manana { background: #fffbeb; color: #b45309; border: 1px solid #fcd34d; }
+        .mesa-tarde { background: #f3e8ff; color: #6b21a8; border: 1px solid #d8b4fe; }
 
-        /* Estilos Restaurante */
         .cell-restaurante { padding: 4px; }
         .rest-zone { min-height: 60px; border: 1px dashed #cbd5e1; border-radius: 8px; margin-bottom: 4px; padding: 4px; }
-        .mesa-card { display: block; background: #fff; border: 1px solid #e2e8f0; padding: 4px 8px; margin-bottom: 4px; border-radius: 4px; font-size: 11px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+        .mesa-card { display: block; background: #fff; padding: 4px 8px; margin-bottom: 4px; border-radius: 4px; font-size: 11px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
 
-        /* Botones */
+        /* ESTADOS BADGES (PRESUPUESTOS) */
+        .badge { display: inline-flex; padding: 2px 10px; border-radius: 99px; font-size: 11px; font-weight: 600; text-transform: capitalize; }
+        .st-confirmado { background: #dcfce7; color: #166534; border: 1px solid #22c55e; } /* Verde */
+        .st-pendiente  { background: #ffedd5; color: #9a3412; border: 1px solid #f97316; } /* Naranja */
+        .st-anulado    { background: #fee2e2; color: #991b1b; border: 1px solid #ef4444; } /* Rojo */
+        .st-activo     { background: #eff6ff; color: #1e40af; border: 1px solid #3b82f6; } /* Azul */
+
+        /* BOTONES */
         button { cursor: pointer; border: none; font-family: inherit; }
         .btn-primary { background: #0f172a; color: #fff; padding: 8px 16px; border-radius: 8px; font-weight: 500; }
         .btn-secondary { background: #fff; border: 1px solid #cbd5e1; color: #334155; padding: 8px 16px; border-radius: 8px; }
+        .btn-anular { background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; padding: 8px 16px; border-radius: 8px; }
+        .btn-ai { background: linear-gradient(135deg, #6366f1, #a855f7); color: #fff; padding: 5px 12px; border-radius: 99px; font-size: 11px; box-shadow: 0 2px 5px rgba(124, 58, 237, 0.3); }
+        .btn-ai:hover { filter: brightness(1.1); transform: translateY(-1px); }
+        
         .btn-print { background: #7c3aed; color: #fff; padding: 8px 16px; border-radius: 8px; font-weight: 500; display: inline-flex; gap:6px; align-items: center;}
         
-        /* Modales */
+        /* TOOLBAR IA */
+        .ai-toolbar {
+            display: flex; gap: 8px; padding: 8px; background: #f5f3ff; border-radius: 8px; border: 1px dashed #8b5cf6;
+            margin-bottom: 15px; flex-wrap: wrap; align-items: center;
+        }
+        .ai-label { font-size: 11px; font-weight: 700; color: #6b21a8; margin-right: auto; text-transform: uppercase; display: flex; align-items: center; gap: 4px;}
+        
+        /* MODAL */
         .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 50; justify-content: center; align-items: center; padding: 20px;}
         .modal-content { background: #fff; width: 100%; max-width: 900px; max-height: 90vh; border-radius: 16px; overflow: hidden; display: flex; flex-direction: column; box-shadow: 0 20px 50px rgba(0,0,0,0.2); }
+        .modal-header { padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; background: #f8fafc; border-bottom: 1px solid #e2e8f0; }
         .modal-body { padding: 20px; overflow-y: auto; }
+        .modal-footer { padding: 15px 20px; border-top: 1px solid #e2e8f0; display: flex; align-items: center; gap: 10px; background: #f8fafc; }
+        
         .form-row { display: flex; gap: 15px; margin-bottom: 15px; }
         .form-group { flex: 1; display: flex; flex-direction: column; }
-        input, select, textarea { padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 6px; margin-top: 4px; }
+        .form-group label { font-size: 11px; text-transform: uppercase; color: #64748b; margin-bottom: 4px; font-weight: 600; }
+        input, select, textarea { padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 13px; }
+        
+        .svc-table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 10px; }
+        .svc-table th { background: #f1f5f9; padding: 8px; border-bottom: 1px solid #cbd5e1; }
+        .svc-table td { padding: 4px; border-bottom: 1px solid #f1f5f9; }
+        .svc-input { width: 100%; border: 1px solid #e2e8f0; padding: 4px; border-radius: 4px; }
+        .btn-add-row { margin-top: 8px; background: #f1f5f9; border: 1px dashed #94a3b8; color: #475569; padding: 6px 12px; border-radius: 6px; width: 100%; }
+
+        #aiResponseModal .ai-content { width: 100%; max-width: 600px; background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); display: flex; flex-direction: column; gap: 10px; }
+        
+        /* Modal Reporte */
+        #modalReporte .modal-content { max-width: 400px; height: auto; }
+        
+        /* Tabla Config Salones */
+        #tablaConfigSalones th { font-size:11px; color:#666; }
+        #tablaConfigSalones td { vertical-align: middle; }
     </style>
 </head>
 <body>
-<div id="landingPage">
+
+    <!-- LANDING PAGE -->
+    <div id="landingPage">
         <div class="landing-container">
             <div class="landing-header">
                 <div class="brand-logo">HR</div>
                 <div class="brand-text">
                     <h1>Reservas Salas y Restaurante</h1>
-                    <p>Gestión unificada de presupuestos, salones y restaurante para <strong>Sercotel Guadiana</strong> y <strong>Cumbria Spa&Hotel</strong>.</p>
+                    <p>Gestión unificada para <strong>Sercotel Guadiana</strong> y <strong>Cumbria Spa&Hotel</strong>.</p>
                 </div>
-                <div class="beta-badge">● Beta interna</div>
+                <div class="beta-badge" id="versionBadge">● v3.0</div>
             </div>
 
             <div class="hotel-grid">
                 <div class="h-card" onclick="initApp('Guadiana')">
+                    <img src="Img/logo-guadiana.svg" alt="Logo Guadiana" onerror="this.style.display='none'">
                     <h3>Sercotel Guadiana</h3>
                     <p>Salones, eventos sociales y comidas de empresa.</p>
                     <div class="h-tag">🏛️ Ciudad Real · Centro</div>
                 </div>
 
                 <div class="h-card" onclick="initApp('Cumbria')">
+                    <img src="Img/logo-cumbria.svg" alt="Logo Cumbria" onerror="this.style.display='none'">
                     <h3>Cumbria Spa&Hotel</h3>
                     <p>Convenciones, grupos deportivos y grandes banquetes.</p>
                     <div class="h-tag">🌄 Ciudad Real · Zona Norte</div>
@@ -172,48 +269,50 @@
             </div>
 
             <div class="landing-footer">
-                Panel interno de trabajo. <strong>No compartir enlace</strong> con clientes ni agencias. Versión conectada a Firebase.
+                Panel interno de trabajo. <strong>No compartir enlace</strong>. Versión conectada a Firebase.
             </div>
         </div>
     </div>
 
+    <!-- APP PRINCIPAL -->
     <div id="appContainer" style="display: none">
         <div class="app-header">
             <div class="header-left">
                 <button class="btn-back" onclick="location.reload()">⬅</button>
-
                 <h2 id="tituloHotelActual" class="header-title">Hotel</h2>
                 <img id="headerLogo" />
-
                 <div class="connection-badge status-offline" id="statusBadge">
                     <span class="status-dot"></span>
                     <span id="statusText">Conectando...</span>
                 </div>
             </div>
 
-            <div class="module-tabs">
-                <button class="tab-btn active" onclick="setModulo('eventos')" id="btnModEventos">📅 Salones</button>
-                <button class="tab-btn" onclick="setModulo('restaurante')" id="btnModRest">🍴 Restaurante</button>
-                <button class="tab-btn" onclick="setModulo('presupuestos')" id="btnModPpto">📄 Presupuestos</button>
+            <div class="header-right">
+                <div class="module-tabs">
+                    <button class="tab-btn active" onclick="setModulo('eventos')" id="btnModEventos">📅 Salones</button>
+                    <button class="tab-btn" onclick="setModulo('restaurante')" id="btnModRest">🍴 Restaurante</button>
+                    <button class="tab-btn" onclick="setModulo('presupuestos')" id="btnModPpto">📄 Presupuestos</button>
+                </div>
+                <button class="btn-secondary" onclick="abrirConfig()">⚙️ Salones</button>
             </div>
         </div>
 
-     <div class="controls-bar">
-    <div class="left-controls">
-        <input type="date" id="fechaVista" onchange="render()" />
-        <select id="filtroEstado" onchange="render()">
-            <option value="todos">Ver activos</option>
-            <option value="pendiente">⏳ Pendientes</option>
-            <option value="confirmado">✅ Confirmados</option>
-            <option value="anulado">❌ Anulados</option>
-        </select>
-    </div>
-
-    <div style="display:flex; gap:10px;">
-        <button class="btn-print" onclick="generarOrdenServicio()">🖨️ Orden de Servicio</button>
-        <button class="btn-primary" id="btnNuevoPrincipal" onclick="nuevoGeneral()">+ Nuevo</button>
-    </div>
-</div>
+        <div class="controls-bar">
+            <div class="left-controls">
+                <input type="date" id="fechaVista" onchange="render()" />
+                <select id="filtroEstado" onchange="render()">
+                    <option value="todos">Ver activos</option>
+                    <option value="pendiente">⏳ Pendientes</option>
+                    <option value="confirmado">✅ Confirmados</option>
+                    <option value="anulado">❌ Anulados</option>
+                </select>
+            </div>
+            <div style="display:flex; gap:10px;">
+                <!-- BOTON DE REPORTE INTELIGENTE -->
+                <button class="btn-print" id="btnReporte" onclick="abrirModalReporte()">🖨️ Orden de Servicio</button>
+                <button class="btn-primary" id="btnNuevoPrincipal" onclick="nuevoGeneral()">+ Nuevo</button>
+            </div>
+        </div>
 
         <div class="table-wrapper">
             <table id="mainTable">
@@ -239,48 +338,81 @@
         </div>
     </div>
 
+    <!-- MODAL CONFIGURACION SALONES -->
+    <div class="modal-overlay" id="modalConfig">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Gestión de Salones (Tarifas y Aforos)</h3>
+                <button class="btn-close-x" onclick="document.getElementById('modalConfig').style.display='none'">×</button>
+            </div>
+            <div class="modal-body">
+                <p style="font-size:12px; color:#666;">Configura aquí los salones disponibles para el hotel actual. Puedes cambiar nombres, capacidades y precios, o desactivar salones temporalmente.</p>
+                <table class="svc-table" id="tablaConfigSalones">
+                    <thead>
+                        <tr>
+                            <th>Nombre del Salón</th>
+                            <th width="70">Capacidad</th>
+                            <th width="90">€ 1/2 Jornada</th>
+                            <th width="90">€ Jornada Comp.</th>
+                            <th width="50">Activo</th>
+                            <th width="30"></th>
+                        </tr>
+                    </thead>
+                    <tbody id="bodyConfigSalones"></tbody>
+                </table>
+                <button class="btn-add-row" onclick="addSalonRow()">+ Añadir Salón</button>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" onclick="document.getElementById('modalConfig').style.display='none'">Cancelar</button>
+                <button class="btn-primary" onclick="saveConfig()">Guardar Cambios</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL FICHA -->
     <div class="modal-overlay" id="modalFicha">
         <div class="modal-content">
             <div class="modal-header">
                 <h3 id="modalTitle">Ficha</h3>
-                <button class="btn-close-x" onclick="cerrarModal()">×</button>
+                <button class="btn-close-x" onclick="cerrarModal()" style="font-size:20px; background:none; border:none;">×</button>
             </div>
 
             <div class="modal-body">
                 <input type="hidden" id="dataId" />
                 <input type="hidden" id="dataType" />
                 <input type="hidden" id="refPresupuesto" />
-                <input type="hidden" id="fechaEmision" />
 
-                <div class="form-row" style="background: #f9f9f9; padding: 10px; border-radius: 8px; border: 1px solid #e0e0e0;">
+                <!-- BARRA DE HERRAMIENTAS IA (SOLO CHECKLIST Y AUDITAR) -->
+                <div class="ai-toolbar" id="aiToolbar">
+                    <span class="ai-label">✨ Herramientas IA</span>
+                    <button class="btn-ai" onclick="generarChecklistIA()">✅ Checklist</button>
+                    <button class="btn-ai" onclick="auditarEventoIA()" style="background: linear-gradient(135deg, #f59e0b, #d97706);">⚠️ Auditar</button>
+                </div>
+
+                <div class="form-row" style="background: #f8fafc; padding: 10px; border-radius: 8px; border: 1px solid #e2e8f0;">
                     <div class="form-group" id="grpFechaUnica">
                         <label>Fecha</label>
                         <input type="date" id="inpFecha" />
                     </div>
-
                     <div class="form-group" id="grpRangoFechas" style="display: none">
-                        <div class="form-row" style="gap: 6px">
-                            <div class="form-group">
-                                <label>Desde</label>
-                                <input type="date" id="inpFechaDesde" />
-                            </div>
-                            <div class="form-group">
-                                <label>Hasta</label>
-                                <input type="date" id="inpFechaHasta" />
-                            </div>
+                        <div class="form-row" style="gap: 6px; margin:0;">
+                            <div class="form-group"><label>Desde</label><input type="date" id="inpFechaDesde" /></div>
+                            <div class="form-group"><label>Hasta</label><input type="date" id="inpFechaHasta" /></div>
                         </div>
                     </div>
-
                     <div class="form-group">
                         <label>Espacio / Salón</label>
-                        <select id="inpSalon"></select>
+                        <select id="inpSalon" onchange="updateSalonDetails()"></select>
+                        <small id="salonDetails" style="color:#666; margin-top:2px; font-size:10px;"></small>
                     </div>
                 </div>
 
                 <div class="form-row">
                     <div class="form-group" style="flex: 2">
                         <label>Cliente / Evento</label>
-                        <input type="text" id="inpNombre" />
+                        <input type="text" id="inpNombre" 
+                               oninput="document.getElementById('modalTitle').innerText = this.value || 'Nuevo Evento'" 
+                               placeholder="Nombre del cliente..." />
                     </div>
                     <div class="form-group">
                         <label>Teléfono</label>
@@ -292,126 +424,140 @@
                     </div>
                 </div>
 
-               <div class="form-row" id="blockRestaurante" style="display: none; background: #fff8e1; padding: 10px; border-radius: 8px; border: 1px solid #ffe082;">
-    <div class="form-group">
-        <label>Hora Reserva</label>
-        <input type="time" id="inpHora" />
-    </div>
-    <div class="form-group">
-        <label>Nº Pax</label>
-        <input type="number" id="inpPaxRest" />
-    </div>
-    <div class="form-group">
-        <label>Turno</label>
-        <select id="inpTurno">
-            <option value="manana">☀️ Almuerzo</option>
-            <option value="tarde">🌙 Cena</option>
-        </select>
-    </div>
-    <div class="form-group">
-        <label>Estado Reserva</label>
-        <select id="inpEstadoRest">
-            <option value="confirmado">✅ Confirmada</option>
-            <option value="lista_espera">⏳ Lista de Espera</option>
-        </select>
-    </div>
-</div>
+                <!-- RESTAURANTE (COMPACTADO) -->
+                <div class="form-row" id="blockRestaurante" style="display: none; background: #fffbeb; padding: 6px; border-radius: 8px; border: 1px solid #fcd34d; align-items: flex-end;">
+                    <div style="display:flex; gap:10px; width:100%;">
+                        <div class="form-group" style="flex:0 0 100px;"><label>Hora</label><input type="time" id="inpHora" /></div>
+                        <div class="form-group" style="flex:0 0 70px;"><label>Pax</label><input type="number" id="inpPaxRest" /></div>
+                        <div class="form-group" style="flex:1;"><label>Turno</label><select id="inpTurno"><option value="manana">☀️ Almuerzo</option><option value="tarde">🌙 Cena</option></select></div>
+                        <div class="form-group" style="flex:1;"><label>Estado</label><select id="inpEstadoRest"><option value="confirmado">✅ Confirmada</option><option value="lista_espera">⏳ Lista de Espera</option></select></div>
+                    </div>
+                </div>
+
+                <!-- EVENTOS (SALONES) -->
                 <div id="blockEventos">
                     <div class="form-row">
                         <div class="form-group">
-                            <label>Jornada / Turno</label>
+                            <label>Estado</label>
+                            <select id="inpEstadoEvento">
+                                <option value="pendiente">⏳ Pendiente</option>
+                                <option value="confirmado">✅ Confirmado</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Jornada</label>
                             <select id="inpTurnoEvento">
                                 <option value="dia_completo">Todo el día</option>
                                 <option value="manana">☀️ Mañana</option>
                                 <option value="tarde">🌙 Tarde</option>
                             </select>
                         </div>
-
                         <div class="form-group">
                             <label>Montaje</label>
-                            <select id="inpMontaje">
-                                <option>Banquete</option>
-                                <option>Escuela</option>
-                                <option>Teatro</option>
-                                <option>Cóctel</option>
-                            </select>
+                            <select id="inpMontaje"><option>Banquete</option><option>Escuela</option><option>Teatro</option><option>Cóctel</option><option>Imperial</option><option>U</option></select>
+                        </div>
+                        <div class="form-group"><label>Pax A.</label><input type="number" id="inpPaxA" style="width:60px" /></div>
+                        <div class="form-group"><label>Pax N.</label><input type="number" id="inpPaxN" style="width:60px" /></div>
+                    </div>
+
+                    <div class="form-row" style="background: #f1f5f9; padding: 8px; border-radius: 6px; border: 1px dashed #cbd5e1;">
+                        <div class="form-group">
+                            <label>Hora Inicio (Info)</label>
+                            <input type="time" id="inpHoraInicio" />
                         </div>
                         <div class="form-group">
-                            <label>Pax Adultos</label>
-                            <input type="number" id="inpPaxA" />
+                            <label>Hora Fin (Info)</label>
+                            <input type="time" id="inpHoraFin" />
                         </div>
-                        <div class="form-group">
-                            <label>Pax Niños</label>
-                            <input type="number" id="inpPaxN" />
+                        <div class="form-group" style="flex:2; justify-content:center;">
+                            <small style="color:#64748b;">* Horario orientativo para el cliente/personal.</small>
                         </div>
                     </div>
 
-                    <div style="margin-top: 10px">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-                            <label style="color: var(--primary-dark); font-weight: 700;">DESGLOSE ECONÓMICO</label>
-                            <button class="btn-ai" id="btnMenuIA" onclick="generarMenuIA()">🍽️ Sugerir Menú IA</button>
+                    <div style="margin-top: 10px; border-top:1px solid #e2e8f0; padding-top:10px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <label style="color: var(--primary); font-weight: 700;">DESGLOSE / SERVICIOS</label>
+                            <button class="btn-ai" id="btnMenuIA" onclick="generarMenuIA()">🍽️ Menú IA</button>
                         </div>
-
                         <table class="svc-table">
-                            <thead>
-                                <tr>
-                                    <th style="width: 130px">Fecha</th>
-                                    <th>Concepto</th>
-                                    <th style="width: 60px">Uds.</th>
-                                    <th style="width: 80px">Precio</th>
-                                    <th style="width: 80px">Total</th>
-                                    <th style="width: 26px"></th>
-                                </tr>
-                            </thead>
+                            <thead><tr><th style="width:120px">Fecha</th><th>Concepto</th><th style="width:50px">Uds</th><th style="width:70px">Precio</th><th style="width:70px">Total</th><th style="width:20px"></th></tr></thead>
                             <tbody id="bodyServicios"></tbody>
                         </table>
-
                         <button class="btn-add-row" type="button" onclick="addServiceRow()">+ Añadir línea</button>
-
-                        <div style="text-align: right; font-size: 16px; font-weight: 700; margin-top: 10px;">
-                            TOTAL: <span id="totalAmount" style="color: var(--primary)">0.00</span> €
-                        </div>
+                        <div style="text-align: right; font-size: 15px; font-weight: 700; margin-top: 10px;">TOTAL: <span id="totalAmount">0.00</span> €</div>
                     </div>
                 </div>
 
-                <div class="form-group" style="margin-top: 10px">
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
-                        <label>Notas / Alergias</label>
-                        <button class="btn-ai" id="btnNotasIA" onclick="mejorarNotasConIA()" type="button">✨ Mejorar redacción</button>
+                <div class="form-row" style="margin-top: 15px">
+                    <div class="form-group">
+                        <label>Nota Interna / Operativa</label>
+                        <textarea id="inpNotas" rows="2" placeholder="Solo uso interno (Alergias, logística...)"></textarea>
                     </div>
-                    <textarea id="inpNotas" rows="3"></textarea>
+                    <div class="form-group">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                            <label style="color:#2563eb;">Nota para Cliente (PDF)</label>
+                            <button class="btn-ai" id="btnNotasIA" onclick="mejorarNotasConIA()">✨ Mejorar</button>
+                        </div>
+                        <textarea id="inpNotaCliente" rows="2" placeholder="Texto que aparecerá en el PDF..."></textarea>
+                    </div>
                 </div>
             </div>
 
             <div class="modal-footer">
-    <button class="btn-ai" id="btnEmailIA" onclick="redactarEmailIA()" type="button">📧 Redactar Email Cliente</button>
-    
-    <button class="btn-secondary" id="btnPdf" onclick="imprimirPDF()" type="button">📄 PDF Presupuesto</button>
-
-    <div style="flex: 1"></div>
-
-    <button class="btn-primary" type="button" id="btnConfirmarPpto" onclick="confirmarPresupuesto()" style="display:none;">Confirmar</button>
-
-    <button class="btn-primary" type="button" id="btnRecuperar" onclick="recuperarFicha()" style="display:none; background-color: #ff9800;">↺ Recuperar</button>
-    
-    <button class="btn-anular" type="button" id="btnAnular" onclick="anularFicha()">Anular</button>
-    <button class="btn-primary" type="button" onclick="guardarFicha()">GUARDAR</button>
-</div>
-        </div>
-    </div>
-
-    <div class="modal-overlay" id="aiResponseModal">
-        <div class="ai-content">
-            <h3>🤖 Sugerencia IA</h3>
-            <textarea id="aiOutput" style="width: 100%; height: 200px; margin: 10px 0; padding: 10px"></textarea>
-            <div style="display: flex; justify-content: flex-end; gap: 10px">
-                <button class="btn-secondary" type="button" onclick="document.getElementById('aiResponseModal').style.display='none'">Cerrar</button>
-                <button class="btn-primary" type="button" onclick="copiarIA()">Copiar / Usar</button>
+                <button class="btn-ai" id="btnEmailIA" onclick="redactarEmailIA()" type="button">📧 Email Cliente</button>
+                <button class="btn-secondary" id="btnPdf" onclick="imprimirPDF()" type="button">📄 PDF</button>
+                <div style="flex: 1"></div>
+                <button class="btn-primary" type="button" id="btnConfirmarPpto" onclick="confirmarPresupuesto()" style="display:none; background:#10b981;">✅ Confirmar</button>
+                <button class="btn-primary" type="button" id="btnRecuperar" onclick="recuperarFicha()" style="display:none; background:#f59e0b;">↺ Recuperar</button>
+                <button class="btn-anular" type="button" id="btnAnular" onclick="anularFicha()">Anular</button>
+                <button class="btn-primary" type="button" onclick="guardarFicha()">GUARDAR</button>
             </div>
         </div>
     </div>
 
-    <script>
+    <!-- MODAL REPORTE -->
+    <div class="modal-overlay" id="modalReporte">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="tituloModalReporte">Imprimir Informe</h3>
+                <button class="btn-close-x" onclick="document.getElementById('modalReporte').style.display='none'">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Desde</label>
+                    <input type="date" id="inpReporteDesde">
+                </div>
+                <div class="form-group">
+                    <label>Hasta</label>
+                    <input type="date" id="inpReporteHasta">
+                </div>
+                <p style="font-size:12px; color:#666; margin-top:10px;">
+                    * Se imprimirán solo los registros <strong>CONFIRMADOS</strong>.
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-print" style="width:100%" onclick="imprimirReporte()">🖨️ Generar Listado</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL IA -->
+    <div class="modal-overlay" id="aiResponseModal">
+        <div class="ai-content">
+            <h3>🤖 Resultado IA</h3>
+            <textarea id="aiOutput" style="width: 100%; height: 250px; padding: 10px; border-radius: 8px; border:1px solid #ccc; font-family: monospace;"></textarea>
+            <div style="display: flex; justify-content: flex-end; gap: 10px">
+                <button class="btn-secondary" type="button" onclick="document.getElementById('aiResponseModal').style.display='none'">Cerrar</button>
+                <button class="btn-primary" type="button" onclick="copiarIA()">Copiar</button>
+            </div>
+        </div>
+    </div>
+
+<script>
+    /* --- CONFIGURACIÓN --- */
+    const APP_VERSION = "v3.0"; 
+    const apiKey = "AIzaSyDHZVBmVq1clcgY7sGBuXxiqEKrkGgJVwE"; // Clave Recuperada
+
     /* FIREBASE */
     const firebaseConfig = {
         apiKey: "AIzaSyBAK0sGUYpV8KHy1KwIdNRLtHlq5LT3Vwg",
@@ -424,36 +570,42 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
-    /* GEMINI */
-    const apiKey = "AIzaSyBdtp8vZeXmIMXG9lHHj9TY9z0mq9OzlJA";
-
     /* ESTADO */
     let currentHotel = null;
     let currentModule = "eventos";
     let dataCache = [];
 
-    const salones = {
+    // CONFIGURACIÓN POR DEFECTO (Extrapolada de tus PDF)
+    // name: Nombre, pax: Max pax según PDF, priceHalf: Media Jornada, priceFull: Jornada Completa
+    const defaultSalonesConfig = {
         Guadiana: [
-            "Puerta de Alarcos",    // 570m2
-            "Puerta de Calatrava",  // 125m2
-            "Puerta del Carmen",    // 110m2
-            "Puerta de Ciruela",    // 25m2
-            "Puerta de Granada",    // 120m2
-            "Puerta de Santa María",// 70m2
-            "Puerta de Toledo",     // 150m2
-            "Restaurante",
-            "Cafetería"
+            { name: "Puerta de Alarcos", pax: 800, priceHalf: 350, priceFull: 500, active: true },
+            { name: "Puerta de Calatrava", pax: 135, priceHalf: 120, priceFull: 200, active: true },
+            { name: "Puerta del Carmen", pax: 120, priceHalf: 100, priceFull: 180, active: true },
+            { name: "Puerta de Ciruela", pax: 20, priceHalf: 60, priceFull: 100, active: true },
+            { name: "Puerta de Granada", pax: 135, priceHalf: 120, priceFull: 200, active: true },
+            { name: "Puerta de Santa María", pax: 80, priceHalf: 90, priceFull: 150, active: true },
+            { name: "Puerta de Toledo", pax: 160, priceHalf: 150, priceFull: 250, active: true },
+            { name: "Restaurante", pax: 150, priceHalf: 0, priceFull: 0, active: true },
+            { name: "Cafetería", pax: 50, priceHalf: 0, priceFull: 0, active: true }
         ],
         Cumbria: [
-            "Salón Mercurio",       // 77m2
-            "Salón Venus",          // 77m2
-            "Salón La Tierra",      // 68m2
-            "Salón Marte",          // 77m2
-            "Salón Júpiter",        // 68m2
-            "Restaurante",
-            "Cafetería"
+            { name: "Salón Mercurio", pax: 90, priceHalf: 120, priceFull: 200, active: true },
+            { name: "Salón Venus", pax: 90, priceHalf: 120, priceFull: 200, active: true },
+            { name: "Salón La Tierra", pax: 70, priceHalf: 90, priceFull: 150, active: true },
+            { name: "Salón Marte", pax: 90, priceHalf: 120, priceFull: 200, active: true },
+            { name: "Salón Júpiter", pax: 70, priceHalf: 90, priceFull: 150, active: true },
+            { name: "Restaurante", pax: 120, priceHalf: 0, priceFull: 0, active: true },
+            { name: "Cafetería", pax: 60, priceHalf: 0, priceFull: 0, active: true }
         ]
     };
+    let salonesConfig = JSON.parse(JSON.stringify(defaultSalonesConfig));
+
+    // --- CARGA INICIAL ---
+    document.addEventListener("DOMContentLoaded", () => {
+        const vBadge = document.getElementById("versionBadge");
+        if(vBadge) vBadge.innerText = "● " + APP_VERSION;
+    });
 
     function initApp(hotel) {
         currentHotel = hotel;
@@ -462,9 +614,67 @@
         document.getElementById("tituloHotelActual").innerText = hotel;
         document.getElementById("headerLogo").src = hotel === "Guadiana" ? "Img/logo-guadiana.svg" : "Img/logo-cumbria.svg";
         document.getElementById("fechaVista").valueAsDate = new Date();
+        loadConfig(); 
         cargarDatos();
     }
 
+    // --- GESTIÓN DE CONFIGURACIÓN ---
+    function loadConfig() {
+        db.collection("master_data").doc("CONFIG_SALONES").get().then((doc) => {
+            if (doc.exists) {
+                const data = doc.data();
+                if(data[currentHotel]) salonesConfig = data;
+            }
+        }).catch(() => console.log("Usando configuración por defecto"));
+    }
+
+    function abrirConfig() {
+        const body = document.getElementById("bodyConfigSalones");
+        body.innerHTML = "";
+        const list = salonesConfig[currentHotel] || [];
+        
+        list.forEach((s, idx) => {
+            body.innerHTML += `
+                <tr>
+                    <td><input type="text" class="svc-input" value="${s.name}" onchange="updateConfigItem(${idx}, 'name', this.value)"></td>
+                    <td><input type="number" class="svc-input" value="${s.pax}" onchange="updateConfigItem(${idx}, 'pax', this.value)"></td>
+                    <td><input type="number" class="svc-input" value="${s.priceHalf || 0}" onchange="updateConfigItem(${idx}, 'priceHalf', this.value)"></td>
+                    <td><input type="number" class="svc-input" value="${s.priceFull || 0}" onchange="updateConfigItem(${idx}, 'priceFull', this.value)"></td>
+                    <td style="text-align:center;"><input type="checkbox" ${s.active ? 'checked' : ''} onchange="updateConfigItem(${idx}, 'active', this.checked)"></td>
+                    <td style="text-align:center; cursor:pointer; color:red;" onclick="removeConfigItem(${idx})">🗑️</td>
+                </tr>
+            `;
+        });
+        document.getElementById("modalConfig").style.display = "flex";
+    }
+
+    function updateConfigItem(idx, field, val) {
+        salonesConfig[currentHotel][idx][field] = val;
+    }
+
+    function removeConfigItem(idx) {
+        if(confirm("¿Desactivar este salón?")) {
+            salonesConfig[currentHotel][idx].active = false;
+            abrirConfig();
+        }
+    }
+
+    function addSalonRow() {
+        salonesConfig[currentHotel].push({ name: "Nuevo Salón", pax: 0, priceHalf: 0, priceFull: 0, active: true });
+        abrirConfig();
+    }
+
+    function saveConfig() {
+        db.collection("master_data").doc("CONFIG_SALONES").set(salonesConfig, { merge: true })
+            .then(() => {
+                alert("Configuración guardada.");
+                document.getElementById("modalConfig").style.display = "none";
+                render(); 
+            })
+            .catch(e => alert("Error al guardar config: " + e.message));
+    }
+
+    // --- FUNCIONES PRINCIPALES ---
     function cargarDatos() {
         db.collection("master_data").onSnapshot((snap) => {
             const badge = document.getElementById("statusBadge");
@@ -472,7 +682,9 @@
             badge.classList.add("status-online");
             document.getElementById("statusText").innerText = "Conectado";
             dataCache = [];
-            snap.forEach((d) => dataCache.push({ id: d.id, ...d.data() }));
+            snap.forEach((d) => {
+                if(d.id !== "CONFIG_SALONES") dataCache.push({ id: d.id, ...d.data() });
+            });
             render();
         }, () => {
             const badge = document.getElementById("statusBadge");
@@ -489,16 +701,24 @@
         document.getElementById(btnId).classList.add("active");
         let txt = m === "eventos" ? "Nuevo Evento" : m === "restaurante" ? "Nueva Mesa" : "Nuevo Presupuesto";
         document.getElementById("btnNuevoPrincipal").innerText = "+ " + txt;
+        
+        const btnRep = document.getElementById("btnReporte");
+        if(m === "restaurante") btnRep.innerText = "📋 Listado Reservas";
+        else btnRep.innerText = "🖨️ Orden de Servicio";
+        
         if (m === "presupuestos") {
             document.getElementById("mainTable").style.display = "none";
             document.getElementById("presupuestosContainer").style.display = "block";
+            btnRep.style.display = "none"; 
         } else {
             document.getElementById("mainTable").style.display = "table";
             document.getElementById("presupuestosContainer").style.display = "none";
+            btnRep.style.display = "inline-flex";
         }
         render();
     }
-function render() {
+
+    function render() {
         const thead = document.getElementById("tableHead");
         const tbody = document.getElementById("tableBody");
         thead.innerHTML = "";
@@ -507,12 +727,12 @@ function render() {
         const filtroState = document.getElementById("filtroEstado").value;
         let filtered = dataCache.filter((d) => d.hotel === currentHotel);
 
-        // --- PRESUPUESTOS ---
         if (currentModule === "presupuestos") {
             filtered = filtered.filter((d) => {
                 if (d.type !== "presupuesto") return false;
                 if (filtroState === "todos") return d.estado !== "anulado";
                 if (filtroState === "anulado") return d.estado === "anulado";
+                if (filtroState === "pendiente") return d.estado === "pendiente";
                 return d.estado === filtroState;
             });
             const bodyP = document.getElementById("budgetBody");
@@ -520,12 +740,18 @@ function render() {
             filtered.forEach((item) => {
                 const tr = document.createElement("tr");
                 tr.className = "budget-row";
+                let badgeClass = "st-activo"; 
+                const est = (item.estado || "activo").toLowerCase();
+                if (est === "confirmado") badgeClass = "st-confirmado";
+                else if (est === "pendiente") badgeClass = "st-pendiente";
+                else if (est === "anulado") badgeClass = "st-anulado";
+
                 tr.innerHTML = `
                     <td style="padding: 8px 10px;">${item.fechaInicio || ""}</td>
                     <td><strong>${item.nombre || ""}</strong></td>
                     <td>${item.salon || ""}</td>
                     <td>${item.ref || "-"}</td>
-                    <td><span class="badge ${item.estado === "anulado" ? "st-anulado" : "st-activo"}">${item.estado || "activo"}</span></td>
+                    <td><span class="badge ${badgeClass}">${item.estado || "activo"}</span></td>
                     <td style="text-align:right; font-weight:bold;">${item.total || 0} €</td>`;
                 tr.onclick = () => abrirModalId(item.id);
                 bodyP.appendChild(tr);
@@ -533,52 +759,54 @@ function render() {
             return;
         }
 
-        // --- CALENDARIO (SALONES Y RESTAURANTE) ---
         const fVista = document.getElementById("fechaVista").value;
-        const tipoBusca = currentModule === "restaurante" ? "restaurante" : "evento";
         
-        // 1. GENERAR CABECERA CON FORMATO "Sab 29 Nov 25"
         let headerHTML = '<tr><th style="width:200px; left:0; z-index:5;">ESPACIO</th>';
-        
         const diasSem = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
         const meses = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
 
         for (let i = 0; i < 7; i++) {
             const d = new Date(fVista);
             d.setDate(d.getDate() + i);
-            
             const nombreDia = diasSem[d.getDay()];
             const numDia = d.getDate();
             const nombreMes = meses[d.getMonth()];
-            const year = String(d.getFullYear()).slice(-2); // Cogemos los últimos 2 dígitos
-
-            // Formato final: Sab 29 Nov 25
+            const year = String(d.getFullYear()).slice(-2);
             headerHTML += `<th style="font-size:12px; text-align:center;">${nombreDia} ${numDia} ${nombreMes} ${year}</th>`;
         }
         headerHTML += "</tr>";
         thead.innerHTML = headerHTML;
 
-        const spaces = salones[currentHotel].filter((s) => {
+        const spaces = (salonesConfig[currentHotel] || []).filter(s => s.active).map(s => s.name);
+        const activeSpaces = spaces.filter(s => {
             if (currentModule === "restaurante") return s.includes("Restaurante") || s.includes("Cafetería");
             return !s.includes("Restaurante") && !s.includes("Cafetería");
         });
 
-        spaces.forEach((salon) => {
+        activeSpaces.forEach((salon) => {
             const tr = document.createElement("tr");
             let tds = `<td style="font-weight:bold; padding-left:16px; position:sticky; left:0; background:#fff; z-index:4;">${salon}</td>`;
 
             for (let i = 0; i < 7; i++) {
                 const d = new Date(fVista);
                 d.setDate(d.getDate() + i);
-                const dStr = d.toISOString().split("T")[0]; // Para comparar fechas
+                const dStr = d.toISOString().split("T")[0];
 
                 const items = filtered.filter((x) => {
-                    if (x.type !== tipoBusca || x.salon !== salon) return false;
+                    if (x.type !== (currentModule === "restaurante" ? "restaurante" : "evento") || x.salon !== salon) return false;
                     
-                    // Lógica de Filtro
-                    if (filtroState === "todos") { if (x.estado === "anulado") return false; }
-                    else if (filtroState === "anulado") { if (x.estado !== "anulado") return false; }
-                    else { if (x.estado !== filtroState) return false; }
+                    if (filtroState === "todos") { 
+                        if (x.estado === "anulado") return false; 
+                    }
+                    else if (filtroState === "anulado") { 
+                        if (x.estado !== "anulado") return false; 
+                    }
+                    else if (filtroState === "pendiente") {
+                        if (x.estado !== "pendiente" && x.estado !== "lista_espera") return false;
+                    }
+                    else { 
+                        if (x.estado !== filtroState) return false; 
+                    }
 
                     if (currentModule === "restaurante") return x.fechaInicio === dStr;
                     const inicio = x.fechaInicio || dStr;
@@ -587,82 +815,55 @@ function render() {
                 });
 
                 if (currentModule === "restaurante") {
-                    // --- LÓGICA RESTAURANTE ---
                     const alm = items.filter((x) => x.turno === "manana").map((x) => {
-                        let style = "";
-                        let icon = "✅ ";
-                        if (x.estado === 'anulado') {
-                            style = 'background:#ffebee; color:#c62828; border:1px solid #ef9a9a; opacity:0.7; text-decoration:line-through;';
-                            icon = "❌ ";
-                        } else if (x.estado === 'lista_espera') {
-                            style = 'background: #ffffff; color: #e65100; border: 2px dashed #ff6d00; font-weight: bold;';
-                            icon = "⏳ ";
-                        }
+                        let style = ""; let icon = "✅ ";
+                        if (x.estado === 'anulado') { style = 'background:#ffebee; color:#c62828; border:1px solid #ef9a9a; opacity:0.7; text-decoration:line-through;'; icon = "❌ "; } 
+                        else if (x.estado === 'lista_espera' || x.estado !== 'confirmado') { style = 'background: #ffffff; color: #e65100; border: 2px dashed #ff6d00; font-weight: bold;'; icon = "⏳ "; }
                         return `<div class="mesa-card mesa-manana" style="${style}" onclick="event.stopPropagation(); abrirModalId('${x.id}')"><b>${icon}${x.hora || ""}</b> ${x.nombre || ""} <small>(${x.paxRest || "?"}p)</small></div>`;
                     }).join("");
 
                     const cen = items.filter((x) => x.turno === "tarde").map((x) => {
-                        let style = "";
-                        let icon = "✅ ";
-                        if (x.estado === 'anulado') {
-                            style = 'background:#ffebee; color:#c62828; border:1px solid #ef9a9a; opacity:0.7; text-decoration:line-through;';
-                            icon = "❌ ";
-                        } else if (x.estado === 'lista_espera') {
-                            style = 'background: #ffffff; color: #4a148c; border: 2px dashed #6200ea; font-weight: bold;';
-                            icon = "⏳ ";
-                        }
+                        let style = ""; let icon = "✅ ";
+                        if (x.estado === 'anulado') { style = 'background:#ffebee; color:#c62828; border:1px solid #ef9a9a; opacity:0.7; text-decoration:line-through;'; icon = "❌ "; } 
+                        else if (x.estado === 'lista_espera') { style = 'background: #ffffff; color: #4a148c; border: 2px dashed #6200ea; font-weight: bold;'; icon = "⏳ "; }
                         return `<div class="mesa-card mesa-tarde" style="${style}" onclick="event.stopPropagation(); abrirModalId('${x.id}')"><b>${icon}${x.hora || ""}</b> ${x.nombre || ""} <small>(${x.paxRest || "?"}p)</small></div>`;
                     }).join("");
 
                     tds += `<td class="cell-restaurante"><div class="rest-zone" onclick="nuevoRest('${dStr}','${salon}','manana')">${alm}</div><div class="rest-zone" onclick="nuevoRest('${dStr}','${salon}','tarde')">${cen}</div></td>`;
-                    
                 } else {
-                    // --- LÓGICA SALONES (SIN TEXTO MAÑANA/TARDE) ---
                     const evtDiaCompleto = items.find(x => x.turno === "dia_completo" && x.estado !== "anulado");
                     const evtManana = items.find(x => x.turno === "manana" && x.estado !== "anulado");
                     const evtTarde = items.find(x => x.turno === "tarde" && x.estado !== "anulado");
 
                     let content = "";
+                    const getStyle = (evt, turno) => {
+                        if (evt.estado === "confirmado") {
+                            return "background:#dcfce7; color:#166534; border-left: 4px solid #22c55e;";
+                        } else {
+                            if (turno === 'dia_completo') return "background:#dbeafe; color:#1e40af; border-left: 4px solid #3b82f6;";
+                            if (turno === 'manana') return "background:#e0f2fe; color:#0369a1; border-left: 3px solid #0ea5e9;";
+                            if (turno === 'tarde') return "background:#f3e8ff; color:#6b21a8; border-left: 3px solid #9333ea;";
+                        }
+                    };
 
                     if (evtDiaCompleto) {
-                        let style = "";
-                        if(evtDiaCompleto.estado === "confirmado") style = "background:#c8e6c9; color:#2e7d32; border:1px solid #81c784;"; 
-                        
-                        content = `
-                            <div class="split-cell">
-                                <div class="evt-full-day" style="${style}" onclick="event.stopPropagation(); abrirModalId('${evtDiaCompleto.id}')">
-                                    📅 ${evtDiaCompleto.nombre}
-                                </div>
-                            </div>`;
+                        const st = getStyle(evtDiaCompleto, 'dia_completo');
+                        content = `<div class="split-cell"><div class="evt-full-day" style="${st}" onclick="event.stopPropagation(); abrirModalId('${evtDiaCompleto.id}')">📅 ${evtDiaCompleto.nombre}</div></div>`;
                     } else {
-                        // 2. Quitamos el texto "Mañana" y "Tarde", dejamos string vacío ""
                         let htmlManana = ""; 
                         if (evtManana) {
-                             let styleM = "";
-                             if(evtManana.estado === "confirmado") styleM = "background:#fff9c4; color:#f9a825; font-weight:bold;";
-                             htmlManana = `<div class="evt-part evt-manana" style="${styleM}" onclick="event.stopPropagation(); abrirModalId('${evtManana.id}')">
-                                ☀️ ${evtManana.nombre}
-                             </div>`;
+                             const st = getStyle(evtManana, 'manana');
+                             htmlManana = `<div class="evt-part evt-manana" style="${st}" onclick="event.stopPropagation(); abrirModalId('${evtManana.id}')">☀️ ${evtManana.nombre}</div>`;
                         }
-
                         let htmlTarde = ""; 
                         if (evtTarde) {
-                             let styleT = "";
-                             if(evtTarde.estado === "confirmado") styleT = "background:#e1bee7; color:#6a1b9a; font-weight:bold;";
-                             htmlTarde = `<div class="evt-part evt-tarde" style="${styleT}" onclick="event.stopPropagation(); abrirModalId('${evtTarde.id}')">
-                                🌙 ${evtTarde.nombre}
-                             </div>`;
+                             const st = getStyle(evtTarde, 'tarde');
+                             htmlTarde = `<div class="evt-part evt-tarde" style="${st}" onclick="event.stopPropagation(); abrirModalId('${evtTarde.id}')">🌙 ${evtTarde.nombre}</div>`;
                         }
-
-                        content = `
-                            <div class="split-cell">
-                                <div class="split-zone" onclick="nuevoSalon('${dStr}','${salon}', 'manana')">
-                                    ${htmlManana}
-                                </div>
-                                <div class="split-zone" onclick="nuevoSalon('${dStr}','${salon}', 'tarde')">
-                                    ${htmlTarde}
-                                </div>
-                            </div>`;
+                        content = `<div class="split-cell">
+                            <div class="split-zone" onclick="nuevoSalon('${dStr}','${salon}', 'manana')">${htmlManana}</div>
+                            <div class="split-zone" onclick="nuevoSalon('${dStr}','${salon}', 'tarde')">${htmlTarde}</div>
+                        </div>`;
                     }
                     tds += `<td class="cell-salon" style="padding:0; vertical-align:middle;">${content}</td>`;
                 }
@@ -671,20 +872,21 @@ function render() {
             tbody.appendChild(tr);
         });
     }
-    function cerrarModal() {
-        document.getElementById("modalFicha").style.display = "none";
-    }
-// 1. ACTUALIZAR NUEVOGENERAL (Para permitir rangos en eventos)
+
     function nuevoGeneral() {
         document.getElementById("dataId").value = "";
         document.getElementById("inpNombre").value = "";
         document.getElementById("inpTel").value = "";
         document.getElementById("inpEmail").value = "";
         document.getElementById("inpNotas").value = "";
+        document.getElementById("inpNotaCliente").value = ""; 
         document.getElementById("bodyServicios").innerHTML = "";
         document.getElementById("totalAmount").innerText = "0.00";
         document.getElementById("inpHora").value = "";
         document.getElementById("inpPaxRest").value = "";
+        
+        if(document.getElementById("inpHoraInicio")) document.getElementById("inpHoraInicio").value = "";
+        if(document.getElementById("inpHoraFin")) document.getElementById("inpHoraFin").value = "";
 
         const tipo = currentModule === "restaurante" ? "restaurante" : currentModule === "presupuestos" ? "presupuesto" : "evento";
         document.getElementById("dataType").value = tipo;
@@ -693,38 +895,53 @@ function render() {
         const isPpto = tipo === "presupuesto";
         const isEvt = tipo === "evento";
 
-        document.getElementById("modalTitle").innerText = isRest ? "Nueva Mesa" : (isPpto ? "Nuevo Presupuesto" : "Nuevo Evento / Bloqueo");
+        document.getElementById("modalTitle").innerText = isRest ? "Nueva Mesa" : (isPpto ? "Nuevo Presupuesto" : "Nuevo Evento");
         
-        // VISIBILIDAD DE BLOQUES
+        // VISIBILIDAD BLOQUES Y HERRAMIENTAS IA
         document.getElementById("blockRestaurante").style.display = isRest ? "block" : "none";
         document.getElementById("blockEventos").style.display = isRest ? "none" : "block";
+        
+        const toolbar = document.getElementById("aiToolbar");
+        const btnNotas = document.getElementById("btnNotasIA");
+        if(isRest) {
+            if(toolbar) toolbar.style.display = "none";
+            if(btnNotas) btnNotas.style.display = "none";
+        } else {
+            if(toolbar) toolbar.style.display = "flex";
+            if(btnNotas) btnNotas.style.display = "inline-block";
+        }
 
-        // FECHAS: Ahora mostramos Rango también para Eventos (para poder bloquear "desde-hasta")
-        document.getElementById("grpFechaUnica").style.display = (isPpto || isEvt) ? "none" : "block"; 
-        document.getElementById("grpRangoFechas").style.display = (isPpto || isEvt) ? "flex" : "none";
+        document.getElementById("grpRangoFechas").style.display = isPpto ? "flex" : "none";
+        document.getElementById("grpFechaUnica").style.display = (isRest || isEvt) ? "block" : "none"; 
 
-        // Si es restaurante, usa fecha unica
-        if(isRest) document.getElementById("grpFechaUnica").style.display = "block";
-
-        // Botones
         document.getElementById("btnPdf").style.display = isPpto ? "inline-flex" : "none";
         document.getElementById("btnMenuIA").style.display = isPpto ? "inline-flex" : "none";
         document.getElementById("btnConfirmarPpto").style.display = isPpto ? "inline-flex" : "none";
-        
         document.getElementById("btnAnular").style.display = "none";
         document.getElementById("btnRecuperar").style.display = "none";
 
-        // Valores por defecto
         if(isRest) document.getElementById("inpEstadoRest").value = "confirmado";
-        if(isEvt) document.getElementById("inpTurnoEvento").value = "dia_completo";
+        if(isEvt) {
+            document.getElementById("inpTurnoEvento").value = "dia_completo";
+            document.getElementById("inpEstadoEvento").value = "pendiente";
+        }
 
-        // Salones
         const sel = document.getElementById("inpSalon");
         sel.innerHTML = "";
         if (isPpto) sel.innerHTML = `<option value="Pendiente">-- Pendiente --</option>`;
-        salones[currentHotel].forEach((s) => {
-            if (isRest) { if (s.includes("Restaurante") || s.includes("Cafetería")) sel.innerHTML += `<option>${s}</option>`; } 
-            else { if (!s.includes("Restaurante")) sel.innerHTML += `<option>${s}</option>`; }
+        
+        const list = salonesConfig[currentHotel] || [];
+        list.forEach((s) => {
+            if (!s.active) return;
+            if (isRest) { 
+                if (s.name.includes("Restaurante") || s.name.includes("Cafetería")) 
+                    sel.innerHTML += `<option value="${s.name}">${s.name} (Cap: ${s.pax})</option>`; 
+            } 
+            else { 
+                // MOSTRAR PRECIOS EN SELECTOR
+                const prices = s.priceHalf > 0 ? `${s.priceHalf}€ / ${s.priceFull}€` : `${s.priceFull}€`;
+                sel.innerHTML += `<option value="${s.name}">${s.name} (Cap: ${s.pax} | ${prices})</option>`; 
+            }
         });
 
         const hoy = new Date().toISOString().split("T")[0];
@@ -735,8 +952,131 @@ function render() {
         if (isPpto) addServiceRow({ date: hoy });
         document.getElementById("modalFicha").style.display = "flex";
     }
+    
+    function updateSalonDetails() {
+        const name = document.getElementById("inpSalon").value;
+        const s = (salonesConfig[currentHotel] || []).find(x => x.name === name);
+        if(s) {
+             const prices = s.priceHalf > 0 ? `1/2 Día: ${s.priceHalf}€ | Día: ${s.priceFull}€` : `Día: ${s.priceFull}€`;
+             document.getElementById("salonDetails").innerText = `Aforo: ${s.pax} pax | ${prices}`;
+        }
+    }
 
-    // 2. FUNCIÓN AUXILIAR (Añádela si no la tienes)
+    function nuevoRest(fecha, salon, turno) {
+        nuevoGeneral();
+        document.getElementById("inpFecha").value = fecha;
+        document.getElementById("inpSalon").value = salon;
+        document.getElementById("inpTurno").value = turno;
+    }
+
+    function nuevoSalon(fecha, salon, turnoPreferido) {
+        nuevoGeneral();
+        document.getElementById("inpFecha").value = fecha;
+        document.getElementById("inpFechaDesde").value = fecha;
+        document.getElementById("inpFechaHasta").value = fecha;
+        document.getElementById("inpSalon").value = salon;
+        if(turnoPreferido) document.getElementById("inpTurnoEvento").value = turnoPreferido;
+    }
+
+    function abrirModalId(id) {
+        const item = dataCache.find((x) => x.id === id);
+        if (!item) return;
+
+        const tempModule = currentModule;
+        currentModule = item.type === "restaurante" ? "restaurante" : item.type === "presupuesto" ? "presupuestos" : "eventos";
+        nuevoGeneral();
+        currentModule = tempModule;
+
+        document.getElementById("dataId").value = item.id;
+        document.getElementById("dataType").value = item.type;
+        document.getElementById("inpNombre").value = item.nombre || "";
+        document.getElementById("modalTitle").innerText = item.nombre || "Ficha";
+        document.getElementById("inpTel").value = item.tel || "";
+        document.getElementById("inpEmail").value = item.email || "";
+        document.getElementById("inpNotas").value = item.notas || "";
+        document.getElementById("inpNotaCliente").value = item.notaCliente || ""; 
+        document.getElementById("inpSalon").value = item.salon || "";
+
+        if (item.estado === "anulado") {
+            document.getElementById("btnAnular").style.display = "none";
+            document.getElementById("btnRecuperar").style.display = "inline-flex";
+        } else {
+            document.getElementById("btnAnular").style.display = "inline-flex";
+            document.getElementById("btnRecuperar").style.display = "none";
+        }
+
+        if (item.type === "restaurante") {
+            document.getElementById("inpHora").value = item.hora || "";
+            document.getElementById("inpPaxRest").value = item.paxRest || "";
+            document.getElementById("inpTurno").value = item.turno || "manana";
+            document.getElementById("inpEstadoRest").value = (item.estado === "lista_espera") ? "lista_espera" : "confirmado";
+            document.getElementById("inpFecha").value = item.fechaInicio || "";
+        } else if (item.type === "presupuesto") {
+            document.getElementById("inpFechaDesde").value = item.fechaInicio || "";
+            document.getElementById("inpFechaHasta").value = item.fechaFin || "";
+            document.getElementById("refPresupuesto").value = item.ref || "";
+            document.getElementById("bodyServicios").innerHTML = "";
+            if (item.servicios) item.servicios.forEach((s) => addServiceRow(s));
+            updateTotal();
+        } else {
+            document.getElementById("inpFecha").value = item.fechaInicio || "";
+            
+            document.getElementById("inpPaxA").value = item.paxA || "";
+            document.getElementById("inpPaxN").value = item.paxN || "";
+            document.getElementById("inpMontaje").value = item.montaje || "Banquete";
+            document.getElementById("inpTurnoEvento").value = item.turno || "dia_completo";
+            document.getElementById("inpEstadoEvento").value = (item.estado === "confirmado") ? "confirmado" : "pendiente";
+            
+            document.getElementById("inpHoraInicio").value = item.horaInicio || "";
+            document.getElementById("inpHoraFin").value = item.horaFin || "";
+            
+            document.getElementById("bodyServicios").innerHTML = "";
+            if (item.servicios && item.servicios.length) item.servicios.forEach((s) => addServiceRow(s));
+            updateTotal();
+        }
+    }
+
+    function cerrarModal() {
+        document.getElementById("modalFicha").style.display = "none";
+    }
+
+    function addServiceRow(data = {}) {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+            <td><input type="date" class="s-date svc-input" value="${data.date || ""}" onchange="updateDates()"></td>
+            <td><input type="text" class="s-desc svc-input" value="${data.desc || ""}" placeholder="Concepto"></td>
+            <td><input type="number" class="s-uds svc-input" value="${data.uds || 1}" oninput="calc(this)"></td>
+            <td><input type="number" class="s-price svc-input" value="${data.price || 0}" oninput="calc(this)"></td>
+            <td><input type="text" class="s-total svc-input" value="${data.total || 0}" readonly style="background:#f5f5f5;"></td>
+            <td class="btn-del-row" onclick="this.parentElement.remove(); updateTotal()">✕</td>`;
+        document.getElementById("bodyServicios").appendChild(tr);
+    }
+
+    function calc(el) {
+        const row = el.closest("tr");
+        const uds = parseFloat(row.querySelector(".s-uds").value) || 0;
+        const prc = parseFloat(row.querySelector(".s-price").value) || 0;
+        row.querySelector(".s-total").value = (uds * prc).toFixed(2);
+        updateTotal();
+    }
+
+    function updateTotal() {
+        let total = 0;
+        document.querySelectorAll(".s-total").forEach((i) => (total += parseFloat(i.value) || 0));
+        document.getElementById("totalAmount").innerText = total.toFixed(2);
+    }
+
+    function updateDates() {
+        if (document.getElementById("dataType").value !== "presupuesto") return;
+        const dates = [];
+        document.querySelectorAll(".s-date").forEach((i) => { if (i.value) dates.push(i.value); });
+        if (dates.length) {
+            dates.sort();
+            document.getElementById("inpFechaDesde").value = dates[0];
+            document.getElementById("inpFechaHasta").value = dates[dates.length - 1];
+        }
+    }
+
     function sumarDiasFecha(fechaStr, dias) {
         const parts = fechaStr.split('-');
         const d = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]), 12, 0, 0);
@@ -747,70 +1087,84 @@ function render() {
         return `${year}-${month}-${day}`;
     }
 
-    // 3. ACTUALIZAR GUARDARFICHA (Para crear bucle de eventos si es rango)
     function guardarFicha(estadoOverride, skipClose) {
         try {
             const id = document.getElementById("dataId").value;
             const type = document.getElementById("dataType").value;
             const nombre = document.getElementById("inpNombre").value;
+            
             if (!nombre) { alert("El nombre es obligatorio."); return Promise.reject(new Error("Falta nombre")); }
 
             let estadoFinal = estadoOverride || "activo";
             if (type === "restaurante" && !estadoOverride) estadoFinal = document.getElementById("inpEstadoRest").value;
+            if (type === "evento" && !estadoOverride) estadoFinal = document.getElementById("inpEstadoEvento").value;
+            if (type === "presupuesto" && !estadoOverride) {
+                if (!id) estadoFinal = "pendiente";
+                else {
+                    const previo = dataCache.find(x => x.id === id);
+                    estadoFinal = previo ? (previo.estado || "pendiente") : "pendiente";
+                }
+            }
 
-            // Datos base
             const dataBase = {
                 hotel: currentHotel, type, nombre,
                 tel: document.getElementById("inpTel").value,
                 email: document.getElementById("inpEmail").value,
                 salon: document.getElementById("inpSalon").value,
                 notas: document.getElementById("inpNotas").value,
+                notaCliente: document.getElementById("inpNotaCliente").value,
                 estado: estadoFinal
             };
 
-            // CASO 1: RESTAURANTE (Sin cambios, fecha única)
             if (type === "restaurante") {
                 dataBase.hora = document.getElementById("inpHora").value;
                 dataBase.paxRest = document.getElementById("inpPaxRest").value;
                 dataBase.turno = document.getElementById("inpTurno").value;
                 dataBase.fechaInicio = document.getElementById("inpFecha").value;
                 dataBase.fechaFin = dataBase.fechaInicio;
-
-                if (id) return db.collection("master_data").doc(id).update(dataBase).then(() => { if(!skipClose) cerrarModal(); });
-                else return db.collection("master_data").add(dataBase).then((ref) => { document.getElementById("dataId").value = ref.id; if(!skipClose) cerrarModal(); });
             }
 
-            // CASO 2: PRESUPUESTO (Rango informativo, un solo registro)
             if (type === "presupuesto") {
                 dataBase.fechaInicio = document.getElementById("inpFechaDesde").value;
                 dataBase.fechaFin = document.getElementById("inpFechaHasta").value;
                 dataBase.total = document.getElementById("totalAmount").innerText;
-                dataBase.servicios = []; // (Tu lógica de extraer servicios aquí...)
+                dataBase.servicios = []; 
                 document.querySelectorAll("#bodyServicios tr").forEach((tr) =>
                     dataBase.servicios.push({
                         date: tr.querySelector(".s-date").value, desc: tr.querySelector(".s-desc").value,
                         uds: tr.querySelector(".s-uds").value, price: tr.querySelector(".s-price").value, total: tr.querySelector(".s-total").value
                     })
                 );
-                if (!id) dataBase.ref = "PRE-" + Date.now();
-                
-                if (id) return db.collection("master_data").doc(id).update(dataBase).then(() => { if(!skipClose) cerrarModal(); });
-                else return db.collection("master_data").add(dataBase).then((ref) => { document.getElementById("dataId").value = ref.id; if(!skipClose) cerrarModal(); });
+                if (!id && !dataBase.ref) dataBase.ref = "PRE-" + Date.now();
             }
 
-            // CASO 3: EVENTO DE SALÓN (Puede ser rango "Desde... Hasta...")
             if (type === "evento") {
-                const fInicio = document.getElementById("inpFechaDesde").value;
-                const fFin = document.getElementById("inpFechaHasta").value || fInicio;
+                const fInicio = document.getElementById("inpFecha").value;
+                const fFin = fInicio;
 
-                // Validación de colisiones (simplificada para el ejemplo)
-                // ... (Tu código de validación iría aquí) ...
-
-                const d1 = new Date(fInicio);
-                const d2 = new Date(fFin);
-                const diffDays = Math.ceil(Math.abs(d2 - d1) / (1000 * 60 * 60 * 24));
-
-                // Recogemos servicios
+                if(estadoFinal !== "anulado") {
+                    const salonCheck = document.getElementById("inpSalon").value;
+                    const turnoCheck = document.getElementById("inpTurnoEvento").value;
+                    const coincidencias = dataCache.filter(d => 
+                        d.hotel === currentHotel && d.id !== id && d.type === "evento" && d.salon === salonCheck && d.fechaInicio === fInicio && d.estado !== "anulado"
+                    );
+                    for(let ev of coincidencias) {
+                        if (ev.turno === "dia_completo" || turnoCheck === "dia_completo" || ev.turno === turnoCheck) {
+                            alert("⛔ CONFLICTO: El salón ya está ocupado en ese turno.");
+                            return Promise.reject("Ocupado");
+                        }
+                    }
+                }
+                
+                dataBase.fechaInicio = fInicio; 
+                dataBase.fechaFin = fFin;
+                dataBase.paxA = document.getElementById("inpPaxA").value;
+                dataBase.paxN = document.getElementById("inpPaxN").value;
+                dataBase.montaje = document.getElementById("inpMontaje").value;
+                dataBase.turno = document.getElementById("inpTurnoEvento").value;
+                dataBase.horaInicio = document.getElementById("inpHoraInicio").value;
+                dataBase.horaFin = document.getElementById("inpHoraFin").value;
+                
                 const serviciosRaw = [];
                 document.querySelectorAll("#bodyServicios tr").forEach((tr) => {
                     serviciosRaw.push({
@@ -818,66 +1172,109 @@ function render() {
                         uds: tr.querySelector(".s-uds").value, price: tr.querySelector(".s-price").value, total: tr.querySelector(".s-total").value
                     });
                 });
-
-                // Si estamos editando (id existe) y no cambiamos fechas, update normal.
-                // Si es nuevo y es rango, hacemos bucle.
-                
-                if (id) {
-                    // EDICIÓN SIMPLE (Asumimos que al editar no expandimos rango para simplificar, o solo editas el día actual)
-                    dataBase.fechaInicio = fInicio; 
-                    dataBase.fechaFin = fInicio; // Forzamos single day al editar para no romper
-                    dataBase.paxA = document.getElementById("inpPaxA").value;
-                    dataBase.montaje = document.getElementById("inpMontaje").value;
-                    dataBase.turno = document.getElementById("inpTurnoEvento").value;
-                    dataBase.servicios = serviciosRaw;
-                    return db.collection("master_data").doc(id).update(dataBase).then(() => { if(!skipClose) cerrarModal(); });
-                } else {
-                    // NUEVO REGISTRO (Posible Bucle)
-                    const promesas = [];
-                    for (let i = 0; i <= diffDays; i++) {
-                        const fechaActual = sumarDiasFecha(fInicio, i);
-                        const evtDia = { ...dataBase }; // Copia
-                        evtDia.fechaInicio = fechaActual;
-                        evtDia.fechaFin = fechaActual;
-                        evtDia.paxA = document.getElementById("inpPaxA").value;
-                        evtDia.montaje = document.getElementById("inpMontaje").value;
-                        evtDia.turno = document.getElementById("inpTurnoEvento").value;
-                        
-                        // Asignar servicios que coincidan con la fecha
-                        evtDia.servicios = serviciosRaw.filter(s => s.date === fechaActual || !s.date);
-                        
-                        promesas.push(db.collection("master_data").add(evtDia));
-                    }
-                    return Promise.all(promesas).then(() => {
-                        alert("Eventos creados correctamente (" + (diffDays+1) + " días).");
-                        if(!skipClose) cerrarModal();
-                    });
-                }
+                dataBase.servicios = serviciosRaw;
             }
 
-        } catch (e) { alert("Error: " + e.message); }
+            if (id) {
+                return db.collection("master_data").doc(id).update(dataBase).then(() => { if (!skipClose) cerrarModal(); return id; });
+            } else {
+                return db.collection("master_data").add(dataBase).then((ref) => { document.getElementById("dataId").value = ref.id; if (!skipClose) cerrarModal(); return ref.id; });
+            }
+        } catch (e) { alert("Error: " + e.message); return Promise.reject(e); }
     }
 
-    // 4. NUEVA FUNCIÓN: ORDEN DE SERVICIO
-    function generarOrdenServicio() {
-        const fInicio = document.getElementById("fechaVista").value;
-        // Calculamos +7 días para el listado
-        const fFin = sumarDiasFecha(fInicio, 7);
+    function anularFicha() {
+        const id = document.getElementById("dataId").value;
+        if (id && confirm("¿Anular registro?")) {
+            db.collection("master_data").doc(id).update({ estado: "anulado" }).then(() => cerrarModal());
+        }
+    }
 
-        // Filtramos datos de la memoria (dataCache)
-        // Buscamos Eventos y Restaurante activos en ese rango
+    function recuperarFicha() {
+        const id = document.getElementById("dataId").value;
+        const type = document.getElementById("dataType").value;
+        const estadoDestino = (type === "restaurante") ? "confirmado" : "pendiente";
+        if (id && confirm("¿Recuperar este registro?")) {
+            db.collection("master_data").doc(id).update({ estado: estadoDestino }).then(() => cerrarModal());
+        }
+    }
+
+    async function confirmarPresupuesto() {
+        if (document.getElementById("dataType").value !== "presupuesto") return;
+        const salon = document.getElementById("inpSalon").value;
+        if (!salon || salon === "Pendiente" || salon.startsWith("--")) { alert("Indica el salón."); return; }
+        const nombre = document.getElementById("inpNombre").value;
+        if (!nombre) { alert("Nombre obligatorio."); return; }
+
+        const fInicio = document.getElementById("inpFechaDesde").value;
+        const fFin = document.getElementById("inpFechaHasta").value || fInicio;
+        const d1 = new Date(fInicio); const d2 = new Date(fFin);
+        const diffDays = Math.ceil(Math.abs(d2 - d1) / (1000 * 60 * 60 * 24));
+
+        for (let i = 0; i <= diffDays; i++) {
+            const fechaCheck = sumarDiasFecha(fInicio, i);
+            const conflicto = dataCache.find(d => d.hotel === currentHotel && d.type === "evento" && d.salon === salon && d.fechaInicio === fechaCheck && d.estado !== "anulado");
+            if (conflicto) { alert(`⛔ CONFLICTO el día ${fechaCheck}: ${conflicto.nombre}`); return; }
+        }
+
+        try {
+            const pptoId = await guardarFicha("confirmado", true);
+            const promesas = [];
+            for (let i = 0; i <= diffDays; i++) {
+                const fechaActual = sumarDiasFecha(fInicio, i);
+                const evt = {
+                    hotel: currentHotel, type: "evento", nombre, salon,
+                    fechaInicio: fechaActual, fechaFin: fechaActual,
+                    paxA: document.getElementById("inpPaxA").value,
+                    montaje: document.getElementById("inpMontaje").value,
+                    notas: document.getElementById("inpNotas").value,
+                    notaCliente: document.getElementById("inpNotaCliente").value,
+                    estado: "confirmado", turno: "dia_completo", refPresupuesto: pptoId
+                };
+                const servs = [];
+                document.querySelectorAll("#bodyServicios tr").forEach((tr) => {
+                     const sDate = tr.querySelector(".s-date").value;
+                     if (sDate === fechaActual || (i===0 && !sDate)) {
+                         servs.push({
+                            date: sDate || fechaActual, desc: tr.querySelector(".s-desc").value,
+                            uds: tr.querySelector(".s-uds").value, price: tr.querySelector(".s-price").value, total: tr.querySelector(".s-total").value
+                         });
+                     }
+                });
+                if(servs.length) evt.servicios = servs;
+                promesas.push(db.collection("master_data").add(evt));
+            }
+            await Promise.all(promesas);
+            alert("Confirmado y bloqueado."); cerrarModal(); render();
+        } catch (e) { console.error(e); alert("Error: " + e.message); }
+    }
+
+    function abrirModalReporte() {
+        const hoy = new Date().toISOString().split("T")[0];
+        const semana = sumarDiasFecha(hoy, 7);
+        document.getElementById("inpReporteDesde").value = hoy;
+        document.getElementById("inpReporteHasta").value = semana;
+        const titulo = (currentModule === "restaurante") ? "Imprimir Reservas" : "Imprimir Orden de Servicio";
+        document.getElementById("tituloModalReporte").innerText = titulo;
+        document.getElementById("modalReporte").style.display = "flex";
+    }
+
+    function imprimirReporte() {
+        const fInicio = document.getElementById("inpReporteDesde").value;
+        const fFin = document.getElementById("inpReporteHasta").value;
+        const modulo = currentModule; 
+
         const listado = dataCache.filter(d => {
-            if(d.hotel !== currentHotel) return false;
-            if(d.estado === 'anulado') return false;
-            if(d.type === 'presupuesto') return false; // Solo confirmados/eventos reales
-            
-            return d.fechaInicio >= fInicio && d.fechaInicio <= fFin;
+            if (d.hotel !== currentHotel) return false;
+            if (d.estado !== 'confirmado') return false;
+            if (d.fechaInicio < fInicio || d.fechaInicio > fFin) return false;
+            if (modulo === 'restaurante' && d.type !== 'restaurante') return false;
+            if (modulo !== 'restaurante' && d.type !== 'evento') return false; 
+            return true;
         });
 
-        // Ordenar por fecha y luego por hora/turno
         listado.sort((a, b) => {
             if(a.fechaInicio !== b.fechaInicio) return a.fechaInicio.localeCompare(b.fechaInicio);
-            // Si es restaurante tiene hora
             const hA = a.hora || (a.turno==='manana'?'14:00':'21:00');
             const hB = b.hora || (b.turno==='manana'?'14:00':'21:00');
             return hA.localeCompare(hB);
@@ -890,219 +1287,272 @@ function render() {
             const lugar = item.salon || "Restaurante";
             const pax = (item.type === 'restaurante') ? item.paxRest : (item.paxA || 0);
             
-            // Detalles del servicio (menú, montaje...)
             let detalles = `<b>${item.nombre}</b><br>`;
             if(item.montaje) detalles += `Montaje: ${item.montaje}<br>`;
             if(item.notas) detalles += `⚠️ ${item.notas}<br>`;
+            if(item.horaInicio || item.horaFin) detalles += `🕒 ${item.horaInicio || '?'} - ${item.horaFin || '?'}<br>`;
             
             if(item.servicios && item.servicios.length > 0) {
                 detalles += `<ul style="margin:4px 0 0 15px; padding:0;">`;
-                item.servicios.forEach(s => {
-                    detalles += `<li>${s.uds}x ${s.desc}</li>`;
-                });
+                item.servicios.forEach(s => { detalles += `<li>${s.uds}x ${s.desc}</li>`; });
                 detalles += `</ul>`;
             }
-
-            filas += `
-                <tr style="border-bottom:1px solid #eee;">
-                    <td style="padding:8px;">${fecha}</td>
-                    <td style="padding:8px;">${hora}</td>
-                    <td style="padding:8px;">${lugar}</td>
-                    <td style="padding:8px; font-weight:bold;">${pax} pax</td>
-                    <td style="padding:8px;">${detalles}</td>
-                </tr>
-            `;
+            filas += `<tr style="border-bottom:1px solid #eee;"><td style="padding:8px;">${fecha}</td><td style="padding:8px;">${hora}</td><td style="padding:8px;">${lugar}</td><td style="padding:8px; font-weight:bold;">${pax} pax</td><td style="padding:8px;">${detalles}</td></tr>`;
         });
+
+        const tituloInforme = (modulo === 'restaurante') ? "📋 Listado de Reservas" : "📋 Orden de Servicio";
 
         const html = `
         <html>
         <head>
-            <title>Orden de Servicio - ${currentHotel}</title>
+            <title>Informe</title>
             <style>
-                body { font-family: sans-serif; padding: 20px; }
+                body{font-family:sans-serif;padding:20px}
                 h1 { color: #263238; }
-                table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 12px; }
-                th { background: #eceff1; padding: 10px; text-align: left; border-bottom: 2px solid #cfd8dc; }
+                table{width:100%;border-collapse:collapse;font-size:12px; margin-top:20px;}
+                th{background:#eceff1;padding:10px;text-align:left;border-bottom:2px solid #cfd8dc;}
+                td{vertical-align:top;}
             </style>
         </head>
         <body>
-            <h1>📋 Orden de Servicio / Previsión Semanal</h1>
-            <p>Hotel: <strong>${currentHotel}</strong> | Desde: ${fInicio} | Generado: ${new Date().toLocaleString()}</p>
+            <h1>${tituloInforme}</h1>
+            <p><strong>${currentHotel}</strong> | Del ${fInicio.split('-').reverse().join('/')} al ${fFin.split('-').reverse().join('/')}</p>
             <table>
                 <thead>
                     <tr>
                         <th width="80">Fecha</th>
-                        <th width="100">Hora/Turno</th>
+                        <th width="100">Hora</th>
                         <th width="150">Espacio</th>
                         <th width="60">Pax</th>
-                        <th>Evento y Servicios</th>
+                        <th>Detalles</th>
                     </tr>
                 </thead>
                 <tbody>
-                    ${filas || '<tr><td colspan="5" style="padding:20px; text-align:center">No hay eventos para esta semana.</td></tr>'}
+                    ${filas || '<tr><td colspan="5" style="padding:20px; text-align:center">No hay eventos confirmados en este rango.</td></tr>'}
                 </tbody>
             </table>
-            <script>window.print();<\/script>
+            <script>window.print()<\/script>
         </body>
-        </html>
-        `;
+        </html>`;
+        
+        const win = window.open("", "_blank"); 
+        win.document.write(html); 
+        win.document.close();
+        document.getElementById("modalReporte").style.display = "none";
+    }
+
+    function imprimirPDF() {
+        const typeEl = document.getElementById("dataType");
+        if (!typeEl || typeEl.value !== "presupuesto") {
+            alert("El PDF solo está disponible para presupuestos.");
+            return;
+        }
+
+        const escapeHTML = (str = "") => String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        const nl2br = (str = "") => escapeHTML(str).replace(/\r\n|\n/g, "<br>");
+        const getInputValue = (id) => document.getElementById(id)?.value?.trim() || "";
+        const getTextValue = (id) => document.getElementById(id)?.innerText?.trim() || "";
+        
+        const formatISODate = (iso) => {
+            if (!iso) return "";
+            const [y, m, d] = iso.split("-");
+            if (!y || !m || !d) return "";
+            return `${d}/${m}/${y}`;
+        };
+
+        const HOTEL_CONFIG = {
+            Cumbria: { nombre: "Cumbria Spa&Hotel", linea: "Presupuesto de evento", dir: "Ctra. de Toledo, 26 · 13005 Ciudad Real", tel: "Tel. (+34) 926 25 04 04", web: "www.cumbriahotel.es", logoRel: "Img/logo-cumbria.svg" },
+            Guadiana: { nombre: "Sercotel Guadiana", linea: "Presupuesto de evento", dir: "C/ Guadiana, 36 · 13002 Ciudad Real", tel: "Tel. (+34) 926 22 33 13", web: "www.hotelguadiana.es", logoRel: "Img/logo-guadiana.svg" }
+        };
+
+        const hotelInfo = HOTEL_CONFIG[currentHotel] || HOTEL_CONFIG["Guadiana"];
+        const hoy = new Date();
+        const emis = hoy.toLocaleDateString("es-ES");
+
+        const cliente = getInputValue("inpNombre");
+        const tel = getInputValue("inpTel");
+        const email = getInputValue("inpEmail");
+        const salon = getInputValue("inpSalon");
+        const fDesde = formatISODate(getInputValue("inpFechaDesde"));
+        const fHasta = formatISODate(getInputValue("inpFechaHasta"));
+        const montaje = getInputValue("inpMontaje");
+        const paxA = getInputValue("inpPaxA") || "0";
+        const paxN = getInputValue("inpPaxN") || "0";
+        const total = getTextValue("totalAmount") || "0,00";
+        const notas = getInputValue("inpNotaCliente");
+        const ref = getInputValue("refPresupuesto") || "PENDIENTE";
+
+        let filasServicios = "";
+        const filas = document.querySelectorAll("#bodyServicios tr");
+
+        const getCellValue = (tr, selector) => {
+            const el = tr.querySelector(selector);
+            if (!el) return "";
+            return (el.value ?? el.textContent ?? "").toString().trim();
+        };
+
+        filas.forEach((tr) => {
+            const fechaRaw = getCellValue(tr, ".s-date");
+            const fecha = formatISODate(fechaRaw);
+            const desc = getCellValue(tr, ".s-desc");
+            const uds = getCellValue(tr, ".s-uds");
+            const price = getCellValue(tr, ".s-price");
+            const tot = getCellValue(tr, ".s-total");
+
+            filasServicios += `<tr><td>${escapeHTML(fecha)}</td><td>${escapeHTML(desc)}</td><td class="num">${escapeHTML(uds)}</td><td class="num">${escapeHTML(price)}</td><td class="num">${escapeHTML(tot)}</td></tr>`;
+        });
+
+        if (!filasServicios) filasServicios = `<tr><td colspan="5">Sin líneas de servicio.</td></tr>`;
+        
+        const notasHTML = notas.trim() ? `<h2>Notas / observaciones</h2><div class="notas">${nl2br(notas)}</div>` : "";
+
+        const html = `
+        <!DOCTYPE html>
+        <html lang="es">
+        <head>
+        <meta charset="utf-8">
+        <title>Presupuesto – ${escapeHTML(hotelInfo.nombre)}</title>
+        <style>
+            *{box-sizing:border-box;}
+            @page { size: A4; margin: 14mm 16mm; }
+            body{ font-family: system-ui,-apple-system,"Segoe UI",sans-serif; font-size: 12px; margin: 0; padding: 10mm 12mm; color: #263238; }
+            h1{ font-size: 20px; margin: 0 0 6px; }
+            h2{ font-size: 14px; margin: 18px 0 6px; }
+            .header-top{ display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:8px; }
+            .header-left{ display:flex; align-items:center; gap:12px; max-width:70%; }
+            .logo-block img{ height:60px; display:block; }
+            .hotel-text{ font-size:11px; line-height:1.4; color:#37474f; }
+            .hotel-text .nombre{ font-size:15px; font-weight:600; color:#263238; }
+            .header-right{ font-size:11px; color:#455a64; text-align:right; min-width:140px; }
+            hr{ border:none; border-top:2px solid #cfd8dc; margin:6px 0 14px; }
+            table{ width:100%; border-collapse:collapse; margin-top:4px; }
+            th,td{ padding:5px 6px; border:none; border-bottom:1px solid #dde3ea; vertical-align:top; }
+            thead th{ background:#f5f7f9; border-top:1px solid #dde3ea; font-weight:600; }
+            .num{ text-align:right; }
+            .total-box{ margin-top:10px; text-align:right; font-size:14px; font-weight:bold; }
+            .notas{ margin-top:8px; white-space:normal; border:1px solid #cfd8dc; padding:6px; border-radius:4px; background:#fafafa; font-size:11px; }
+            .condiciones{ margin-top:18px; font-size:11px; color:#455a64; line-height:1.5; border-top:1px solid #cfd8dc; padding-top:8px; page-break-inside:avoid; }
+            .firmas{ margin-top:28px; font-size:11px; display:flex; justify-content:space-between; gap:40px; page-break-inside:avoid; }
+            .firmas-col{ flex:1; text-align:center; }
+            .firmas-linea{ margin-bottom:4px; border-top:1px solid #90a4ae; height:0; }
+        </style>
+        </head>
+        <body>
+            <div class="header-top">
+                <div class="header-left">
+                    <div class="logo-block"><img src="${escapeHTML(hotelInfo.logoRel)}" alt="Logo"></div>
+                    <div class="hotel-text">
+                        <div class="nombre">${escapeHTML(hotelInfo.nombre)}</div>
+                        <div class="linea">${escapeHTML(hotelInfo.linea)}</div>
+                        <div>${escapeHTML(hotelInfo.dir)}</div>
+                        <div>${escapeHTML(hotelInfo.tel)} · ${escapeHTML(hotelInfo.web)}</div>
+                    </div>
+                </div>
+                <div class="header-right">
+                    Ref.: <strong>${escapeHTML(ref)}</strong><br>Emisión: ${escapeHTML(emis)}<br>Estancia: ${escapeHTML(fDesde || "-")} a ${escapeHTML(fHasta || "-")}
+                </div>
+            </div>
+            <hr>
+            <h2>Datos del cliente</h2>
+            <table>
+                <tr><th style="width:120px;">Cliente / Evento</th><td>${escapeHTML(cliente)}</td></tr>
+                <tr><th>Teléfono</th><td>${escapeHTML(tel)}</td></tr>
+                <tr><th>Email</th><td>${escapeHTML(email)}</td></tr>
+                <tr><th>Espacio / Salón</th><td>${escapeHTML(salon)}</td></tr>
+                <tr><th>Montaje / Pax</th><td>${escapeHTML(montaje)} · Adultos: ${escapeHTML(paxA)} · Niños: ${escapeHTML(paxN)}</td></tr>
+            </table>
+            <h2>Desglose económico</h2>
+            <table>
+                <thead><tr><th style="width:80px;">Fecha</th><th>Concepto</th><th style="width:40px;">Uds.</th><th style="width:60px;">Precio</th><th style="width:70px;">Total</th></tr></thead>
+                <tbody>${filasServicios}</tbody>
+            </table>
+            <div class="total-box">TOTAL PRESUPUESTO: ${escapeHTML(total)} €</div>
+            ${notasHTML}
+            <div class="condiciones">
+                <h2>Condiciones</h2>
+                <ul>
+                    <li>Presupuesto orientativo, sujeto a disponibilidad.</li>
+                    <li>Los precios incluyen impuestos vigentes.</li>
+                    <li>Horarios de uso a confirmar con el hotel.</li>
+                    <li>Modificaciones en pax pueden variar el precio.</li>
+                    <li>Reserva firme tras pago o garantía.</li>
+                </ul>
+            </div>
+            <div class="firmas">
+                <div class="firmas-col"><div class="firmas-linea"></div>Firma del cliente</div>
+                <div class="firmas-col"><div class="firmas-linea"></div>Fecha</div>
+            </div>
+        </body>
+        </html>`;
 
         const win = window.open("", "_blank");
-        win.document.write(html);
-        win.document.close();
+        if (!win) { alert("Permite ventanas emergentes."); return; }
+        win.document.open(); win.document.write(html); win.document.close();
+        win.focus(); win.onload = function () { win.focus(); win.print(); };
     }
 
-// --- FUNCIÓN AUXILIAR SEGURA PARA FECHAS ---
-    // Esta función evita el problema de las zonas horarias fijando la hora a las 12:00
-    function sumarDiasFecha(fechaStr, dias) {
-        const parts = fechaStr.split('-');
-        // Creamos la fecha a mediodía (12:00) para evitar que cambios de hora la muevan de día
-        const d = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]), 12, 0, 0);
-        d.setDate(d.getDate() + dias);
-        
-        const year = d.getFullYear();
-        const month = String(d.getMonth() + 1).padStart(2, '0');
-        const day = String(d.getDate()).padStart(2, '0');
-        return `${year}-${month}-${day}`;
-    }
-
-    function confirmarPresupuesto() {
-        // 1. Validaciones básicas
-        if (document.getElementById("dataType").value !== "presupuesto") return;
-        
-        const salon = document.getElementById("inpSalon").value;
-        if (!salon || salon === "Pendiente" || salon.startsWith("--")) { 
-            alert("Para confirmar, por favor selecciona un Salón definitivo."); 
-            return; 
-        }
-        
-        const nombre = document.getElementById("inpNombre").value;
-        if (!nombre) { alert("El nombre del evento es obligatorio."); return; }
-
-        const fInicio = document.getElementById("inpFechaDesde").value;
-        const fFin = document.getElementById("inpFechaHasta").value || fInicio;
-
-        // Calcular cuántos días hay de diferencia
-        const d1 = new Date(fInicio);
-        const d2 = new Date(fFin);
-        const diffTime = Math.abs(d2 - d1);
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
-        // diffDays será 0 si es el mismo día, 1 si son dos días, etc.
-
-        // 2. Primero guardamos el presupuesto original como "confirmado"
-        guardarFicha("confirmado", true).then((pptoId) => {
-            
-            const promesas = [];
-
-            // 3. Iteramos por cada día del rango (desde 0 hasta diffDays)
-            for (let i = 0; i <= diffDays; i++) {
-                
-                // Generamos la fecha exacta para este día del bucle
-                const fechaActual = sumarDiasFecha(fInicio, i);
-
-                // Preparamos los datos base del evento
-                const eventoData = {
-                    hotel: currentHotel, 
-                    type: "evento", 
-                    nombre: nombre, 
-                    salon: salon,
-                    fechaInicio: fechaActual, // IMPORTANTE: Fecha única para este día
-                    fechaFin: fechaActual,    // Empieza y acaba el mismo día
-                    paxA: document.getElementById("inpPaxA").value,
-                    paxN: document.getElementById("inpPaxN").value,
-                    montaje: document.getElementById("inpMontaje").value,
-                    notas: document.getElementById("inpNotas").value,
-                    estado: "confirmado",
-                    turno: "dia_completo",
-                    refPresupuesto: pptoId
-                };
-
-                // 4. Filtrar servicios: Solo metemos los que coincidan con la fecha de HOY
-                // O si el servicio no tiene fecha, lo metemos en el primer día por defecto.
-                const serviciosDia = [];
-                let totalDia = 0;
-
-                document.querySelectorAll("#bodyServicios tr").forEach((tr) => {
-                    const svcDate = tr.querySelector(".s-date").value;
-                    
-                    // Condición: La fecha del servicio coincide con el día que estamos creando
-                    // O es el primer día (i===0) y el servicio no tiene fecha puesta
-                    if (svcDate === fechaActual || (i === 0 && !svcDate)) {
-                        const totalLinea = parseFloat(tr.querySelector(".s-total").value) || 0;
-                        serviciosDia.push({
-                            date: svcDate || fechaActual, // Aseguramos que tenga fecha
-                            desc: tr.querySelector(".s-desc").value,
-                            uds: tr.querySelector(".s-uds").value,
-                            price: tr.querySelector(".s-price").value,
-                            total: tr.querySelector(".s-total").value
-                        });
-                        totalDia += totalLinea;
-                    }
-                });
-
-                if (serviciosDia.length > 0) {
-                    eventoData.servicios = serviciosDia;
-                    eventoData.total = totalDia.toFixed(2);
-                } else {
-                    eventoData.total = "0.00";
-                }
-
-                // Añadimos la promesa de guardar este día a la lista
-                promesas.push(db.collection("master_data").add(eventoData));
-            }
-
-            // Esperamos a que se creen TODOS los días
-            return Promise.all(promesas);
-
-        }).then(() => {
-            alert(`Presupuesto confirmado correctamente.\nSe han generado ${diffDays + 1} eventos en el calendario de salones.`);
-            cerrarModal();
-            // Forzamos recarga visual por si acaso
-            render(); 
-        }).catch((e) => { 
-            console.error(e); 
-            alert("Ocurrió un error al confirmar: " + e.message); 
-        });
-    }
     async function callGemini(prompt) {
-        if (!apiKey) return alert("Configura la API Key de Gemini.");
+        if (!apiKey) return alert("Por favor, introduce tu API KEY de Google Gemini en el código para usar la IA.");
+        // Usamos el modelo 1.5 flash que suele ser más estable para claves gratuitas
         const url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=" + apiKey;
         try {
-            const r = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }) });
-            const d = await r.json();
+            const r = await fetch(url, {
+                method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+            });
+            const d = await r.json(); 
+            if(d.error) throw new Error(d.error.message);
             return d.candidates?.[0]?.content?.parts?.[0]?.text;
-        } catch { return null; }
+        } catch (e) { 
+            console.error(e);
+            alert("Error IA: " + e.message);
+            return null; 
+        }
     }
-
     async function mejorarNotasConIA() {
-        const input = document.getElementById("inpNotas");
-        if (!input.value.trim()) return alert("Escribe algo primero.");
-        const original = input.value;
-        input.value = "Mejorando redacción...";
-        const res = await callGemini("Mejora estas notas de evento: " + original);
-        input.value = res || original;
+        const inp = document.getElementById("inpNotaCliente"); 
+        if (!inp.value.trim()) return alert("Escribe algo primero.");
+        const ori = inp.value; inp.value = "Pensando...";
+        const res = await callGemini("Mejora la redacción de estas notas para un evento, haciéndolas profesionales y claras: " + ori); 
+        inp.value = res || ori;
     }
+    async function generarChecklistIA() {
+        const montaje = document.getElementById("inpMontaje").value;
+        const pax = document.getElementById("inpPaxA").value;
+        const prompt = `Crea un checklist operativo breve para el personal de un evento con montaje "${montaje}" para ${pax} personas. Tareas de montaje, servicio y desmontaje.`;
 
+        document.getElementById("aiOutput").value = "Generando checklist...";
+        document.getElementById("aiResponseModal").style.display = "flex";
+        
+        const res = await callGemini(prompt);
+        if(res) document.getElementById("aiOutput").value = res;
+    }
+    async function auditarEventoIA() {
+        const datos = `
+            Evento: ${document.getElementById("inpNombre").value}
+            Salón: ${document.getElementById("inpSalon").value}
+            Pax: ${document.getElementById("inpPaxA").value}
+            Montaje: ${document.getElementById("inpMontaje").value}
+            Notas Internas: ${document.getElementById("inpNotas").value}
+        `;
+        const prompt = `Actúa como director de operaciones. Audita este evento brevemente y dime si ves problemas de aforo, logística o incoherencias: ${datos}`;
+        
+        document.getElementById("aiOutput").value = "Auditando...";
+        document.getElementById("aiResponseModal").style.display = "flex";
+        
+        const res = await callGemini(prompt);
+        if(res) document.getElementById("aiOutput").value = res;
+    }
     async function generarMenuIA() {
-        const tipo = document.getElementById("inpNombre").value || "Evento";
-        const pax = document.getElementById("inpPaxA").value || "varias";
-        const res = await callGemini(`Genera menú corto (3 lineas texto) para evento "${tipo}" (${pax} pax).`);
-        if (!res) return alert("Error IA.");
-        addServiceRow({ date: document.getElementById("inpFechaDesde").value, desc: res.replace(/\n/g, " · "), uds: document.getElementById("inpPaxA").value || 1, price: 0 });
+        const res = await callGemini(`Genera un menú breve (3 platos) para un evento de tipo "${document.getElementById("inpNombre").value}" para (${document.getElementById("inpPaxA").value} pax). Solo el texto del menú.`);
+        if(res) addServiceRow({ date: document.getElementById("inpFecha").value, desc: res.replace(/\n/g, " · "), uds: document.getElementById("inpPaxA").value || 1, price: 0 });
     }
-
     async function redactarEmailIA() {
-        const cli = document.getElementById("inpNombre").value || "cliente";
-        const tot = document.getElementById("totalAmount").innerText;
-        const res = await callGemini(`Email breve a ${cli} adjuntando presupuesto de ${tot}€.`);
-        if (res) { document.getElementById("aiOutput").value = res; document.getElementById("aiResponseModal").style.display = "flex"; }
+        const res = await callGemini(`Redacta un email breve y profesional para el cliente ${document.getElementById("inpNombre").value} adjuntándole el presupuesto por valor de ${document.getElementById("totalAmount").innerText}€. Saludo formal.`);
+        if(res) { document.getElementById("aiOutput").value = res; document.getElementById("aiResponseModal").style.display = "flex"; }
     }
-
     function copiarIA() {
-        document.getElementById("aiOutput").select();
-        document.execCommand("copy");
+        document.getElementById("aiOutput").select(); document.execCommand("copy");
         document.getElementById("aiResponseModal").style.display = "none";
-        alert("Copiado");
     }
 </script>
 </body>

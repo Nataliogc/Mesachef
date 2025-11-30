@@ -1,0 +1,3 @@
+ /* --- CONFIGURACIÓN --- */
+    const APP_VERSION = "v2.6"; 
+    const apiKey = "AIzaSyDHZVBmVq1clcgY7sGBuXxiqEKrkGgJVwE"; // Pega tu nueva clave aquí para activar la IA
