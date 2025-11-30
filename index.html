@@ -27,10 +27,7 @@
       "theme_color":"#263238",
       "icons":[
         {"src":"mesa-chef-192.png","sizes":"192x192","type":"image/png"},
-        {"src":"mesa-chef-512.png","sizes":"512x512","type":"image/png"}
-      ]
-    }'>
-
+        {"src":"mesa-chef-512.png","sizes":"512x512","type":"image/png"}]}'>
 
 
     <!-- Manifiesto Web Incrustado (Permite instalar la App en Android/iOS/PC) -->
@@ -90,6 +87,14 @@
             box-shadow: 0 8px 20px rgba(0,0,0,0.15);
             margin-bottom: 10px;
         }
+.app-logo-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: #374151;
+    letter-spacing: 0.06em;
+    margin-top: 2px;
+}
+
         .brand-text h1 { margin: 0; font-size: 26px; color: #111827; letter-spacing: -0.5px; text-transform: uppercase; }
         .brand-text p { margin: 8px 0 0; color: #6b7280; font-size: 15px; }
         .beta-badge {
@@ -262,7 +267,8 @@
             <div class="landing-header">
                 <!-- LOGO DE LA APP -->
                <img src="mesa-chef-512.png" alt="MesaChef Logo" class="app-logo-big">
-                <div class="brand-text">
+                <div class="app-logo-name">MesaChef</div>
+		<div class="brand-text">
                     <h1>Reservas Salas y Restaurante</h1>
                     <p>Gestión unificada para <strong>Sercotel Guadiana</strong> y <strong>Cumbria Spa&Hotel</strong>.</p>
                 </div>
@@ -280,16 +286,17 @@
                 <div class="h-card" onclick="initApp('Cumbria')">
                     <img src="Img/logo-cumbria.svg" alt="Logo Cumbria" onerror="this.style.display='none'">
                     <h3>Cumbria Spa&Hotel</h3>
-                    <p>Convenciones, grupos deportivos y grandes banquetes.</p>
+                    <p>Salones para convenciones, restaurante y zona bienestar..</p>
                     <div class="h-tag">🌄 Ciudad Real · Zona Norte</div>
                 </div>
             </div>
 
-            <div class="landing-footer">
-                Panel interno de trabajo. Versión conectada a Firebase.
-            </div>
+           <div class="landing-footer">
+            Panel interno de gestión. Uso exclusivo interno. Prohibido su uso fuera del centro de trabajo.<br>
+            <span class="landing-footer-sub">Versión conectada a Firebase.</span>
         </div>
     </div>
+</div>
 
     <!-- APP PRINCIPAL -->
     <div id="appContainer" style="display: none">
@@ -310,7 +317,7 @@
                     <button class="tab-btn" onclick="setModulo('restaurante')" id="btnModRest">🍴 Restaurante</button>
                     <button class="tab-btn" onclick="setModulo('presupuestos')" id="btnModPpto">📄 Presupuestos</button>
                 </div>
-                <button class="btn-secondary" onclick="abrirConfig()">⚙️ Salones</button>
+                <button class="btn-secondary" onclick="abrirConfig()">⚙️ Herramientas</button>
             </div>
         </div>
 
