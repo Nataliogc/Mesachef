@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel de Administración - MesaChef</title>
+    
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+
+    <style>
+        :root {
+            --primary: #263238;
+            --accent: #10b981;
+            --bg: #f3f4f6;
+        }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: var(--bg); margin: 0; padding: 20px; color: #1f2937; }
+        
+        /* LOGIN MODAL */
+        #loginOverlay {
+            position: fixed; inset: 0; background: #263238; z-index: 9999;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+        }
+        .login-box {
+            background: white; padding: 30px; border-radius: 12px; width: 300px; text-align: center;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+        }
+        .login-box h2 { margin-top: 0; color: var(--primary); }
+        .login-input { width: 100%; padding: 10px; margin: 15px 0; border: 2px solid #e5e7eb; border-radius: 6px; font-size: 16px; outline: none; text-align: center;}
+        .login-input:focus { border-color: var(--accent); }
+        .btn-login { background: var(--accent); color: white; width: 100%; padding: 10px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 16px; }
+
+        /* LAYOUT PRINCIPAL */
+        .container { max-width: 1100px; margin: 0 auto; display: none; /* Oculto hasta login */ }
+        
+        .header-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .btn-back { text-decoration: none; color: #4b5563; font-weight: 600; display: flex; align-items: center; gap: 5px; background: white; padding: 8px 15px; border-radius: 99px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        
+        .grid-layout { display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 20px; }
+        
+        /* TARJETAS DE CONFIG */
+        .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.02); border: 1px solid #e5e7eb; }
+        .card h3 { margin-top: 0; border-bottom: 1px solid #f3f4f6; padding-bottom: 10px; color: var(--primary); display: flex; align-items: center; gap: 8px; font-size: 16px; }
+        .full-width { grid-column: 1 / -1; }
+
+        /* FORMULARIOS */
+        label { display: block; font-size: 12px; font-weight: 700; color: #6b7280; margin-bottom: 4px; text-transform: uppercase; }
+        input[type="text"], input[type="number"], input[type="time"], select, textarea {
+            width: 100%; padding: 8px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 13px; margin-bottom: 10px; box-sizing: border-box;
+        }
+        input:focus, textarea:focus { border-color: var(--accent); outline: none; }
+        
+        .row-horarios { display: flex; gap: 15px; }
+        .alert-info { background: #eff6ff; color: #1e40af; padding: 8px; border-radius: 6px; font-size: 12px; margin-top: 5px; border: 1px solid #dbeafe; }
+
+        /* TABLA SALONES */
+        table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        th { text-align: left; background: #f9fafb; padding: 10px; border-bottom: 1px solid #e5e7eb; color: #374151; }
+        td { padding: 8px; border-bottom: 1px solid #f3f4f6; }
+        .btn-icon { background: none; border: none; cursor: pointer; font-size: 16px; }
+        .btn-add { background: #f3f4f6; border: 1px dashed #9ca3af; color: #4b5563; width: 100%; padding: 8px; margin-top: 10px; border-radius: 6px; cursor: pointer; }
+        
+        /* MONTAJES */
+        .tags-container { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
+        .tag { background: #e0f2fe; color: #0369a1; padding: 4px 10px; border-radius: 99px; font-size: 12px; display: flex; align-items: center; gap: 6px; }
+        .tag-close { cursor: pointer; font-weight: bold; }
+
+        /* BOTÓN FLOTANTE GUARDAR */
+        .fab-save {
+            position: fixed; bottom: 30px; right: 30px;
+            background: var(--primary); color: white;
+            padding: 15px 30px; border-radius: 99px;
+            font-weight: bold; box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            border: none; cursor: pointer; transition: transform 0.2s;
+            display: flex; align-items: center; gap: 10px; z-index: 100;
+        }
+        .fab-save:hover { transform: translateY(-3px); background: #1f2937; }
+    </style>
+</head>
+<body>
+
+    <div id="loginOverlay">
+        <div class="login-box">
+            <h2>🔒 Acceso Admin</h2>
+            <p style="font-size:13px; color:#666;">Introduce la contraseña maestra</p>
+            <input type="password" id="passInput" class="login-input" placeholder="Contraseña...">
+            <button class="btn-login" onclick="checkPassword()">Entrar</button>
+            <p id="errorMsg" style="color:red; font-size:12px; margin-top:10px; display:none;">Contraseña incorrecta</p>
+        </div>
+    </div>
+
+    <div class="container" id="adminPanel">
+        
+        <div class="header-bar">
+            <a href="index.html" class="btn-back">⬅ Volver a la App</a>
+            <h1 style="font-size: 20px; color: var(--primary); margin:0;">⚙️ Configuración Global</h1>
+            <div style="background: #fff; padding: 5px 15px; border-radius: 8px; border:1px solid #ddd;">
+                <span style="font-size:11px; font-weight:bold; color:#666; margin-right:5px;">EDITANDO:</span>
+                <select id="hotelSelector" onchange="cargarConfig()" style="border:none; font-weight:bold; font-size:14px; margin:0; width:auto; outline:none;">
+                    <option value="Guadiana">Sercotel Guadiana</option>
+                    <option value="Cumbria">Cumbria Spa&Hotel</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="grid-layout">
+            
+            <div class="card">
+                <h3>⏱️ Horarios Restaurante</h3>
+                <div class="row-horarios">
+                    <div style="flex:1">
+                        <label>Apertura Almuerzo</label>
+                        <input type="time" id="confAlmIni">
+                    </div>
+                    <div style="flex:1">
+                        <label>Cierre Almuerzo</label>
+                        <input type="time" id="confAlmFin">
+                    </div>
+                </div>
+                <div class="row-horarios">
+                    <div style="flex:1">
+                        <label>Apertura Cena</label>
+                        <input type="time" id="confCenaIni">
+                    </div>
+                    <div style="flex:1">
+                        <label>Cierre Cena</label>
+                        <input type="time" id="confCenaFin">
+                    </div>
+                </div>
+                <hr style="border:0; border-top:1px dashed #eee; margin:10px 0;">
+                <label>Corte Visual (Cambio de Columna)</label>
+                <input type="time" id="confCorte">
+                <div class="alert-info">A partir de esta hora, las reservas se verán en la columna de Tarde/Cena.</div>
+            </div>
+
+            <div class="card">
+                <h3>🪑 Tipos de Montaje</h3>
+                <p style="font-size:12px; color:#666; margin-bottom:10px;">Opciones disponibles en el desplegable de eventos.</p>
+                <div class="tags-container" id="containerMontajes"></div>
+                <div style="display:flex; gap:5px;">
+                    <input type="text" id="newMontaje" placeholder="Nuevo montaje..." style="margin:0;">
+                    <button onclick="addMontaje()" style="background:var(--primary); color:white; border:none; padding:0 15px; border-radius:6px;">+</button>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>🤖 Inteligencia Artificial</h3>
+                <label>Tono de comunicación</label>
+                <select id="confIATone">
+                    <option value="formal">Muy Formal (Usted)</option>
+                    <option value="cercano">Cercano y Comercial (Tú)</option>
+                    <option value="lujo">Exclusivo / Lujo</option>
+                    <option value="tecnico">Técnico y Directo</option>
+                </select>
+                <label>Instrucción extra (Prompt)</label>
+                <textarea id="confIAPrompt" rows="2" placeholder="Ej: Mencionar siempre que el parking es gratuito..."></textarea>
+            </div>
+
+            <div class="card" style="border-color: #fca5a5; background: #fef2f2;">
+                <h3 style="color: #b91c1c;">🔒 Seguridad</h3>
+                <label style="display:flex; align-items:center; gap:10px; cursor:pointer; margin-top:10px; color:#b91c1c;">
+                    <input type="checkbox" id="confMantenimiento" style="width:auto; margin:0;">
+                    ACTIVAR MODO MANTENIMIENTO
+                </label>
+                <p style="font-size:11px; color:#7f1d1d; margin-top:5px;">
+                    Si activas esto, la App principal mostrará un aviso de "En Obras" y nadie podrá acceder.
+                </p>
+            </div>
+
+            <div class="card full-width">
+                <h3>🏨 Gestión de Salones y Tarifas</h3>
+                <div style="overflow-x:auto;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Nombre del Espacio</th>
+                                <th width="80">Pax</th>
+                                <th width="100">€ 1/2 Día</th>
+                                <th width="100">€ Comp.</th>
+                                <th width="60" style="text-align:center">Activo</th>
+                                <th width="40"></th>
+                            </tr>
+                        </thead>
+                        <tbody id="bodySalones"></tbody>
+                    </table>
+                </div>
+                <button class="btn-add" onclick="addSalonRow()">+ Añadir nuevo salón</button>
+            </div>
+
+            <div class="card full-width">
+                <h3>📄 Legal y Condiciones (PDF)</h3>
+                <textarea id="confLegal" rows="5" style="font-family:monospace; font-size:12px;"></textarea>
+                <div class="alert-info">Este texto aparecerá al pie de todos los presupuestos generados.</div>
+            </div>
+
+        </div> <br><br><br> </div>
+
+    <button class="fab-save" onclick="guardarTodo()" id="btnGuardar" style="display:none;">
+        💾 GUARDAR CAMBIOS
+    </button>
+
+    <script>
+        /* --- 1. CONFIGURACIÓN FIREBASE --- */
+        const firebaseConfig = {
+            apiKey: "AIzaSyBAK0sGUYpV8KHy1KwIdNRLtHlq5LT3Vwg",
+            authDomain: "gestionsalones-bba4b.firebaseapp.com",
+            projectId: "gestionsalones-bba4b",
+            storageBucket: "gestionsalones-bba4b.firebasestorage.app",
+            messagingSenderId: "860164285474",
+            appId: "1:860164285474:web:ff995e88093e5aa5eb167b"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        /* --- 2. GESTIÓN DE ACCESO --- */
+        const MASTER_PASS = "mesachet2026";
+
+        function checkPassword() {
+            const input = document.getElementById("passInput");
+            const error = document.getElementById("errorMsg");
+            
+            if (input.value === MASTER_PASS) {
+                document.getElementById("loginOverlay").style.display = "none";
+                document.getElementById("adminPanel").style.display = "block";
+                document.getElementById("btnGuardar").style.display = "flex";
+                cargarConfig(); // Cargar datos al entrar
+            } else {
+                error.style.display = "block";
+                input.value = "";
+                input.focus();
+            }
+        }
+        
+        // Permitir Enter para login
+        document.getElementById("passInput").addEventListener("keypress", function(event) {
+            if (event.key === "Enter") checkPassword();
+        });
+
+        /* --- 3. LÓGICA DEL PANEL --- */
+        let fullConfig = {}; 
+        let currentHotel = "Guadiana";
+
+        function cargarConfig() {
+            currentHotel = document.getElementById("hotelSelector").value;
+            console.log("Cargando...", currentHotel);
+
+            db.collection("master_data").doc("CONFIG_SALONES").get().then((doc) => {
+                if (doc.exists) {
+                    fullConfig = doc.data();
+                } else {
+                    fullConfig = { Guadiana: [], Cumbria: [], horarios: {} };
+                }
+                renderInterface();
+            }).catch(e => alert("Error conectando: " + e.message));
+        }
+
+        function renderInterface() {
+            // A. Horarios
+            const h = fullConfig.horarios || { almIni: "13:00", almFin: "16:00", cenaIni: "20:30", cenaFin: "23:00", corte: "18:00" };
+            document.getElementById("confAlmIni").value = h.almIni;
+            document.getElementById("confAlmFin").value = h.almFin;
+            document.getElementById("confCenaIni").value = h.cenaIni;
+            document.getElementById("confCenaFin").value = h.cenaFin;
+            document.getElementById("confCorte").value = h.corte || "18:00";
+
+            // B. Salones
+            const tbody = document.getElementById("bodySalones");
+            tbody.innerHTML = "";
+            const salones = fullConfig[currentHotel] || [];
+            salones.forEach((s, i) => {
+                tbody.innerHTML += `
+                    <tr>
+                        <td><input type="text" value="${s.name}" onchange="updSalon(${i}, 'name', this.value)" style="margin:0"></td>
+                        <td><input type="number" value="${s.pax}" onchange="updSalon(${i}, 'pax', this.value)" style="margin:0"></td>
+                        <td><input type="number" value="${s.priceHalf || 0}" onchange="updSalon(${i}, 'priceHalf', this.value)" style="margin:0"></td>
+                        <td><input type="number" value="${s.priceFull || 0}" onchange="updSalon(${i}, 'priceFull', this.value)" style="margin:0"></td>
+                        <td style="text-align:center"><input type="checkbox" ${s.active ? 'checked' : ''} onchange="updSalon(${i}, 'active', this.checked)"></td>
+                        <td style="text-align:center"><button class="btn-icon" onclick="delSalon(${i})" style="color:red">✕</button></td>
+                    </tr>`;
+            });
+
+            // C. Montajes
+            const montajes = fullConfig.montajes || ["Banquete", "Escuela", "Teatro", "Cóctel", "U", "Imperial"];
+            const divM = document.getElementById("containerMontajes");
+            divM.innerHTML = montajes.map((m, i) => 
+                `<div class="tag">${m} <span class="tag-close" onclick="delMontaje(${i})">×</span></div>`
+            ).join("");
+
+            // D. Legal y Mantenimiento
+            document.getElementById("confLegal").value = fullConfig.textoLegal || "";
+            document.getElementById("confMantenimiento").checked = fullConfig.mantenimiento || false;
+            
+            // E. IA
+            const ai = fullConfig.aiOptions || {};
+            document.getElementById("confIATone").value = ai.tone || "formal";
+            document.getElementById("confIAPrompt").value = ai.prompt || "";
+        }
+
+        /* --- HELPERS DE ACTUALIZACIÓN --- */
+        function updSalon(idx, field, val) { fullConfig[currentHotel][idx][field] = val; }
+        
+        function addSalonRow() {
+            if(!fullConfig[currentHotel]) fullConfig[currentHotel] = [];
+            fullConfig[currentHotel].push({ name: "Nuevo Espacio", pax: 0, priceHalf: 0, priceFull: 0, active: true });
+            renderInterface();
+        }
+        
+        function delSalon(idx) {
+            if(confirm("¿Eliminar este salón?")) {
+                fullConfig[currentHotel].splice(idx, 1);
+                renderInterface();
+            }
+        }
+
+        function addMontaje() {
+            const val = document.getElementById("newMontaje").value.trim();
+            if(val) {
+                if(!fullConfig.montajes) fullConfig.montajes = [];
+                fullConfig.montajes.push(val);
+                document.getElementById("newMontaje").value = "";
+                renderInterface();
+            }
+        }
+        
+        function delMontaje(idx) {
+            fullConfig.montajes.splice(idx, 1);
+            renderInterface();
+        }
+
+        /* --- GUARDADO GLOBAL --- */
+        function guardarTodo() {
+            // Recoger datos de formularios sueltos
+            fullConfig.horarios = {
+                almIni: document.getElementById("confAlmIni").value,
+                almFin: document.getElementById("confAlmFin").value,
+                cenaIni: document.getElementById("confCenaIni").value,
+                cenaFin: document.getElementById("confCenaFin").value,
+                corte: document.getElementById("confCorte").value
+            };
+
+            fullConfig.textoLegal = document.getElementById("confLegal").value;
+            fullConfig.mantenimiento = document.getElementById("confMantenimiento").checked;
+            
+            fullConfig.aiOptions = {
+                tone: document.getElementById("confIATone").value,
+                prompt: document.getElementById("confIAPrompt").value
+            };
+
+            // Enviar a Firebase
+            db.collection("master_data").doc("CONFIG_SALONES").set(fullConfig)
+                .then(() => {
+                    // Animación visual botón
+                    const btn = document.getElementById("btnGuardar");
+                    const prevText = btn.innerText;
+                    btn.innerText = "✅ ¡GUARDADO!";
+                    btn.style.background = "#059669";
+                    setTimeout(() => {
+                        btn.innerText = prevText;
+                        btn.style.background = "";
+                    }, 2000);
+                })
+                .catch(e => alert("Error guardando: " + e.message));
+        }
+    </script>
+</body>
+</html>
