@@ -591,48 +591,70 @@
     }
 
     // --- LÓGICA DE PRECIOS EXACTA (BASADA EN TU TXT) ---
-    function actualizarLineaSalon() {
-        const typeEl = document.getElementById("dataType");
-        if(!typeEl || typeEl.value !== "presupuesto") return;
-        const firstRow = document.querySelector("#bodyServicios tr");
-        if(!firstRow) return;
+    // --- LÓGICA DE PRECIOS: usa siempre la primera línea como "Alquiler de Salón"
+function actualizarLineaSalon() {
+    const firstRow = document.querySelector("#bodyServicios tr");
+    if (!firstRow) return;
 
-        const salon = document.getElementById("inpSalon").value;
-        const turno = document.getElementById("inpTurnoEvento").value;
-        const inputDesc = firstRow.querySelector(".s-desc");
-        const inputPrice = firstRow.querySelector(".s-price");
-        if(!inputDesc || !inputPrice) return;
+    const salonEl = document.getElementById("inpSalon");
+    const turnoEl = document.getElementById("inpTurnoEvento");
+    if (!salonEl || !turnoEl) return;
 
-        if(!salon || salon === "Pendiente") {
-            if(inputDesc.value.includes("Alquiler")) inputDesc.value = "Alquiler de Salón";
-            return;
+    const salon = salonEl.value;
+    const turno = turnoEl.value;
+
+    const inputDesc  = firstRow.querySelector(".s-desc");
+    const inputPrice = firstRow.querySelector(".s-price");
+    if (!inputDesc || !inputPrice) return;
+
+    // Si no hay salón elegido o está en "Pendiente"
+    if (!salon || salon === "Pendiente") {
+        if (inputDesc.value.includes("Alquiler")) {
+            inputDesc.value = "Alquiler de Salón";
         }
+        inputPrice.value = "";
+        calcTotal();
+        return;
+    }
 
-        // TEXTO CORRECTO (1/2 Día)
-        let txtJornada = (turno === "dia_completo") ? "Jornada Comp." : (turno==="manana" ? "1/2 Día (Mañana)" : "1/2 Día (Tarde)");
-        inputDesc.value = `Alquiler Salón ${salon} - ${txtJornada}`;
+    // Texto de la jornada (igual que en tu TXT)
+    let txtJornada;
+    if (turno === "dia_completo") {
+        txtJornada = "Jornada Comp.";
+    } else if (turno === "manana") {
+        txtJornada = "1/2 Día (Mañana)";
+    } else {
+        txtJornada = "1/2 Día (Tarde)";
+    }
+    inputDesc.value = `Alquiler Salón ${salon} - ${txtJornada}`;
 
-        // BUSCAR PRECIO (Lógica del archivo TXT: replace/[^0-9.,]/g)
-        const configHotel = salonesConfig[currentHotel] || [];
-        const datos = configHotel.find(s => s.name.trim() === salon.trim());
-        
-       let p = 0;
-if (datos) {
-    // Usamos el motor común de limpieza numérica
-    const pFull = parseCurrency(datos.priceFull);
-    const pHalf = parseCurrency(datos.priceHalf);
+    // Buscar precios en la configuración de salones del hotel actual
+    const configHotel = salonesConfig[currentHotel] || [];
+    const datos = configHotel.find(s => (s.name || "").trim() === salon.trim());
 
-    p = (turno === "dia_completo") ? pFull : pHalf;
+    let precio = 0;
+    if (datos) {
+        const pFull = parseCurrency(datos.priceFull);
+        const pHalf = parseCurrency(datos.priceHalf);
+        precio = (turno === "dia_completo") ? pFull : pHalf;
 
-    console.log("Detectado:", p); // Debug
+        console.log("Precio salón detectado:", {
+            hotel: currentHotel,
+            salon,
+            turno,
+            pFull,
+            pHalf,
+            precio
+        });
+    } else {
+        console.warn("No se han encontrado datos de precio para el salón:", salon);
+    }
+
+    // Pintar el precio (o vacío si no hay datos)
+    inputPrice.value = precio > 0 ? precio.toFixed(2) + " €" : "";
+    calcTotal();
 }
 
-
-        if(p > 0) inputPrice.value = p.toFixed(2) + " €";
-        else inputPrice.value = ""; 
-        
-        calcTotal();
-    }
 
     function formatPrice(el) {
     const val = parseCurrency(el.value);
