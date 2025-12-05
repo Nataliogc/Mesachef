@@ -12,14 +12,8 @@
 
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
-
+    
     <style>
-        .alert-pendiente { color: #b45309; font-size: 11px; font-weight: 600; }
-        .urgente-rojo { color: #b91c1c !important; font-weight: bold; }
-        .proximo-naranja { color: #d97706 !important; }
-        .ok-verde { color: #047857 !important; }
-        .caducado-rojo { color: #7f1d1d !important; font-weight: bold; }
-
         :root { --primary: #263238; --accent: #546e7a; --bg-body: #f0f2f5; --surface: #ffffff; --border: #dfe3e8; }
         * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
         body { margin: 0; background: var(--bg-body); color: #1a1a1a; font-size: 13px; }
@@ -46,7 +40,6 @@
         .status-dot { width: 8px; height: 8px; border-radius: 50%; }
         .status-online { background: #e8f5e9; color: #1b5e20; border-color: #a5d6a7; } .status-online .status-dot { background: #2e7d32; }
         .status-offline { background: #ffebee; color: #c62828; border-color: #ef9a9a; } .status-offline .status-dot { background: #c62828; }
-        .status-connecting { background: #fff7cc; color: #b45309; border-color: #facc15; } .status-connecting .status-dot { background: #f59e0b; }
 
         .module-tabs { display: flex; gap: 6px; background: #f5f5f5; padding: 4px; border-radius: 999px; }
         .tab-btn { border: none; background: transparent; padding: 6px 14px; border-radius: 999px; font-size: 12px; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; color: #37474f; }
@@ -72,11 +65,11 @@
         th { background: #f8fafc; padding: 12px; text-align: left; border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 10; font-size: 11px; text-transform: uppercase; color: #64748b; font-weight: 600; }
         td { border-bottom: 1px solid #f1f5f9; vertical-align: top; }
         
-        /* CELDAS FIN DE SEMANA */
+        /* CELDAS FIN DE SEMANA (VIERNES, SABADO, DOMINGO) */
         .weekend-cell { background-color: #f1f5f9 !important; } 
         .salon-name-cell { background-color: #e2e8f0; color: #1e293b; font-weight: 800; text-align: center; vertical-align: middle; border-right: 1px solid #cbd5e1; width: 140px; min-width: 140px; }
 
-        /* CALENDARIO SPLIT */
+        /* CALENDARIO SPLIT (SALONES) */
         .split-cell { display: flex; flex-direction: column; height: auto; min-height: 100px; width: 100%; position: relative; }
         .split-zone { flex: 1; border-bottom: 1px dotted #e2e8f0; display: flex; align-items: center; padding: 4px; cursor: pointer; transition: 0.1s; min-height: 50px; }
         .split-zone:hover { background: #e2e8f0; }
@@ -148,203 +141,178 @@
 </head>
 <body>
 
-<div id="landingPage">
-    <div class="landing-container">
-        <img src="mesa-chef-512.png" class="app-logo-big" alt="Logo">
-        <h1 style="margin:10px 0 5px; font-size:24px; color:#1f2937;">RESERVAS SALAS Y RESTAURANTE</h1>
-        <p style="color:#666; margin-bottom:30px;">Gestión unificada para <strong>Sercotel Guadiana</strong> y <strong>Cumbria Spa&Hotel</strong>.</p>
-        <div style="background:#d1fae5; color:#065f46; padding:4px 10px; border-radius:10px; display:inline-block; font-size:11px;">● v25.21 TODO VISIBLE</div>
-        <div class="hotel-grid">
-            <div class="h-card" onclick="initApp('Guadiana')">
-                <img src="Img/logo-guadiana.svg" alt="Logo Guadiana" onerror="this.style.display='none'">
-                <h3>Sercotel Guadiana</h3>
-                <div class="h-tag">🏛️ Ciudad Real · Centro</div>
+    <div id="landingPage">
+        <div class="landing-container">
+            <img src="mesa-chef-512.png" class="app-logo-big" alt="Logo">
+            <h1 style="margin:10px 0 5px; font-size:24px; color:#1f2937;">RESERVAS SALAS Y RESTAURANTE</h1>
+            <p style="color:#666; margin-bottom:30px;">Gestión unificada para <strong>Sercotel Guadiana</strong> y <strong>Cumbria Spa&Hotel</strong>.</p>
+            <div style="background:#d1fae5; color:#065f46; padding:4px 10px; border-radius:10px; display:inline-block; font-size:11px;">● v25.31 FIXED CALENDAR & LOGIC</div>
+            <div class="hotel-grid">
+                <div class="h-card" onclick="initApp('Guadiana')">
+                    <img src="Img/logo-guadiana.svg" alt="Logo Guadiana" onerror="this.style.display='none'">
+                    <h3>Sercotel Guadiana</h3>
+                    <div class="h-tag">🏛️ Ciudad Real · Centro</div>
+                </div>
+                <div class="h-card" onclick="initApp('Cumbria')">
+                    <img src="Img/logo-cumbria.svg" alt="Logo Cumbria" onerror="this.style.display='none'">
+                    <h3>Cumbria Spa&Hotel</h3>
+                    <div class="h-tag">🌄 Ciudad Real · Zona Norte</div>
+                </div>
             </div>
-            <div class="h-card" onclick="initApp('Cumbria')">
-                <img src="Img/logo-cumbria.svg" alt="Logo Cumbria" onerror="this.style.display='none'">
-                <h3>Cumbria Spa&Hotel</h3>
-                <div class="h-tag">🌄 Ciudad Real · Zona Norte</div>
-            </div>
-        </div>
-        <div style="margin-top:35px; font-size:13px; color:#666; text-align:center; line-height:1.4;">Uso exclusivo para la gestión interna de la restauración y eventos.<br>Queda prohibido su uso fuera de la organización. © Todos los derechos reservados.</div>
-    </div>
-</div>
-
-<div id="appContainer">
-    <header class="app-header">
-        <div class="header-left">
-            <button class="btn-back" onclick="location.reload()">⬅</button>
-            <h2 id="tituloHotelActual" class="header-title">Hotel</h2>
-            <img id="headerLogo" style="height:30px; margin-left:10px;" />
-            <div class="connection-badge status-offline" id="statusBadge">
-                <span class="status-dot"></span><span id="statusText">Conectando...</span>
-            </div>
-        </div>
-        <div class="header-right">
-            <div class="module-tabs">
-                <button class="tab-btn active" onclick="setModulo('eventos')" id="btnModEventos">📅 Salones</button>
-                <button class="tab-btn" onclick="setModulo('restaurante')" id="btnModRest">🍴 Restaurante</button>
-                <button class="tab-btn" onclick="setModulo('presupuestos')" id="btnModPpto">📄 Presupuestos</button>
-                <button class="tab-btn" onclick="setModulo('grandes_eventos')" id="btnModGran">🎉 Grandes Eventos</button>
-            </div>
-            <a href="admin.html" class="btn-secondary" style="text-decoration:none; display:inline-flex; align-items:center; padding: 6px 12px; font-size: 12px;">⚙️ Config</a>
-        </div>
-    </header>
-
-    <div class="controls-bar">
-        <div class="left-controls">
-            <button class="btn-nav" onclick="cambiarSemana(-7)">❮</button>
-            <input type="date" id="fechaVista" onchange="render()" title="Fecha inicio vista" />
-            <button class="btn-nav" onclick="cambiarSemana(7)">❯</button>
-            <select id="filtroEstado" onchange="render()">
-                <option value="todos">👁️ Ver Todo</option>
-                <option value="activos" selected>Ver activos</option>
-                <option value="pendiente">⏳ Pendientes</option>
-                <option value="confirmado">✅ Confirmados</option>
-                <option value="caducado">⛔ Caducados</option>
-                <option value="anulado">❌ Anulados</option>
-            </select>
-            <div class="search-wrapper">
-                <input type="text" id="searchInput" placeholder="🔎 Buscar..." oninput="render()">
-                <span class="search-loading" id="aiLoading">Pensando...</span>
-                <button class="btn-search-ai" onclick="busquedaIA()">✨ IA</button>
-            </div>
-        </div>
-        <div style="display:flex; gap:10px;">
-            <button class="btn-primary" id="btnNuevoPrincipal" onclick="nuevoGeneral()">+ Nuevo</button>
         </div>
     </div>
 
-    <div class="table-wrapper">
-        <table id="mainTable"><thead id="tableHead"></thead><tbody id="tableBody"></tbody></table>
-        <div id="presupuestosContainer" style="display: none">
-            <table class="budget-table">
-                <thead><tr><th style="width:100px">Fecha</th><th style="width:120px">Nº</th><th>Cliente</th><th style="width:140px">Salón</th><th style="width:100px">Estado</th><th style="width:80px;text-align:right">Total</th></tr></thead>
-                <tbody id="budgetBody"></tbody>
-            </table>
-        </div>
-    </div>
-</div>
+    <div id="appContainer">
+        <header class="app-header">
+            <div class="header-left">
+                <button class="btn-back" onclick="location.reload()">⬅</button>
+                <h2 id="tituloHotelActual" class="header-title">Hotel</h2>
+                <img id="headerLogo" style="height:30px; margin-left:10px;" />
+                <div class="connection-badge status-offline" id="statusBadge">
+                    <span class="status-dot"></span><span id="statusText">Conectando...</span>
+                </div>
+            </div>
+            <div class="header-right">
+                <div class="module-tabs">
+                    <button class="tab-btn active" onclick="setModulo('eventos')" id="btnModEventos">📅 Salones</button>
+                    <button class="tab-btn" onclick="setModulo('restaurante')" id="btnModRest">🍴 Restaurante</button>
+                    <button class="tab-btn" onclick="setModulo('presupuestos')" id="btnModPpto">📄 Presupuestos</button>
+                    <button class="tab-btn" onclick="setModulo('grandes_eventos')" id="btnModGran">🎉 Grandes Eventos</button>
+                </div>
+                <a href="admin.html" class="btn-secondary" style="text-decoration:none; display:inline-flex; align-items:center; padding: 6px 12px; font-size: 12px;">⚙️ Config</a>
+            </div>
+        </header>
 
-<div class="modal-overlay" id="modalFicha">
-    <div class="modal-content">
-        <div class="modal-header">
-            <h3 id="modalTitle">Ficha</h3>
-            <button onclick="document.getElementById('modalFicha').style.display='none'" style="border:none; background:none; font-size:20px; cursor:pointer;">×</button>
+        <div class="controls-bar">
+            <div class="left-controls">
+                <button class="btn-nav" onclick="cambiarSemana(-7)">❮</button>
+                <input type="date" id="fechaVista" onchange="render()" title="Fecha inicio vista" />
+                <button class="btn-nav" onclick="cambiarSemana(7)">❯</button>
+                <select id="filtroEstado" onchange="render()">
+                    <option value="todos">Ver activos</option>
+                    <option value="pendiente">⏳ Pendientes</option>
+                    <option value="confirmado">✅ Confirmados</option>
+                    <option value="caducado">⛔ Caducados</option>
+                    <option value="anulado">❌ Anulados</option>
+                </select>
+                <div class="search-wrapper">
+                    <input type="text" id="searchInput" placeholder="🔎 Buscar..." oninput="render()">
+                    <span class="search-loading" id="aiLoading">Pensando...</span>
+                    <button class="btn-search-ai" onclick="busquedaIA()">✨ IA</button>
+                </div>
+            </div>
+            <div style="display:flex; gap:10px;">
+                <button class="btn-primary" id="btnNuevoPrincipal" onclick="nuevoGeneral()">+ Nuevo</button>
+            </div>
         </div>
-        <div class="modal-body">
-            <input type="hidden" id="dataId"><input type="hidden" id="dataType"><input type="hidden" id="refPresupuesto">
-            <div class="form-row" style="background:#f8fafc; padding:12px; border-radius:8px; border:1px solid #e2e8f0;">
-                <div class="form-group" id="grpFechaUnica"><label>Fecha</label><input type="date" id="inpFecha" /></div>
-                <div id="grpRangoFechas" style="display:none; gap:10px; flex:0 0 auto;">
-                    <div style="width:130px;"><label>Desde</label><input type="date" id="inpFechaDesde" /></div>
-                    <div style="width:130px;"><label>Hasta</label><input type="date" id="inpFechaHasta" /></div>
-                </div>
-                <div class="form-group" style="flex:1;">
-                    <label>Espacio / Salón</label>
-                    <select id="inpSalon" style="width:100%" onchange="checkSalonPendiente(this); actualizarLineaSalon()"></select>
-                </div>
-            </div>
-            <div class="form-row">
-                <div class="form-group" style="flex:2"><label>Cliente / Evento</label><input type="text" id="inpNombre" oninput="document.getElementById('modalTitle').innerText=this.value||'Ficha'" /></div>
-                <div class="form-group"><label>Teléfono</label><input type="text" id="inpTel" /></div>
-                <div class="form-group"><label>Email</label><input type="text" id="inpEmail" /></div>
-            </div>
-            <div class="form-row" id="blockRestaurante" style="display:none; background:#fffbeb; padding:6px; border-radius:8px; border:1px solid #fcd34d;">
-                <div style="display:flex; gap:10px; width:100%;">
-                    <div class="form-group"><label>Hora</label><input type="time" id="inpHora" /></div>
-                    <div class="form-group"><label>Pax</label><input type="number" id="inpPaxRest" /></div>
-                    <div class="form-group"><label>Turno</label><select id="inpTurno"><option value="manana">☀️ Almuerzo</option><option value="tarde">🌙 Cena</option></select></div>
-                </div>
-            </div>
-            <div id="blockEventos">
-                <div class="form-row" style="align-items:flex-end; gap:10px;">
-                    <div class="form-group" style="width:140px;"><label>Estado</label><select id="inpEstadoEvento"><option value="pendiente">⏳ Pendiente</option><option value="confirmado">✅ Confirmado</option></select></div>
-                    
-                    <div class="form-group" style="width:140px;">
-                        <label>Jornada</label>
-                        <select id="inpTurnoEvento" onchange="actualizarLineaSalon()">
-                            <option value="dia_completo">Jornada Comp.</option>
-                            <option value="manana">1/2 Día (Mañana)</option>
-                            <option value="tarde">1/2 Día (Tarde)</option>
-                        </select>
-                    </div>
 
-                    <div class="form-group" style="flex:1;"><label>Montaje</label><select id="inpMontaje"><option>Banquete</option><option>Escuela</option><option>Teatro</option><option>Cóctel</option><option>U</option></select></div>
-                    <div class="form-group" style="width:80px;"><label>Pax A.</label><input type="number" id="inpPaxA" /></div>
-                </div>
-                <div style="margin-top:10px; border-top:1px solid #e2e8f0; padding-top:10px;">
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-                        <label style="color:var(--primary); font-weight:700;">DESGLOSE / SERVICIOS</label>
-                        <button class="btn-ai-purple" onclick="generarMenuIA()">🟣 Menú IA</button>
-                    </div>
-                    <table class="svc-table">
-                        <thead><tr><th style="width:135px">Fecha</th><th>Concepto</th><th style="width:60px">Uds</th><th style="width:90px">Precio</th><th style="width:90px">Total</th><th style="width:30px"></th></tr></thead>
-                        <tbody id="bodyServicios"></tbody>
-                    </table>
-                    <button class="btn-add-row" onclick="addServiceRow()">+ Añadir línea</button>
-                    <div style="text-align:right; font-size:15px; font-weight:700; margin-top:10px;">TOTAL: <span id="totalAmount">0.00</span> €</div>
-                </div>
-            </div>
-            <div id="blockGran" style="display:none; background:#fdf2f8; padding:10px; border-radius:8px; border:1px solid #fbcfe8;">
-                <div class="form-row">
-                    <div class="form-group"><label>Aforo</label><input type="number" id="inpAforo" oninput="calcGran()"></div>
-                    <div class="form-group"><label>Precio Std</label><input type="number" id="inpPrcStd" onchange="aplicarStd()"></div>
-                </div>
-                <div style="font-weight:bold; margin-bottom:5px;">Pax: <span id="gPax">0</span> | Total: <span id="gTot">0</span>€ | Pendiente: <span id="gPend" style="color:red">0.00</span>€</div>
-                <table class="svc-table">
-                    <thead><tr><th>Mesa</th><th>Nombre</th><th>Pax</th><th>Precio</th><th>Pagado</th><th></th></tr></thead>
-                    <tbody id="bodyPart"></tbody>
+        <div class="table-wrapper">
+            <table id="mainTable"><thead id="tableHead"></thead><tbody id="tableBody"></tbody></table>
+            <div id="presupuestosContainer" style="display: none">
+                <table class="budget-table">
+                    <thead><tr><th style="width:100px">Fecha</th><th>Cliente</th><th style="width:140px">Salón</th><th style="width:100px">Estado</th><th style="width:80px;text-align:right">Total</th></tr></thead>
+                    <tbody id="budgetBody"></tbody>
                 </table>
-                <button class="btn-add-row" style="color:#be185d;" onclick="addPart()">+ Añadir Participante</button>
             </div>
-            <div class="form-row" style="margin-top:15px">
-                <div class="form-group"><label>Notas</label><textarea id="inpNotas" rows="2"></textarea></div>
-                <div class="form-group"><label>Nota Cliente (PDF)</label><textarea id="inpNotaCliente" rows="2"></textarea></div>
-            </div>
-        </div>
-        <div class="modal-footer">
-            <button class="btn-email" id="btnEmail" onclick="redactarEmailIA()" style="display:none;">📧 Email</button>
-            <button class="btn-secondary" id="btnPdf" onclick="imprimirPDF()">📄 PDF</button>
-            <div style="flex:1"></div>
-            <button class="btn-secondary" id="btnRecuperar" onclick="recuperarFicha()" style="display:none;">🔄 Recuperar</button>
-            <button class="btn-confirm" id="btnConfirmarPpto" onclick="confirmarPresupuesto()" style="display:none;">✅ Confirmar</button>
-            <button class="btn-anular" id="btnAnular" onclick="anularFicha()">Anular</button>
-            <button class="btn-primary" id="btnGuardarMain" onclick="guardarFicha()">GUARDAR</button>
         </div>
     </div>
-</div>
 
-<div id="aiResponseModal"><div class="ai-box"><h3>🤖 Respuesta IA</h3><textarea id="aiOutput" style="width:100%; height:200px; padding:10px; border:1px solid #ccc;"></textarea><div style="text-align:right; margin-top:10px;"><button class="btn-secondary" onclick="document.getElementById('aiResponseModal').style.display='none'">Cerrar</button> <button class="btn-primary" onclick="copiarAI()">Copiar</button></div></div></div>
+    <div class="modal-overlay" id="modalFicha">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modalTitle">Ficha</h3>
+                <button onclick="document.getElementById('modalFicha').style.display='none'" style="border:none; background:none; font-size:20px; cursor:pointer;">×</button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="dataId"><input type="hidden" id="dataType"><input type="hidden" id="refPresupuesto">
+                <div class="form-row" style="background:#f8fafc; padding:12px; border-radius:8px; border:1px solid #e2e8f0;">
+                    <div class="form-group" id="grpFechaUnica"><label>Fecha</label><input type="date" id="inpFecha" /></div>
+                    <div id="grpRangoFechas" style="display:none; gap:10px; flex:0 0 auto;">
+                        <div style="width:130px;"><label>Desde</label><input type="date" id="inpFechaDesde" /></div>
+                        <div style="width:130px;"><label>Hasta</label><input type="date" id="inpFechaHasta" /></div>
+                    </div>
+                    <div class="form-group" style="flex:1;">
+                       <label>Espacio / Salón</label>
+                       <select id="inpSalon" style="width:100%" onchange="checkSalonPendiente(this); actualizarLineaSalon()"></select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group" style="flex:2"><label>Cliente / Evento</label><input type="text" id="inpNombre" oninput="document.getElementById('modalTitle').innerText=this.value||'Ficha'" /></div>
+                    <div class="form-group"><label>Teléfono</label><input type="text" id="inpTel" /></div>
+                    <div class="form-group"><label>Email</label><input type="text" id="inpEmail" /></div>
+                </div>
+                <div class="form-row" id="blockRestaurante" style="display:none; background:#fffbeb; padding:6px; border-radius:8px; border:1px solid #fcd34d;">
+                    <div style="display:flex; gap:10px; width:100%;">
+                        <div class="form-group"><label>Hora</label><input type="time" id="inpHora" /></div>
+                        <div class="form-group"><label>Pax</label><input type="number" id="inpPaxRest" /></div>
+                        <div class="form-group"><label>Turno</label><select id="inpTurno"><option value="manana">☀️ Almuerzo</option><option value="tarde">🌙 Cena</option></select></div>
+                    </div>
+                </div>
+                <div id="blockEventos">
+                    <div class="form-row" style="align-items:flex-end; gap:10px;">
+                        <div class="form-group" style="width:140px;"><label>Estado</label><select id="inpEstadoEvento"><option value="pendiente">⏳ Pendiente</option><option value="confirmado">✅ Confirmado</option></select></div>
+                        
+                        <div class="form-group" style="width:140px;">
+                            <label>Jornada</label>
+                            <select id="inpTurnoEvento" onchange="actualizarLineaSalon()">
+                                <option value="dia_completo">Jornada Comp.</option>
+                                <option value="manana">1/2 Día (Mañana)</option>
+                                <option value="tarde">1/2 Día (Tarde)</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group" style="flex:1;"><label>Montaje</label><select id="inpMontaje"><option>Banquete</option><option>Escuela</option><option>Teatro</option><option>Cóctel</option><option>U</option></select></div>
+                        <div class="form-group" style="width:80px;"><label>Pax A.</label><input type="number" id="inpPaxA" /></div>
+                    </div>
+                    <div style="margin-top:10px; border-top:1px solid #e2e8f0; padding-top:10px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                            <label style="color:var(--primary); font-weight:700;">DESGLOSE / SERVICIOS</label>
+                            <button class="btn-ai-purple" onclick="generarMenuIA()">🟣 Menú IA</button>
+                        </div>
+                        <table class="svc-table">
+                            <thead><tr><th style="width:135px">Fecha</th><th>Concepto</th><th style="width:60px">Uds</th><th style="width:90px">Precio</th><th style="width:90px">Total</th><th style="width:30px"></th></tr></thead>
+                            <tbody id="bodyServicios"></tbody>
+                        </table>
+                        <button class="btn-add-row" onclick="addServiceRow()">+ Añadir línea</button>
+                        <div style="text-align:right; font-size:15px; font-weight:700; margin-top:10px;">TOTAL: <span id="totalAmount">0.00</span> €</div>
+                    </div>
+                </div>
+                <div id="blockGran" style="display:none; background:#fdf2f8; padding:10px; border-radius:8px; border:1px solid #fbcfe8;">
+                    <div class="form-row">
+                        <div class="form-group"><label>Aforo</label><input type="number" id="inpAforo" oninput="calcGran()"></div>
+                        <div class="form-group"><label>Precio Std</label><input type="number" id="inpPrcStd" onchange="aplicarStd()"></div>
+                    </div>
+                    <div style="font-weight:bold; margin-bottom:5px;">Pax: <span id="gPax">0</span> | Total: <span id="gTot">0</span>€ | Pendiente: <span id="gPend" style="color:red">0.00</span>€</div>
+                    <table class="svc-table">
+                        <thead><tr><th>Mesa</th><th>Nombre</th><th>Pax</th><th>Precio</th><th>Pagado</th><th></th></tr></thead>
+                        <tbody id="bodyPart"></tbody>
+                    </table>
+                    <button class="btn-add-row" style="color:#be185d;" onclick="addPart()">+ Añadir Participante</button>
+                </div>
+                <div class="form-row" style="margin-top:15px">
+                    <div class="form-group"><label>Notas</label><textarea id="inpNotas" rows="2"></textarea></div>
+                    <div class="form-group"><label>Nota Cliente (PDF)</label><textarea id="inpNotaCliente" rows="2"></textarea></div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-email" id="btnEmail" onclick="redactarEmailIA()" style="display:none;">📧 Email</button>
+                <button class="btn-secondary" id="btnPdf" onclick="imprimirPDF()">📄 PDF</button>
+                <div style="flex:1"></div>
+                <button class="btn-secondary" id="btnRecuperar" onclick="recuperarFicha()" style="display:none;">🔄 Recuperar</button>
+                <button class="btn-confirm" id="btnConfirmarPpto" onclick="confirmarPresupuesto()" style="display:none;">✅ Confirmar</button>
+                <button class="btn-anular" id="btnAnular" onclick="anularFicha()">Anular</button>
+                <button class="btn-primary" id="btnGuardarMain" onclick="guardarFicha()">GUARDAR</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="aiResponseModal"><div class="ai-box"><h3>🤖 Respuesta IA</h3><textarea id="aiOutput" style="width:100%; height:200px; padding:10px; border:1px solid #ccc;"></textarea><div style="text-align:right; margin-top:10px;"><button class="btn-secondary" onclick="document.getElementById('aiResponseModal').style.display='none'">Cerrar</button> <button class="btn-primary" onclick="copiarAI()">Copiar</button></div></div></div>
 
 <script>
     const apiKey = "AIzaSyDnJMniLswGjpysPHiH3n3L6EpJyCkbS4E"; 
     const firebaseConfig = { apiKey: "AIzaSyBAK0sGUYpV8KHy1KwIdNRLtHlq5LT3Vwg", authDomain: "gestionsalones-bba4b.firebaseapp.com", projectId: "gestionsalones-bba4b", storageBucket: "gestionsalones-bba4b.firebasestorage.app", messagingSenderId: "860164285474", appId: "1:860164285474:web:ff995e88093e5aa5eb167b" };
     firebase.initializeApp(firebaseConfig);
-
-    const statusBadge = document.getElementById("statusBadge");
-    const statusText  = document.getElementById("statusText");
-
-    function setStatus(mode) {
-        statusBadge.classList.remove("status-online", "status-offline", "status-connecting");
-        if (mode === "connecting") {
-            statusBadge.classList.add("status-connecting"); statusText.innerText = "Conectando...";
-        } else if (mode === "online") {
-            statusBadge.classList.add("status-online"); statusText.innerText = "Conectado";
-        } else {
-            statusBadge.classList.add("status-offline"); statusText.innerText = "Desconectado";
-        }
-    }
-
-    setStatus("connecting");
-    firebase.firestore().enableNetwork().then(() => setStatus("online")).catch(() => setStatus("offline"));
-    window.addEventListener("offline", () => setStatus("offline"));
-    window.addEventListener("online",  () => setStatus("connecting"));
     const db = firebase.firestore();
-
-    setInterval(async () => {
-        try { await db.collection("test_connection").limit(1).get(); setStatus("online"); } catch (e) { setStatus("offline"); }
-    }, 8000);
 
     let currentHotel = null, currentModule = "eventos", dataCache = [], salonesConfig = {Guadiana:[], Cumbria:[], horarios:{}};
     let aiFilteredIds = null;
@@ -365,45 +333,34 @@
         setModulo('restaurante');
     }
 
-    /* ---------------------------------------------------------------
-       1. CARGAR DATOS
-       --------------------------------------------------------------- */
     function cargarDatos() {
-        dataCache = [];
+    dataCache = [];
 
-        db.collection("eventos").onSnapshot(snap => {
-            dataCache = dataCache.filter(x => x.type !== "evento");
-            snap.forEach(d => {
-                dataCache.push({ id: d.id, ...d.data(), type: "evento" });
-            });
-            render();
-        });
+    // --- CARGAR GRANDES EVENTOS ---
+db.collection("grandes_eventos").onSnapshot(snap => {
+    snap.forEach(d => {
+        dataCache.push({ id: d.id, ...d.data(), type: "gran_evento" });
+    });
+    render();
+});
 
-        db.collection("grandes_eventos").onSnapshot(snap => {
-            dataCache = dataCache.filter(x => x.type !== "gran_evento");
-            snap.forEach(d => {
-                dataCache.push({ id: d.id, ...d.data(), type: "gran_evento" });
-            });
-            render();
+    // --- CARGAR RESTAURANTE ---
+    db.collection("restaurante").onSnapshot(snap => {
+        snap.forEach(d => {
+            dataCache.push({ id: d.id, ...d.data() });
         });
+        render();
+    });
 
-        db.collection("restaurante").onSnapshot(snap => {
-            dataCache = dataCache.filter(x => x.type !== "restaurante");
-            snap.forEach(d => {
-                dataCache.push({ id: d.id, ...d.data(), type: "restaurante" });
-            });
-            render();
+    // --- CARGAR PRESUPUESTOS ---
+    db.collection("presupuestos").onSnapshot(snap => {
+        snap.forEach(d => {
+            dataCache.push({ id: d.id, ...d.data(), type: "presupuesto" });
         });
+        render();
+    });
+}
 
-        // FUERZA EL TIPO PRESUPUESTO EN CARGA PARA CORREGIR DATOS ANTIGUOS
-        db.collection("presupuestos").onSnapshot(snap => {
-            dataCache = dataCache.filter(x => x.type !== "presupuesto");
-            snap.forEach(d => {
-                dataCache.push({ id: d.id, ...d.data(), type: "presupuesto" });
-            });
-            render();
-        });
-    }
 
     function setModulo(m) {
         currentModule = m;
@@ -429,9 +386,6 @@
         render();
     }
 
-    /* ---------------------------------------------------------------
-       2. RENDER (LÓGICA CORREGIDA PARA QUE NO DESAPAREZCAN DATOS)
-       --------------------------------------------------------------- */
     function render() {
         if(currentModule === "presupuestos" || currentModule === "grandes_eventos") {
             const body = document.getElementById("budgetBody");
@@ -440,100 +394,39 @@
             const typeFilter = isGran ? "gran_evento" : "presupuesto";
             const filtro = document.getElementById("filtroEstado").value;
             const searchText = document.getElementById("searchInput").value.toLowerCase();
-            const hoyStr = new Date().toISOString().split("T")[0]; // Fecha de hoy
+            const hoyStr = new Date().toISOString().split("T")[0];
+            const isSearching = (aiFilteredIds !== null) || (searchText !== "");
 
             const items = dataCache.filter(d => {
+                if(d.hotel !== currentHotel) return false;
+                if (isSearching) {
+                    if (aiFilteredIds !== null && !aiFilteredIds.includes(d.id)) return false;
+                    if (searchText && !JSON.stringify(d).toLowerCase().includes(searchText)) return false;
+                    return true;
+                }
+                if (d.fechaInicio < hoyStr) return false;
                 if (d.type !== typeFilter) return false;
-                if (d.hotel !== currentHotel) return false;
-
-                // CÁLCULO ESTADO REAL (CADUCIDAD)
-                let estadoReal = d.estado;
-
-                // 1. Si tiene fecha de validez y ya pasó -> Caducado
-                if (estadoReal === "pendiente" && d.validez && d.validez < hoyStr) {
-                    estadoReal = "caducado";
-                }
                 
-                // 2. Si la fecha del evento YA PASÓ y sigue pendiente -> Caducado
-                if (estadoReal === "pendiente" && d.fechaInicio < hoyStr) {
-                    estadoReal = "caducado";
-                }
+                let estadoReal = d.estado;
+                if(d.type === 'presupuesto' && d.estado === 'pendiente' && d.validez && d.validez < hoyStr) estadoReal = 'caducado';
 
-                // BUSCADOR
-                if (searchText) return JSON.stringify(d).toLowerCase().includes(searchText);
-
-                // FILTROS MEJORADOS
-                switch (filtro) {
-                    case "todos":
-                        return true; // MUESTRA TODO
-                    case "activos":
-                        // Activos = Pendientes actuales + Confirmados
-                        return (estadoReal !== "anulado" && estadoReal !== "caducado");
-                    case "pendiente":
-                        // MUESTRA PENDIENTES Y TAMBIÉN LOS CADUCADOS (Para que los veas)
-                        return (estadoReal === "pendiente" || estadoReal === "caducado");
-                    case "confirmado":
-                        return estadoReal === "confirmado";
-                    case "caducado":
-                        return estadoReal === "caducado";
-                    case "anulado":
-                        return estadoReal === "anulado";
-                }
-
-                return true;
+                if(filtro === "todos") return (estadoReal !== 'anulado' && estadoReal !== 'caducado');
+                if(filtro === "anulado") return estadoReal === 'anulado';
+                if(filtro === "caducado") return estadoReal === 'caducado';
+                if(filtro === "pendiente") return estadoReal === 'pendiente'; 
+                return estadoReal === filtro;
             });
 
             items.sort((a,b) => new Date(a.fechaInicio) - new Date(b.fechaInicio));
 
-            if(items.length === 0) {
-                 const tr = document.createElement("tr");
-                 tr.innerHTML = `<td colspan="6" style="text-align:center; padding:20px; color:#666;">No se encontraron datos. Prueba con el filtro "👁️ Ver Todo"</td>`;
-                 body.appendChild(tr);
-            }
-
             items.forEach(d => {
-                const tr = document.createElement("tr"); 
-                tr.className = "budget-row";
+                const tr = document.createElement("tr"); tr.className = "budget-row";
                 let badgeClass = 'st-pendiente';
-                if (d.estado === 'confirmado') badgeClass = 'st-confirmado';
-                if (d.estado === 'anulado') badgeClass = 'st-anulado';
+                if(d.estado === 'confirmado') badgeClass = 'st-confirmado';
+                if(d.estado === 'anulado') badgeClass = 'st-anulado';
                 
-                // Forzamos etiqueta caducado visualmente aunque el estado sea pendiente
-                let estadoVisual = d.estado;
-                let diasRestantes = "", urgencia = "";
-                
-                if (d.estado === "confirmado") { 
-                    diasRestantes = ""; urgencia = ""; 
-                } else if (d.fechaInicio && d.fechaInicio < hoyStr) {
-                    estadoVisual = "caducado";
-                    badgeClass = "st-caducado";
-                    diasRestantes = "Pasado";
-                    urgencia = "caducado-rojo";
-                } else if (d.fechaInicio) {
-                    const hoy = new Date(); const f = new Date(d.fechaInicio);
-                    const dif = Math.ceil((f - hoy) / (1000 * 60 * 60 * 24));
-                    if (dif >= 0) {
-                        diasRestantes = `${dif} días`;
-                        if (dif <= 2) urgencia = "urgente-rojo";
-                        else if (dif <= 7) urgencia = "proximo-naranja";
-                        else urgencia = "ok-verde";
-                    }
-                }
-
                 const fechaFmt = formatearFechaListado(d.fechaInicio);
-                let aviso = "";
-                if (d.estado === "pendiente" && d.salon) aviso = `<span class="alert-pendiente">⚠️ Requiere confirmación</span>`;
-                const pax = (d.paxAdultos||0) + (d.paxNinos||0);
-                const totalCalc = d.importeTotal || d.total || "-";
-
-                tr.innerHTML = `
-                    <td>${fechaFmt}</td>
-                    <td>${d.numero || '-'}</td>
-                    <td><b>${d.nombre}</b><br><small style="color:#6b7280;">${d.montaje || 'Montaje no indicado'} · ${pax} pax</small><br>${aviso}</td>
-                    <td>${d.salon || 'Sin Salón'}</td>
-                    <td><span class="badge ${badgeClass}">${estadoVisual}</span><br><small class="${urgencia}">${diasRestantes}</small></td>
-                    <td style="text-align:right; font-weight:bold;">${totalCalc}</td>
-                `;
+                tr.innerHTML = `<td>${fechaFmt}</td><td><b>${d.nombre}</b></td><td>${d.salon || 'Sin Salón'}</td><td><span class="badge ${badgeClass}">${d.estado}</span></td><td style="text-align:right; font-weight:bold;">${d.total || '-'}</td>`;
                 tr.onclick = () => abrirModalId(d.id);
                 body.appendChild(tr);
             });
@@ -544,14 +437,18 @@
         const tbody = document.getElementById("tableBody");
         thead.innerHTML = ""; tbody.innerHTML = "";
         
+        // --- FECHAS Y COLORES CORREGIDOS (Lunes 1 Dic) ---
         const fBase = new Date(document.getElementById("fechaVista").value);
         let hRow = `<tr><th style="width:150px;left:0;z-index:10;background:#fff;border-right:1px solid #e2e8f0;">ESPACIO</th>`;
         
         for(let i=0; i<7; i++) {
-            const d = new Date(fBase); d.setDate(d.getDate() + i);
-            const diaSem = d.getDay(); 
+            const d = new Date(fBase); // Copia limpia para cada día
+            d.setDate(d.getDate() + i);
+            const diaSem = d.getDay(); // 0=Dom, 1=Lun ... 6=Sab
+            // Viernes(5), Sábado(6), Domingo(0) con color
             const esFinde = (diaSem === 5 || diaSem === 6 || diaSem === 0);
             const bg = esFinde ? 'background:#f1f5f9 !important;' : 'background:#fff;';
+            const dateStr = d.toISOString().split("T")[0]; 
             hRow += `<th style="${bg}">${d.toLocaleDateString('es-ES', { weekday: 'short', day: 'numeric', month: 'short', year: '2-digit' })}</th>`;
         }
         thead.innerHTML = hRow + "</tr>";
@@ -567,25 +464,18 @@
             let row = `<td class="salon-name-cell" style="position:sticky;left:0;z-index:5">${s.name}${sizeInfo}</td>`;
             
             for(let i=0; i<7; i++) {
-                const d = new Date(fBase); d.setDate(d.getDate() + i);
+                const d = new Date(fBase); 
+                d.setDate(d.getDate() + i);
                 const dateStr = d.toISOString().split("T")[0];
                 const diaSem = d.getDay();
                 const esFinde = (diaSem === 5 || diaSem === 6 || diaSem === 0);
                 const styleBg = esFinde ? 'style="background-color:#f1f5f9;"' : '';
                 
-                // --- FILTRO CALENDARIO ---
-                const evts = dataCache.filter(x => {
-                    const match = x.hotel === currentHotel && 
-                                  x.salon === s.name && 
-                                  x.fechaInicio <= dateStr && 
-                                  x.fechaFin >= dateStr && 
-                                  x.estado !== 'anulado';
-                    if (!match) return false;
-                    if (x.type === 'bloqueo_presupuesto') return false; 
-                    return true;
-                });
+                const evts = dataCache.filter(x => x.hotel===currentHotel && x.salon===s.name && x.fechaInicio<=dateStr && x.fechaFin>=dateStr && x.estado!=='anulado');
                 
                 let cellContent = "";
+                
+                // VISUALIZACIÓN RESTAURADA (Separación Restaurante vs Salones)
                 if(currentModule === "restaurante") {
                     const m = evts.filter(x => x.turno === "manana").map(x=>`<div class="mesa-card mesa-manana" onclick="abrirModalId('${x.id}')"><b>${x.hora||''}</b> ${x.nombre} (${x.paxRest})</div>`).join('');
                     const t = evts.filter(x => x.turno === "tarde").map(x=>`<div class="mesa-card mesa-tarde" onclick="abrirModalId('${x.id}')"><b>${x.hora||''}</b> ${x.nombre} (${x.paxRest})</div>`).join('');
@@ -616,6 +506,7 @@
         });
     }
 
+    /* --- LÓGICA DE FICHA --- */
     function nuevoGeneral() { nuevo(new Date().toISOString().split("T")[0], "", ""); }
     function nuevoSalon(f, s, t) { nuevo(f, s, t); }
 
@@ -647,6 +538,7 @@
         document.getElementById("grpFechaUnica").style.display = type==="presupuesto" ? "none" : "block";
         document.getElementById("grpRangoFechas").style.display = type==="presupuesto" ? "flex" : "none";
         
+        // FIX PDF: Mostrar siempre
         document.getElementById("btnPdf").style.display = "inline-flex"; 
         document.getElementById("btnConfirmarPpto").style.display = (type==="presupuesto") ? "inline-flex" : "none";
 
@@ -674,6 +566,7 @@
         if(type==="restaurante" && turno) document.getElementById("inpTurno").value = turno;
         if(type==="gran_evento") addPart(); 
 
+        // FIX ROW: Crear fila siempre y forzar actualización
         if(type==="presupuesto" || type==="evento") { 
             addServiceRow({ date: fecha, desc: "Alquiler de Salón", price: "" });
             setTimeout(() => { actualizarLineaSalon(); }, 200); 
@@ -695,6 +588,7 @@
         
         let displayPrice = "0.00 €";
         if(d.price !== undefined && d.price !== "") {
+             // Limpieza robusta si viene de la BD
              let s = String(d.price).replace(' €', '').replace('€','').replace(/\s/g, '').replace(',', '.');
              let val = parseFloat(s) || 0;
              displayPrice = val.toFixed(2) + " €";
@@ -712,76 +606,133 @@
         calcTotal(); setTimeout(updatePresupuestoDates, 50); 
     }
 
-    function actualizarLineaSalon() {
-        const firstRow = document.querySelector("#bodyServicios tr");
-        if (!firstRow) return;
+    // --- LÓGICA DE PRECIOS EXACTA (BASADA EN TU TXT) ---
+    // --- LÓGICA DE PRECIOS: usa siempre la primera línea como "Alquiler de Salón"
+function actualizarLineaSalon() {
+    const firstRow = document.querySelector("#bodyServicios tr");
+    if (!firstRow) return;
 
-        const salonEl = document.getElementById("inpSalon");
-        const turnoEl = document.getElementById("inpTurnoEvento");
-        if (!salonEl || !turnoEl) return;
+    const salonEl = document.getElementById("inpSalon");
+    const turnoEl = document.getElementById("inpTurnoEvento");
+    if (!salonEl || !turnoEl) return;
 
-        const salon = salonEl.value;
-        const turno = turnoEl.value;
+    const salon = salonEl.value;
+    const turno = turnoEl.value;
 
-        const inputDesc  = firstRow.querySelector(".s-desc");
-        const inputPrice = firstRow.querySelector(".s-price");
-        if (!inputDesc || !inputPrice) return;
+    const inputDesc  = firstRow.querySelector(".s-desc");
+    const inputPrice = firstRow.querySelector(".s-price");
+    if (!inputDesc || !inputPrice) return;
 
-        if (!salon || salon === "Pendiente") {
-            if (inputDesc.value.includes("Alquiler")) { inputDesc.value = "Alquiler de Salón"; }
-            inputPrice.value = "";
-            calcTotal();
-            return;
+    // Si no hay salón elegido o está en "Pendiente"
+    if (!salon || salon === "Pendiente") {
+        if (inputDesc.value.includes("Alquiler")) {
+            inputDesc.value = "Alquiler de Salón";
         }
-
-        let txtJornada;
-        if (turno === "dia_completo") txtJornada = "Jornada Comp.";
-        else if (turno === "manana") txtJornada = "1/2 Día (Mañana)";
-        else txtJornada = "1/2 Día (Tarde)";
-        inputDesc.value = `Alquiler Salón ${salon} - ${txtJornada}`;
-
-        const configHotel = salonesConfig[currentHotel] || [];
-        const datos = configHotel.find(s => (s.name || "").trim() === salon.trim());
-
-        let precio = 0;
-        if (datos) {
-            const pFull = parseCurrency(datos.priceFull);
-            const pHalf = parseCurrency(datos.priceHalf);
-            precio = (turno === "dia_completo") ? pFull : pHalf;
-        }
-        inputPrice.value = precio > 0 ? precio.toFixed(2) + " €" : "";
+        inputPrice.value = "";
         calcTotal();
+        return;
     }
+
+    // Texto de la jornada (igual que en tu TXT)
+    let txtJornada;
+    if (turno === "dia_completo") {
+        txtJornada = "Jornada Comp.";
+    } else if (turno === "manana") {
+        txtJornada = "1/2 Día (Mañana)";
+    } else {
+        txtJornada = "1/2 Día (Tarde)";
+    }
+    inputDesc.value = `Alquiler Salón ${salon} - ${txtJornada}`;
+
+    // Buscar precios en la configuración de salones del hotel actual
+    const configHotel = salonesConfig[currentHotel] || [];
+    const datos = configHotel.find(s => (s.name || "").trim() === salon.trim());
+
+    let precio = 0;
+    if (datos) {
+        const pFull = parseCurrency(datos.priceFull);
+        const pHalf = parseCurrency(datos.priceHalf);
+        precio = (turno === "dia_completo") ? pFull : pHalf;
+
+        console.log("Precio salón detectado:", {
+            hotel: currentHotel,
+            salon,
+            turno,
+            pFull,
+            pHalf,
+            precio
+        });
+    } else {
+        console.warn("No se han encontrado datos de precio para el salón:", salon);
+    }
+
+    // Pintar el precio (o vacío si no hay datos)
+    inputPrice.value = precio > 0 ? precio.toFixed(2) + " €" : "";
+    calcTotal();
+}
+
 
     function formatPrice(el) {
-        const val = parseCurrency(el.value);
-        if (!val) { el.value = ""; return; }
-        el.value = val.toFixed(2) + " €";
+    const val = parseCurrency(el.value);
+
+    // Si quieres que un 0 deje la celda vacía:
+    if (!val) {
+        el.value = "";
+        return;
     }
+
+    el.value = val.toFixed(2) + " €";
+}
+
+
 
     function parseCurrency(str) {
-        if (!str) return 0;
-        let clean = String(str).trim();
-        clean = clean.replace(/[^\d,.-]/g, '');
-        const hasComma = clean.includes(','), hasDot = clean.includes('.');
-        if (hasComma && hasDot) clean = clean.replace(/\./g, '').replace(',', '.');
-        else if (hasComma && !hasDot) clean = clean.replace(',', '.');
-        const n = parseFloat(clean);
-        return isNaN(n) ? 0 : n;
+    if (!str) return 0;
+
+    let clean = String(str).trim();
+
+    // 1) Quitar todo lo que no sea dígito, coma, punto o signo -
+    clean = clean.replace(/[^\d,.-]/g, '');
+
+    // 2) Gestionar miles y decimales:
+    const hasComma = clean.includes(',');
+    const hasDot   = clean.includes('.');
+
+    if (hasComma && hasDot) {
+        // Caso más habitual en España: 1.234,56 €
+        clean = clean.replace(/\./g, '').replace(',', '.');
+    } else if (hasComma && !hasDot) {
+        // 123,45 -> 123.45
+        clean = clean.replace(',', '.');
     }
+    const n = parseFloat(clean);
+    return isNaN(n) ? 0 : n;
+}
+
 
     function calcTotal() {
-        let total = 0;
-        document.querySelectorAll("#bodyServicios tr").forEach(tr => {
-            const udsInput = tr.querySelector(".s-uds"), priceInput = tr.querySelector(".s-price"), totInput = tr.querySelector(".s-tot");
-            const uds = parseFloat(udsInput?.value || "0") || 0;
-            const price = parseCurrency(priceInput?.value || "0");
-            const linea = uds * price;
-            if (totInput) totInput.value = linea ? linea.toFixed(2) + " €" : "";
-            total += linea;
-        });
-        document.getElementById("totalAmount").innerText = total.toFixed(2);
-    }
+    let total = 0;
+
+    document.querySelectorAll("#bodyServicios tr").forEach(tr => {
+        const udsInput   = tr.querySelector(".s-uds");
+        const priceInput = tr.querySelector(".s-price");
+        const totInput   = tr.querySelector(".s-tot");
+
+        const uds   = parseFloat(udsInput?.value || "0") || 0;
+        const price = parseCurrency(priceInput?.value || "0");
+
+        const linea = uds * price;
+
+        if (totInput) {
+            totInput.value = linea ? linea.toFixed(2) + " €" : "";
+        }
+
+        total += linea;
+    });
+
+    document.getElementById("totalAmount").innerText = total.toFixed(2);
+}
+
 
     function updatePresupuestoDates() {
         const dates = [];
@@ -793,217 +744,209 @@
         }
     }
 
-    /* ---------------------------------------------------------------
-       3. GUARDAR FICHA (BLINDADA CONTRA ERROR DE COLECCIÓN)
-       --------------------------------------------------------------- */
-    async function guardarFicha() {
-        const id = document.getElementById("dataId").value;
-        let type = document.getElementById("dataType").value;
-        
-        // 1. BLINDAJE: Si ya existe, recuperar tipo REAL de la caché
-        if (id && dataCache.length > 0) {
-            const itemReal = dataCache.find(x => x.id === id);
-            if (itemReal) {
-                // Si estamos en módulo presupuestos, forzamos corrección
-                if (currentModule === "presupuestos") type = "presupuesto";
-                else type = itemReal.type; 
+  async function guardarFicha() {
+    const id = document.getElementById("dataId").value;
+    let type = document.getElementById("dataType").value;
+
+    // Detectar módulo si viene vacío (caso nuevo registro)
+    if (!type) {
+        if (currentModule === "salones" || currentModule === "eventos") type = "evento";
+        if (currentModule === "restaurante") type = "restaurante";
+        if (currentModule === "presupuestos") type = "presupuesto";
+        if (currentModule === "grandes_eventos") type = "gran_evento";
+    }
+
+    // --- OBJETO BASE ---
+    const data = {
+        type: type,
+        hotel: currentHotel,
+        nombre: document.getElementById("inpNombre")?.value || "",
+        salon: document.getElementById("inpSalon")?.value || "",
+        estado: document.getElementById("inpEstadoEvento")?.value || "",
+        notas: document.getElementById("inpNotas")?.value || "",
+        notaCliente: document.getElementById("inpNotaCliente")?.value || "",
+        tel: document.getElementById("inpTel")?.value || "",
+        email: document.getElementById("inpEmail")?.value || "",
+    };
+
+    // --- FECHAS (usadas en todos los módulos) ---
+    const f1 = document.getElementById("inpFecha")?.value 
+            || document.getElementById("inpFecha1")?.value;
+    const f2 = document.getElementById("inpFecha2")?.value 
+            || f1;
+
+    if (f1) data.fechaInicio = f1;
+    if (f2) data.fechaFin = f2;
+
+    // ============================
+    //     MÓDULO: RESTAURANTE
+    // ============================
+    if (type === "restaurante") {
+        data.hora = document.getElementById("inpHora")?.value || "";
+        data.pax = document.getElementById("inpPaxRest")?.value || "";
+        data.turno = document.getElementById("inpTurno")?.value || "";
+        data.precioMenu = document.getElementById("inpPrecioMenu")?.value || "";
+        data.estadoRest = document.getElementById("inpEstadoRest")?.value || "";
+    }
+
+    // ============================
+    //     MÓDULO: EVENTOS
+    // ============================
+    if (type === "evento") {
+        data.turno = document.getElementById("inpTurnoEvento")?.value || "";
+        data.montaje = document.getElementById("inpMontaje")?.value || "";
+        data.paxA = document.getElementById("inpPaxA")?.value || "";
+        data.paxN = document.getElementById("inpPaxN")?.value || "";
+        data.horaInicio = document.getElementById("inpHoraIni")?.value || "";
+        data.horaFin = document.getElementById("inpHoraFin")?.value || "";
+        data.refPresupuesto = document.getElementById("inpRefPresupuesto")?.value || "";
+    }
+
+    // ============================
+    //     MÓDULO: PRESUPUESTOS
+    // ============================
+    if (type === "presupuesto") {
+
+        // Fechas ya incluidas arriba
+
+        data.jornada = document.getElementById("inpJornada")?.value || "";
+        data.montaje = document.getElementById("inpMontaje")?.value || "";
+        data.hora = document.getElementById("inpHora")?.value || "";
+        data.paxA = document.getElementById("inpPaxA")?.value || "";
+        data.paxN = document.getElementById("inpPaxN")?.value || "";
+
+        // --- Servicios dinámicos ---
+        data.servicios = [];
+        document.querySelectorAll(".filaServicio").forEach(row => {
+            const sFecha = row.querySelector(".serv-fecha")?.value || "";
+            const sConcepto = row.querySelector(".serv-concepto")?.value || "";
+            const sUds = row.querySelector(".serv-uds")?.value || "";
+            const sPrecio = row.querySelector(".serv-precio")?.value || "";
+            const sTotal = row.querySelector(".serv-total")?.value || "";
+
+            if (sConcepto.trim() !== "") {
+                data.servicios.push({
+                    fecha: sFecha,
+                    concepto: sConcepto,
+                    uds: sUds,
+                    precio: sPrecio,
+                    total: sTotal
+                });
             }
-        }
+        });
 
-        if (!type || !id) {
-            if (currentModule === "presupuestos") type = "presupuesto";
-            else if (currentModule === "restaurante") type = "restaurante";
-            else if (currentModule === "grandes_eventos") type = "gran_evento";
-            else type = "evento"; 
-        }
+        // Total presupuesto
+        const totalPres = document.getElementById("totalPresupuesto")?.innerText || "0";
+        data.total = parseFloat(totalPres.replace(",", "."));
+    }
 
-        document.getElementById("dataType").value = type;
+    // ============================
+    //     GRANDES EVENTOS
+    // ============================
+    if (type === "gran_evento") {
+        data.aforo = document.getElementById("inpAforo")?.value || "";
+        data.participantes = document.getElementById("inpParticipantes")?.value || "";
+        data.precioStd = document.getElementById("inpPrecioStd")?.value || "";
+        data.estadoGE = document.getElementById("inpEstadoGE")?.value || "";
+    }
 
-        const data = {
-            type: type,
-            hotel: currentHotel,
-            nombre: document.getElementById("inpNombre")?.value || "",
-            salon: document.getElementById("inpSalon")?.value || "",
-            estado: document.getElementById("inpEstadoEvento")?.value || "pendiente",
-            notas: document.getElementById("inpNotas")?.value || "",
-            notaCliente: document.getElementById("inpNotaCliente")?.value || "",
-            tel: document.getElementById("inpTel")?.value || "",
-            email: document.getElementById("inpEmail")?.value || "",
-        };
+    // ============================
+    //     SELECCIÓN DE COLECCIÓN
+    // ============================
+    let collectionName = "eventos";
+    if (type === "restaurante") collectionName = "restaurante";
+    if (type === "presupuesto") collectionName = "presupuestos";
+    if (type === "gran_evento") collectionName = "grandes_eventos";
 
-        if (type === "presupuesto") {
-            const desde = document.getElementById("inpFechaDesde")?.value || "";
-            const hasta = document.getElementById("inpFechaHasta")?.value || desde;
-            data.fechaInicio = desde; 
-            data.fechaFin = hasta;
+    // ============================
+    //     GUARDADO FIRESTORE
+    // ============================
+    try {
+        if (id) {
+            // Actualizar ficha existente
+            await db.collection(collectionName).doc(id).update(data);
         } else {
-            const f1 = document.getElementById("inpFecha")?.value || "";
-            const f2 = document.getElementById("inpFecha2")?.value || f1;
-            data.fechaInicio = f1; 
-            data.fechaFin = f2;
-        }
-        
-        if (type === "restaurante") {
-            data.hora = document.getElementById("inpHora")?.value || "";
-            data.pax = document.getElementById("inpPaxRest")?.value || "";
-            data.turno = document.getElementById("inpTurno")?.value || "";
+            // Crear nueva ficha
+            await db.collection(collectionName).add(data);
         }
 
-        if (type === "evento") {
-            data.turno = document.getElementById("inpTurnoEvento")?.value || "";
-            data.montaje = document.getElementById("inpMontaje")?.value || "";
-            data.paxA = document.getElementById("inpPaxA")?.value || "";
-            data.horaInicio = document.getElementById("inpHoraIni")?.value || "";
-            data.horaFin = document.getElementById("inpHoraFin")?.value || "";
-        }
+        alert("✔ Guardado correctamente");
+        document.getElementById("modalFicha").style.display = "none";
 
-        if (type === "presupuesto") {
-            const numInput = document.getElementById("refPresupuesto");
-            if (id) { 
-                const itemReal = dataCache.find(x => x.id === id);
-                data.numero = numInput?.value?.trim() || (itemReal ? itemReal.numero : "") || ""; 
-            } else { 
-                const nuevoNum = "P-" + Date.now().toString(36).toUpperCase(); 
-                data.numero = nuevoNum; 
-                if (numInput) numInput.value = nuevoNum; 
-            }
-
-            data.turno = document.getElementById("inpTurnoEvento")?.value || "dia_completo";
-            data.montaje = document.getElementById("inpMontaje")?.value || "";
-            data.paxA = Number(document.getElementById("inpPaxA")?.value || 0);
-            
-            data.lineas = [];
-            document.querySelectorAll("#bodyServicios tr").forEach(row => {
-               const fecha = row.querySelector(".s-date")?.value || "";
-               const concepto = row.querySelector(".s-desc")?.value || "";
-               const uds = Number(row.querySelector(".s-uds")?.value || 0);
-               const precioVal = row.querySelector(".s-price")?.value || "";
-               
-               let cleanPrice = String(precioVal).replace(/[^\d,.-]/g, '');
-               if(cleanPrice.includes(',') && cleanPrice.includes('.')) cleanPrice = cleanPrice.replace(/\./g, '').replace(',', '.');
-               else cleanPrice = cleanPrice.replace(',', '.');
-               const precio = parseFloat(cleanPrice) || 0;
-
-               if(concepto) {
-                   data.lineas.push({ fecha, concepto, uds, precio, total: uds*precio });
-               }
-            });
-            data.servicios = data.lineas; 
-
-            const totalPres = document.getElementById("totalAmount")?.innerText || "0";
-            data.total = parseFloat(totalPres.replace(",", ".").replace(/[^\d.-]/g, '')) || 0;
-            data.importeTotal = data.total.toFixed(2) + " €";
-
-            if (!id && !data.creado) data.creado = new Date().toISOString();
-        }
-
-        let collectionName = "eventos"; 
-        if (type === "restaurante") collectionName = "restaurante";
-        if (type === "presupuesto") collectionName = "presupuestos"; 
-        if (type === "gran_evento") collectionName = "grandes_eventos";
-
-        try {
-            if (id) { 
-                await db.collection(collectionName).doc(id).update(data); 
-            } else { 
-                await db.collection(collectionName).add(data); 
-            }
-            alert("✔ Guardado correctamente");
-            document.getElementById("modalFicha").style.display = "none";
-        } catch (err) {
-            // FIX: Si falla actualizar en 'eventos' (porque era un evento fantasma), intentamos crear en presupuestos
-            if(err.message.includes("No document to update") && collectionName === "presupuestos") {
-                await db.collection("presupuestos").doc(id).set(data); // .set crea si no existe
-                alert("✔ Recuperado y guardado correctamente en Presupuestos");
-                document.getElementById("modalFicha").style.display = "none";
-            } else {
-                alert("❌ Error al guardar: " + err.message); 
-                console.error(err);
-            }
-        }
+    } catch (err) {
+        alert("❌ Error al guardar: " + err.message);
+        console.error(err);
     }
+}
 
-    async function anularFicha() {
-        const id = document.getElementById("dataId").value;
-        if (!id) return;
-        if (!confirm("¿Deseas anular este presupuesto? Podrás recuperarlo más adelante.")) return;
-        try {
-            await db.collection("presupuestos").doc(id).update({ estado: "anulado", fechaAnulacion: new Date().toISOString() });
-            alert("🟥 Presupuesto ANULADO correctamente");
-            document.getElementById("modalFicha").style.display = "none";
-        } catch (err) { alert("❌ Error al anular: " + err.message); console.error(err); }
-    }
 
-    async function recuperarFicha() {
-        const id = document.getElementById("dataId").value;
-        if (!id) return;
-        try {
-            await db.collection("presupuestos").doc(id).update({ estado: "pendiente", fechaAnulacion: firebase.firestore.FieldValue.delete() });
-            alert("🟩 Presupuesto recuperado correctamente.");
-            document.getElementById("modalFicha").style.display = "none";
-        } catch (error) { console.error("Error al recuperar:", error); alert("❌ No se pudo recuperar el presupuesto."); }
-    }
+
 
     async function confirmarPresupuesto() {
-        if (!confirm("¿Confirmar presupuesto? Esto reservará los días en el calendario.")) return;
+        if(!confirm("¿Confirmar presupuesto? Esto reservará los días en el calendario.")) return;
         document.getElementById("inpEstadoEvento").value = "confirmado";
-        const id = document.getElementById("dataId").value;
-        await guardarFicha(); 
-        
-        const numero = document.getElementById("refPresupuesto").value;
-        const data = {
-            nombre: document.getElementById("inpNombre").value,
-            salon: document.getElementById("inpSalon").value,
-            fechaInicio: document.getElementById("inpFechaDesde").value,
-            fechaFin: document.getElementById("inpFechaHasta").value,
-            turno: document.getElementById("inpTurnoEvento").value
-        };
-        await sincronizarEventosVinculados(numero, data);
-        alert("✔ Presupuesto confirmado y reflejado en el calendario.");
+        await guardarFicha();
     }
 
     async function sincronizarEventosVinculados(idRef, data) {
+        // Borrar anteriores
         const snap = await db.collection("master_data").where("refPresupuesto", "==", idRef).get();
         const batch = db.batch();
         snap.forEach(d => batch.delete(d.ref));
         
-        const d1 = new Date(data.fechaInicio); 
-        const d2 = new Date(data.fechaFin);
-        const dias = (d2 - d1) / (1000 * 60 * 60 * 24);
+        // Crear nuevos días
+        const d1 = new Date(data.fechaInicio); const d2 = new Date(data.fechaFin);
+        const dias = (d2-d1)/(1000*60*60*24);
         
-        for(let i = 0; i <= dias; i++) {
-            const d = new Date(d1); 
-            d.setDate(d.getDate() + i);
+        for(let i=0; i<=dias; i++) {
+            const d = new Date(d1); d.setDate(d.getDate()+i);
             const dateStr = d.toISOString().split("T")[0];
-            const ref = db.collection("master_data").doc(); 
-            
+            const ref = db.collection("master_data").doc();
             batch.set(ref, {
-                hotel: currentHotel,
-                type: 'bloqueo_presupuesto', 
-                nombre: data.nombre,
-                salon: data.salon,
-                fechaInicio: dateStr,
-                fechaFin: dateStr,
-                estado: 'confirmado',
-                refPresupuesto: idRef,
+                hotel: currentHotel, type: 'evento', 
+                nombre: data.nombre, salon: data.salon,
+                fechaInicio: dateStr, fechaFin: dateStr,
+                estado: 'confirmado', refPresupuesto: idRef,
                 turno: data.turno
             });
         }
         await batch.commit();
-        console.log("Bloqueo de calendario actualizado correctamente.");
     }
+function cargarServiciosEnModal(servicios = []) {
+    const tbody = document.getElementById("bodyServicios");
+    tbody.innerHTML = "";
+
+    if (!Array.isArray(servicios) || servicios.length === 0) {
+        calcTotal();
+        return;
+    }
+
+    servicios.forEach(s => {
+        // Mantiene compatibilidad con tu addServiceRow()
+        addServiceRow({
+            date: s.fecha || "",
+            desc: s.concepto || "",
+            uds: s.uds || 1,
+            price: s.precio || "",
+        });
+    });
+
+    calcTotal();
+}
 
     function abrirModalId(id) {
         const d = dataCache.find(x => x.id === id);
         if(!d) return;
         
+        // Simular navegación para configurar modal
         const prevMod = currentModule;
+        // Forzar cambio de módulo temporal para pintar el modal correcto
         if(d.type==='gran_evento') currentModule='grandes_eventos';
         else if(d.type==='restaurante') currentModule='restaurante';
-        else currentModule='presupuestos'; 
+        else currentModule='presupuestos'; // por defecto para eventos
         
         nuevo(d.fechaInicio, d.salon, "");
-        currentModule = prevMod;
+        currentModule = prevMod; // Restaurar
 
         document.getElementById("dataId").value = d.id;
         document.getElementById("inpNombre").value = d.nombre;
@@ -1019,29 +962,24 @@
             document.getElementById("inpPaxA").value = d.paxA;
             document.getElementById("inpFechaDesde").value = d.fechaInicio;
             document.getElementById("inpFechaHasta").value = d.fechaFin;
-            document.getElementById("refPresupuesto").value = d.numero || d.refPresupuesto || "";
+            document.getElementById("refPresupuesto").value = d.refPresupuesto || "";
             
-            document.getElementById("bodyServicios").innerHTML = "";
-            if (d.estado === "anulado") {
-                document.getElementById("btnRecuperar").style.display = "inline-flex";
-                document.getElementById("btnAnular").style.display = "none";
-            } else {
-                document.getElementById("btnRecuperar").style.display = "none";
-                document.getElementById("btnAnular").style.display = "inline-flex";
-            }
+           document.getElementById("bodyServicios").innerHTML = "";
 
-            const lines = d.servicios || d.lineas || [];
-            if (Array.isArray(lines)) {
-                lines.forEach(s => {
-                    addServiceRow({
-                        date: s.fecha || "",
-                        desc: s.concepto || "",
-                        uds: s.uds || 1,
-                        price: s.precio || ""
-                    });
-                });
-            }
-            calcTotal();
+if (d.servicios && Array.isArray(d.servicios)) {
+    d.servicios.forEach(s => {
+        addServiceRow({
+            date: s.fecha || "",
+            desc: s.concepto || "",
+            uds: s.uds || 1,
+            price: s.precio || ""
+        });
+    });
+}
+
+calcTotal();
+
+
 
         } else if (d.type === 'gran_evento') {
             document.getElementById("inpAforo").value = d.aforo;
@@ -1058,7 +996,10 @@
 
     function imprimirPDF() {
         const typeEl = document.getElementById("dataType"); 
-        if ((!typeEl || typeEl.value !== "presupuesto") && currentModule !== "presupuestos") { }
+        // Permitimos imprimir en cualquier caso si estamos en el módulo correcto
+        if ((!typeEl || typeEl.value !== "presupuesto") && currentModule !== "presupuestos") { 
+             // Opcional: alert("Imprimiendo ficha...");
+        }
 
         const escapeHTML = (str = "") => String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
         const nl2br = (str = "") => escapeHTML(str).replace(/\r\n|\n/g, "<br>");
@@ -1108,6 +1049,7 @@
         setTimeout(() => win.print(), 500);
     }
     
+    // Funciones Auxiliares Grandes Eventos
     function addPart(d={}) { const tr=document.createElement("tr"); tr.innerHTML=`<td><input class="svc-input p-mesa" value="${d.mesa||''}"></td><td><input class="svc-input p-nom" value="${d.nombre||''}"></td><td><input type="number" class="svc-input p-pax" value="${d.pax||1}" oninput="calcGran()"></td><td><input type="number" class="svc-input p-prc" value="${d.precio||''}" oninput="calcGran()"></td><td><input type="number" class="svc-input p-pag" value="${d.pagado||0}" oninput="calcGran()"></td>`; document.getElementById("bodyPart").appendChild(tr); }
     function calcGran() {
         let pax=0, tot=0, pag=0;
@@ -1123,7 +1065,9 @@
     }
     function aplicarStd() { const v=document.getElementById("inpPrcStd").value; document.querySelectorAll(".p-prc").forEach(i=>{i.value=v}); calcGran(); }
 
+    // Utils
     function safeDate(val) { if(!val) return new Date(); if(val instanceof Date) return val; if(val.includes("-")) { const parts = val.split("-"); return new Date(parts[0], parts[1]-1, parts[2]); } return new Date(val); }
+    // FECHA CORRECTA: Lun 1 Dic 25
     function formatearFechaListado(s) { 
         if(!s) return "-"; 
         const d=safeDate(s); 

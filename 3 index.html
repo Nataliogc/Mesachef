@@ -1,0 +1,1128 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+
+    <!-- Responsive -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>MesaChef – Gestor de Reservas</title>
+
+    <!-- ================================
+         ESTILOS GENERALES (DISEÑO 2)
+    ================================= -->
+    <style>
+
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', sans-serif;
+            background: #f3f4f6;
+        }
+
+        /* ------------------------------
+           PORTADA P2 (MODERNA)
+        ------------------------------ */
+        #landingPage {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 40px 20px;
+            text-align: center;
+        }
+
+        .landing-container {
+            max-width: 420px;
+            margin-bottom: 30px;
+        }
+
+        .app-logo-big {
+            width: 140px;
+            height: 140px;
+            object-fit: contain;
+            margin-bottom: 15px;
+        }
+
+        .hotel-grid {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 25px;
+        }
+
+        .h-card {
+            width: 150px;
+            background: #ffffff;
+            padding: 15px;
+            border-radius: 14px;
+            box-shadow: 0 2px 4px #0001;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .h-card:hover {
+            transform: scale(1.03);
+            box-shadow: 0 4px 10px #0002;
+        }
+
+        .h-card img {
+            width: 90px;
+            height: 60px;
+            object-fit: contain;
+        }
+
+        .h-card h3 {
+            font-size: 15px;
+            margin: 8px 0 4px;
+            color: #1f2937;
+        }
+
+        .h-tag {
+            font-size: 12px;
+            color: #6b7280;
+        }
+
+        .legal {
+            margin-top: 40px;
+            font-size: 11px;
+            color: #777;
+        }
+
+        /* ------------------------------
+           CONTENEDOR PRINCIPAL APP
+        ------------------------------ */
+        #appContainer {
+            display: none;
+        }
+
+        /* Barra superior */
+        .main-header {
+            background: #ffffff;
+            padding: 12px;
+            box-shadow: 0 2px 3px #0001;
+            position: sticky;
+            top: 0;
+            z-index: 20;
+        }
+
+        .top-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .hotel-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .hotel-logo {
+            width: 32px;
+            height: 20px;
+            object-fit: contain;
+        }
+
+        /* Estado conexión EC2 */
+        #connStatus {
+            font-size: 12px;
+            padding: 4px 8px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .st-online   { color:#0a7d37; }
+        .st-warn     { color:#b98a00; }
+        .st-offline  { color:#c00000; }
+
+        /* ------------------------------
+           NAV TABS (DISEÑO 2)
+        ------------------------------ */
+        .nav-tabs {
+            display: flex;
+            background: #f9fafb;
+            padding: 10px;
+            gap: 10px;
+        }
+
+        .tab-btn {
+            background: #fff;
+            padding: 10px 14px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            box-shadow: 0 1px 2px #0001;
+        }
+
+        .tab-btn.active {
+            background: #2563eb;
+            color: #fff;
+            font-weight: 600;
+        }
+
+        .btn-admin {
+            margin-left: auto;
+            background: #e5e7eb;
+        }
+
+        /* ------------------------------
+           PANEL CONTROL
+        ------------------------------ */
+        .panel-control {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: #fff;
+            padding: 10px;
+            box-shadow: 0 1px 2px #0001;
+        }
+
+        .panel-control input[type=date] {
+            padding: 6px;
+            border-radius: 6px;
+            border: 1px solid #d1d5db;
+        }
+
+        select {
+            padding: 6px;
+            border-radius: 6px;
+            border: 1px solid #d1d5db;
+        }
+
+        .search-box {
+            flex: 1;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 7px;
+            border-radius: 6px;
+            border: 1px solid #d1d5db;
+        }
+
+        .btn-new {
+            background: #10b981;
+            color: #fff;
+            padding: 8px 12px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        /* ------------------------------
+           TABLAS
+        ------------------------------ */
+        #mainTable, .ppto-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+            background: #fff;
+        }
+
+        #mainTable th, #mainTable td,
+        .ppto-table th, .ppto-table td {
+            padding: 8px;
+            border-bottom: 1px solid #e5e7eb;
+            font-size: 14px;
+        }
+
+        .ppto-table th {
+            background: #f3f4f6;
+        }
+
+        /* Badges estado */
+        .badge {
+            padding: 3px 8px;
+            border-radius: 10px;
+            font-size: 12px;
+        }
+        .st-pendiente  { background:#fef3c7; color:#92400e; }
+        .st-confirmado { background:#d1fae5; color:#065f46; }
+        .st-anulado    { background:#fee2e2; color:#991b1b; }
+        .st-caducado   { background:#fecaca; color:#7f1d1d; }
+
+    </style>
+</head>
+
+<body>
+
+<!-- =========================================
+     PORTADA MODERNA P2 (SELECCIÓN HOTEL)
+========================================= -->
+<div id="landingPage">
+
+    <div class="landing-container">
+        <img src="mesa-chef-512.png" class="app-logo-big">
+
+        <h1 style="margin:10px 0 5px; font-size:24px; color:#1f2937;">
+            RESERVAS SALAS Y RESTAURANTE
+        </h1>
+
+        <p style="color:#555; margin-bottom:20px;">
+            Gestión unificada para <strong>Sercotel Guadiana</strong> y 
+            <strong>Cumbria Spa&Hotel</strong>.
+        </p>
+
+        <div style="background:#d1fae5; color:#065f46; padding:4px 10px;
+                    border-radius:10px; font-size:11px; display:inline-block;">
+            ● v25.18 VISUALIZACIÓN
+        </div>
+
+        <div class="hotel-grid">
+            <div class="h-card" onclick="initApp('Guadiana')">
+                <img src="Img/logo-guadiana.svg">
+                <h3>Sercotel Guadiana</h3>
+                <div class="h-tag">🏛️ Ciudad Real · Centro</div>
+            </div>
+
+            <div class="h-card" onclick="initApp('Cumbria')">
+                <img src="Img/logo-cumbria.svg">
+                <h3>Cumbria Spa&Hotel</h3>
+                <div class="h-tag">🌄 Ciudad Real · Zona Norte</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="legal">
+        Uso exclusivo interno. Prohibida su reproducción fuera del centro de trabajo.
+    </div>
+</div>
+
+
+<!-- =====================================================
+     CONTENEDOR PRINCIPAL DE LA APLICACIÓN (DISEÑO 2)
+===================================================== -->
+<div id="appContainer">
+
+    <div class="main-header">
+        <div class="top-bar">
+
+            <button onclick="volverPortada()" style="cursor:pointer;">←</button>
+
+            <div class="hotel-title">
+                <img id="hotelLogo" class="hotel-logo">
+                <span id="hotelName"></span>
+            </div>
+
+            <div id="connStatus" class="st-warn">🟡 Conectando…</div>
+        </div>
+
+        <div class="nav-tabs">
+            <div class="tab-btn" id="btnModEventos" onclick="setModulo('eventos')">🗓️ Salones</div>
+            <div class="tab-btn" id="btnModRest" onclick="setModulo('restaurante')">🍽️ Restaurante</div>
+            <div class="tab-btn" id="btnModPpto" onclick="setModulo('presupuestos')">📄 Presupuestos</div>
+            <div class="tab-btn" id="btnModGran" onclick="setModulo('grandes_eventos')">🎪 Grandes Eventos</div>
+            <div class="tab-btn btn-admin" onclick="abrirAdmin()">⚙️ Admin</div>
+        </div>
+    </div>
+
+    <div class="panel-control">
+
+        <input id="fechaVista" type="date" onchange="render()">
+
+        <select id="filtroEstado" onchange="render()">
+            <option value="activos">Ver activos</option>
+            <option value="pendiente">⏳ Pendientes</option>
+            <option value="confirmado">✅ Confirmados</option>
+            <option value="caducado">⛔ Caducados</option>
+            <option value="anulado">❌ Anulados</option>
+        </select>
+
+        <div class="search-box">
+            <input id="searchInput" type="text" placeholder="Buscar..." oninput="render()">
+        </div>
+
+        <button onclick="buscarIA()">✨ IA</button>
+
+        <button id="btnNuevoPrincipal" class="btn-new" onclick="nuevoPrincipal()">+ Nuevo</button>
+    </div>
+
+    <table id="mainTable">
+        <thead id="tableHead"></thead>
+        <tbody id="tableBody"></tbody>
+    </table>
+
+    <div id="presupuestosContainer" style="display:none;">
+        <table class="ppto-table">
+            <thead>
+                <tr>
+                    <th>Fecha</th>
+                    <th>Nº</th>
+                    <th>Cliente</th>
+                    <th>Salón</th>
+                    <th>Estado</th>
+                    <th>Total</th>
+                </tr>
+            </thead>
+            <tbody id="budgetBody"></tbody>
+        </table>
+    </div>
+
+</div>
+
+<!-- BLOQUES 2, 3 y 4 VAN AQUÍ ABAJO -->
+<script>
+/* ============================================================
+   VARIABLES GLOBALES
+============================================================ */
+let currentHotel = null;
+let currentModule = "eventos";
+let dataCache = [];
+let aiFilteredIds = null;
+
+let salonesConfig = {
+    Guadiana: [],
+    Cumbria: [],
+};
+
+/* ============================================================
+   FUNCIÓN: Volver a portada
+============================================================ */
+function volverPortada() {
+    document.getElementById("appContainer").style.display = "none";
+    document.getElementById("landingPage").style.display = "flex";
+    currentHotel = null;
+}
+
+/* ============================================================
+   FUNCIÓN PRINCIPAL: initApp(hotel)
+============================================================ */
+function initApp(hotelName) {
+
+    currentHotel = hotelName;
+
+    function initApp(hotelName) {
+    currentHotel = hotelName;
+
+    // Mostrar portada correctamente
+    document.getElementById("landingPage").style.display = "none";
+    document.getElementById("appContainer").style.display = "block";
+
+    // Resto igual…
+}
+
+
+    // Pintar nombre + logo
+    document.getElementById("hotelName").innerText =
+        (hotelName === "Guadiana") ? "Sercotel Guadiana" : "Cumbria Spa&Hotel";
+
+    document.getElementById("hotelLogo").src =
+        (hotelName === "Guadiana") ? "Img/logo-guadiana.svg" : "Img/logo-cumbria.svg";
+
+    // Fecha base = hoy
+    document.getElementById("fechaVista").value =
+        new Date().toISOString().split("T")[0];
+
+    // Cargar datos salones desde admin
+    cargarAdmin(hotelName);
+
+    // Cargar datos de Firestore
+    cargarDatos();
+
+    // Entrar por defecto al restaurante
+    setModulo("restaurante");
+}
+
+/* ============================================================
+   INDICADOR DE CONEXIÓN EC2 / FIRESTORE
+============================================================ */
+function setConnStatus(mode) {
+    const el = document.getElementById("connStatus");
+
+    if (mode === "online") {
+        el.innerHTML = "🟢 Conectado";
+        el.className = "st-online";
+    } 
+    else if (mode === "connecting") {
+        el.innerHTML = "🟡 Conectando…";
+        el.className = "st-warn";
+    } 
+    else {
+        el.innerHTML = "🔴 Sin conexión";
+        el.className = "st-offline";
+    }
+}
+
+// Estado inicial
+setConnStatus("connecting");
+
+// Comprobación periódica
+let db = null;
+setInterval(async () => {
+    if (!db) return;
+
+    try {
+        await db.collection("test_connection").limit(1).get();
+        setConnStatus("online");
+    } catch {
+        setConnStatus("offline");
+    }
+}, 7000);
+
+/* ============================================================
+   FIREBASE INIT (exacto archivo 2.indexok.html)
+============================================================ */
+document.addEventListener("DOMContentLoaded", function () {
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyA____SUSTITUIR_TU_KEY",
+        authDomain: "mesachef.firebaseapp.com",
+        projectId: "mesachef",
+        storageBucket: "mesachef.appspot.com",
+        messagingSenderId: "0000000000000",
+        appId: "1:000000000000:web:xxxxxxxxxxxx"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    db = firebase.firestore();
+
+   setTimeout(() => setConnStatus("online"), 300);
+});
+
+/* ============================================================
+   CARGAR ADMIN (salones oficiales)
+============================================================ */
+function cargarAdmin(hotelName) {
+
+    db.collection("admin")
+        .doc(hotelName)
+        .onSnapshot(doc => {
+            if (!doc.exists) return;
+
+            const data = doc.data();
+
+            if (data.salones) salonesConfig[hotelName] = data.salones;
+        });
+}
+
+/* ============================================================
+   CARGAR DATOS (eventos, restaurante, presupuestos, grandes eventos)
+============================================================ */
+function cargarDatos() {
+
+    dataCache = []; // limpiar antes
+
+    // Colección RESTAURANTE
+    db.collection("restaurante").onSnapshot(snap => {
+        dataCache = dataCache.filter(x => x.type !== "restaurante");
+        snap.forEach(d => dataCache.push({ id: d.id, ...d.data(), type: "restaurante" }));
+        render();
+    });
+
+    // Colección EVENTOS (salones)
+    db.collection("eventos").onSnapshot(snap => {
+        dataCache = dataCache.filter(x => x.type !== "evento");
+        snap.forEach(d => dataCache.push({ id: d.id, ...d.data(), type: "evento" }));
+        render();
+    });
+
+    // Colección PRESUPUESTOS
+    db.collection("presupuestos").onSnapshot(snap => {
+        dataCache = dataCache.filter(x => x.type !== "presupuesto");
+        snap.forEach(d => dataCache.push({ id: d.id, ...d.data(), type: "presupuesto" }));
+        render();
+    });
+
+    // Colección GRANDES EVENTOS
+    db.collection("grandes_eventos").onSnapshot(snap => {
+        dataCache = dataCache.filter(x => x.type !== "gran_evento");
+        snap.forEach(d => dataCache.push({ id: d.id, ...d.data(), type: "gran_evento" }));
+        render();
+    });
+}
+
+</script>
+<script>
+/* ============================================================
+   FUNCIÓN: setModulo
+============================================================ */
+function setModulo(m) {
+    currentModule = m;
+
+    document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+    if (m === "eventos") document.getElementById("btnModEventos").classList.add("active");
+    if (m === "restaurante") document.getElementById("btnModRest").classList.add("active");
+    if (m === "presupuestos") document.getElementById("btnModPpto").classList.add("active");
+    if (m === "grandes_eventos") document.getElementById("btnModGran").classList.add("active");
+
+    const isList = (m === "presupuestos" || m === "grandes_eventos");
+
+    document.getElementById("mainTable").style.display = isList ? "none" : "table";
+    document.getElementById("presupuestosContainer").style.display = isList ? "block" : "none";
+
+    document.querySelectorAll(".btn-nav").forEach(btn => btn.style.display = (m === "presupuestos" ? "none":"flex"));
+
+    const btn = document.getElementById("btnNuevoPrincipal");
+    if (m === "eventos") btn.innerText        = "+ Nuevo Evento";
+    if (m === "restaurante") btn.innerText    = "+ Nueva Mesa";
+    if (m === "presupuestos") btn.innerText   = "+ Presupuesto";
+    if (m === "grandes_eventos") btn.innerText= "+ Gran Evento";
+
+    render();
+}
+
+/* ============================================================
+   FUNCIÓN AUX: formatearFecha
+============================================================ */
+function formatearFechaListado(f) {
+    if (!f) return "-";
+    const d = new Date(f);
+    return d.toLocaleDateString("es-ES", { day:"2-digit", month:"short", year:"2-digit" });
+}
+
+/* ============================================================
+   FUNCIÓN: render (NÚCLEO VISUAL)
+============================================================ */
+function render() {
+
+    /* ============================================================
+       MODO LISTA → PRESUPUESTOS / GRANDES EVENTOS
+    ============================================================ */
+    if (currentModule === "presupuestos" || currentModule === "grandes_eventos") {
+
+        const body = document.getElementById("budgetBody");
+        body.innerHTML = "";
+
+        const isGran = currentModule === "grandes_eventos";
+        const typeFilter = isGran ? "gran_evento" : "presupuesto";
+        const filtro = document.getElementById("filtroEstado").value;
+
+        const hoyStr = new Date().toISOString().split("T")[0];
+
+        const items = dataCache.filter(d => {
+
+            // Hotel correcto
+            if (d.hotel !== currentHotel) return false;
+
+            // Tipo correcto
+            if (d.type !== typeFilter) return false;
+
+            // Determinar estado real (caducado si validez < hoy)
+            let estadoReal = d.estado;
+            if (d.estado === "pendiente" && d.validez && d.validez < hoyStr) {
+                estadoReal = "caducado";
+            }
+
+            // Filtro "activos"
+            if (filtro === "activos") {
+                return (estadoReal !== "anulado" && estadoReal !== "caducado");
+            }
+
+            if (filtro === "pendiente")  return estadoReal === "pendiente";
+            if (filtro === "confirmado") return estadoReal === "confirmado";
+            if (filtro === "anulado")    return estadoReal === "anulado";
+            if (filtro === "caducado")   return estadoReal === "caducado";
+
+            return true;
+        });
+
+        // Ordenar por fecha
+        items.sort((a,b) => new Date(a.fechaInicio) - new Date(b.fechaInicio));
+
+        // Pintar filas
+        items.forEach(d => {
+
+            const tr = document.createElement("tr");
+            tr.className = "budget-row";
+
+            /* badge */
+            let badgeClass = "st-pendiente";
+            if (d.estado === "confirmado") badgeClass = "st-confirmado";
+            if (d.estado === "anulado")    badgeClass = "st-anulado";
+
+            /* fecha */
+            const fechaFmt = formatearFechaListado(d.fechaInicio);
+
+            /* caducidad visual */
+            let diasRestantes = "";
+            let urgencia = "";
+
+            if (d.estado !== "confirmado" && d.fechaInicio) {
+
+                const hoy = new Date();
+                const f = new Date(d.fechaInicio);
+                const dif = Math.ceil((f - hoy) / (1000*60*60*24));
+
+                if (dif >= 0) {
+                    diasRestantes = `${dif} días`;
+                    if (dif <= 2) urgencia = "urgent-red";
+                    else if (dif <= 7) urgencia = "urgent-orange";
+                    else urgencia = "urgent-green";
+                } else {
+                    diasRestantes = "Caducado";
+                    urgencia = "urgent-red";
+                }
+            }
+
+            /* pax */
+            const paxTotal = (parseInt(d.paxA||0) + parseInt(d.paxN||0));
+
+            /* total */
+            const total = d.total ?? "-";
+
+            /* aviso si pendiente con salón asignado */
+            let aviso = "";
+            if (d.estado === "pendiente" && d.salon) {
+                aviso = `<span style="color:#b45309;font-size:11px;">⚠ Requiere confirmación</span>`;
+            }
+
+            tr.innerHTML = `
+                <td>${fechaFmt}</td>
+                <td>${d.numero || "-"}</td>
+
+                <td>
+                    <b>${d.nombre}</b><br>
+                    <small style="color:#6b7280;">
+                        ${d.montaje || "Montaje no indicado"} · ${paxTotal} pax
+                    </small><br>
+                    ${aviso}
+                </td>
+
+                <td>${d.salon || "Sin salón"}</td>
+
+                <td>
+                    <span class="badge ${badgeClass}">${d.estado}</span><br>
+                    <small class="${urgencia}">${diasRestantes}</small>
+                </td>
+
+                <td style="text-align:right;font-weight:bold;">
+                    ${total}
+                </td>
+            `;
+
+            tr.onclick = () => abrirModalId(d.id);
+            body.appendChild(tr);
+        });
+
+        return;
+    }
+
+    /* ============================================================
+       MODO CALENDARIO (SALONES + RESTAURANTE)
+    ============================================================ */
+
+    const thead = document.getElementById("tableHead");
+    const tbody = document.getElementById("tableBody");
+    thead.innerHTML = "";
+    tbody.innerHTML = "";
+
+    const baseDate = new Date(document.getElementById("fechaVista").value);
+
+    /* ---------------------------
+       CABECERA DE FECHAS
+    --------------------------- */
+    let hRow = `
+        <tr>
+            <th style="width:150px;position:sticky;left:0;z-index:10;background:#fff;">
+                ESPACIO
+            </th>
+    `;
+
+    for (let i = 0; i < 7; i++) {
+        const d = new Date(baseDate);
+        d.setDate(d.getDate() + i);
+
+        hRow += `<th>${d.toLocaleDateString("es-ES", { weekday:"short", day:"numeric", month:"short" })}</th>`;
+    }
+
+    thead.innerHTML = hRow + "</tr>";
+
+    /* ---------------------------
+       FILAS POR SALÓN
+    --------------------------- */
+
+    const salones = salonesConfig[currentHotel] || [];
+
+    salones.forEach(salon => {
+
+        const tr = document.createElement("tr");
+
+        let row = `
+            <td style="position:sticky;left:0;background:#fff;z-index:5;font-weight:600;">
+                ${salon}
+            </td>
+        `;
+
+        for (let i = 0; i < 7; i++) {
+
+            const d = new Date(baseDate);
+            d.setDate(d.getDate() + i);
+            const dateStr = d.toISOString().split("T")[0];
+
+            // Eventos del día
+            const events = dataCache.filter(ev =>
+                ev.hotel === currentHotel &&
+                ev.salon === salon &&
+                ev.fechaInicio <= dateStr &&
+                ev.fechaFin   >= dateStr &&
+                ev.estado !== "anulado"
+            );
+
+            let cell = "";
+
+            // Evento jornada completa
+            const full = events.find(ev => ev.turno === "dia_completo");
+            if (full) {
+                const cls = (full.estado === "confirmado") ? "evt-confirmado" :
+                            (full.type === "presupuesto" && full.estado === "pendiente") ? "evt-pendiente" :
+                            "evt-full";
+
+                cell = `
+                    <div class="${cls}" onclick="abrirModalId('${full.id}')">
+                        <b>${full.nombre}</b>
+                    </div>
+                `;
+
+            } else {
+
+                // Media jornada
+                const m = events.find(ev => ev.turno === "manana");
+                const t = events.find(ev => ev.turno === "tarde");
+
+                const rPart = ev => {
+                    if (!ev) return "";
+                    let cls = (ev.turno === "manana") ? "evt-manana" : "evt-tarde";
+                    if (ev.estado === "confirmado") cls += " evt-confirmado";
+                    if (ev.type === "presupuesto" && ev.estado === "pendiente") cls += " evt-pendiente";
+
+                    return `<div class="${cls}" onclick="abrirModalId('${ev.id}')"><b>${ev.nombre}</b></div>`;
+                };
+
+                cell = `
+                    <div class="split-cell">
+                        <div class="split-zone" onclick="nuevoSalon('${dateStr}','${salon}','manana')">
+                            ${rPart(m)}
+                        </div>
+
+                        <div class="split-zone" onclick="nuevoSalon('${dateStr}','${salon}','tarde')">
+                            ${rPart(t)}
+                        </div>
+                    </div>
+                `;
+            }
+
+            row += `<td>${cell}</td>`;
+        }
+
+        tr.innerHTML = row;
+        tbody.appendChild(tr);
+    });
+}
+</script>
+<script>
+/* ============================================================
+   ABRIR MODAL POR ID
+============================================================ */
+function abrirModalId(id) {
+
+    const d = dataCache.find(x => x.id === id);
+    if (!d) return;
+
+    document.getElementById("dataId").value = d.id;
+    document.getElementById("dataType").value = d.type;
+
+    /* ---- Campos comunes ---- */
+    document.getElementById("inpNombre").value = d.nombre || "";
+    document.getElementById("inpTel").value = d.tel || "";
+    document.getElementById("inpEmail").value = d.email || "";
+    document.getElementById("inpNotas").value = d.notas || "";
+    document.getElementById("inpNotaCliente").value = d.notaCliente || "";
+    document.getElementById("inpSalon").value = d.salon || "";
+    document.getElementById("inpEstadoEvento").value = d.estado || "";
+
+    /* ---- Fechas ---- */
+    document.getElementById("inpFecha").value = d.fechaInicio || "";
+    document.getElementById("inpFecha1").value = d.fechaInicio || "";
+    document.getElementById("inpFecha2").value = d.fechaFin || "";
+
+    /* ---- Presupuestos ---- */
+    if (d.type === "presupuesto") {
+
+        document.getElementById("refPresupuesto").value = d.numero || "";
+        document.getElementById("inpFechaDesde").value = d.fechaInicio || "";
+        document.getElementById("inpFechaHasta").value = d.fechaFin || "";
+        document.getElementById("inpMontaje").value = d.montaje || "";
+        document.getElementById("inpJornada").value = d.jornada || "";
+        document.getElementById("inpPaxA").value = d.paxA || 0;
+        document.getElementById("inpPaxN").value = d.paxN || 0;
+
+        /* --- Cargar desglose --- */
+        const cont = document.getElementById("desgloseServicios");
+        cont.innerHTML = "";
+        if (Array.isArray(d.lineas)) {
+
+            d.lineas.forEach(l => {
+                cont.innerHTML += `
+                    <div class="linea-serv">
+                        <input type="date" class="lin-fecha" value="${l.fecha}">
+                        <input type="text" class="lin-concepto" value="${l.concepto}">
+                        <input type="number" class="lin-uds" value="${l.uds}">
+                        <input type="number" class="lin-precio" value="${l.precio}">
+                        <span class="lin-total">${l.total}</span>
+                    </div>
+                `;
+            });
+        }
+
+        calcularTotalPresupuesto();
+    }
+
+    document.getElementById("modalFicha").style.display = "block";
+}
+
+
+/* ============================================================
+   NUEVO REGISTRO DESDE EL BOTÓN + NUEVO
+============================================================ */
+function nuevoPrincipal() {
+
+    document.getElementById("modalFicha").style.display = "block";
+    document.getElementById("dataId").value = "";
+    document.getElementById("dataType").value = currentModule === "presupuestos" ? "presupuesto" :
+                                                currentModule === "grandes_eventos" ? "gran_evento" :
+                                                currentModule === "restaurante" ? "restaurante" : "evento";
+
+    /* limpiar campos */
+    document.querySelectorAll("#modalFicha input, #modalFicha textarea")
+        .forEach(x => x.value = "");
+}
+
+
+/* ============================================================
+   CREAR LÍNEA DE SERVICIO EN PRESUPUESTO
+============================================================ */
+function addLineaServicio() {
+
+    const cont = document.getElementById("desgloseServicios");
+
+    const row = document.createElement("div");
+    row.className = "linea-serv";
+
+    row.innerHTML = `
+        <input type="date" class="lin-fecha">
+        <input type="text" class="lin-concepto">
+        <input type="number" class="lin-uds" value="1">
+        <input type="number" class="lin-precio" value="0">
+        <span class="lin-total">0</span>
+    `;
+
+    cont.appendChild(row);
+}
+
+
+/* ============================================================
+   CALCULAR TOTAL PRESUPUESTO
+============================================================ */
+function calcularTotalPresupuesto() {
+
+    let total = 0;
+
+    document.querySelectorAll(".linea-serv").forEach(r => {
+        let uds    = Number(r.querySelector(".lin-uds").value) || 0;
+        let precio = Number(r.querySelector(".lin-precio").value) || 0;
+        let t = uds * precio;
+        r.querySelector(".lin-total").innerText = t;
+        total += t;
+    });
+
+    document.getElementById("totalPresupuesto").innerText = total.toFixed(2);
+}
+
+
+/* ============================================================
+   GUARDAR FICHA (EVENTO / RESTAURANTE / PRESUPUESTO)
+============================================================ */
+async function guardarFicha() {
+
+    const id   = document.getElementById("dataId").value;
+    let   type = document.getElementById("dataType").value;
+
+    if (!type) type = currentModule === "presupuestos" ? "presupuesto" :
+                      currentModule === "grandes_eventos" ? "gran_evento" :
+                      currentModule === "restaurante" ? "restaurante" : "evento";
+
+    const data = {
+        type,
+        hotel: currentHotel,
+        nombre: document.getElementById("inpNombre").value,
+        tel: document.getElementById("inpTel").value,
+        email: document.getElementById("inpEmail").value,
+        notas: document.getElementById("inpNotas").value,
+        notaCliente: document.getElementById("inpNotaCliente").value,
+        salon: document.getElementById("inpSalon").value,
+        estado: document.getElementById("inpEstadoEvento").value
+    };
+
+    /* -------- FECHAS -------- */
+    if (type === "presupuesto") {
+
+        data.fechaInicio = document.getElementById("inpFechaDesde").value;
+        data.fechaFin    = document.getElementById("inpFechaHasta").value;
+        data.desde       = data.fechaInicio;
+        data.hasta       = data.fechaFin;
+
+    } else {
+
+        data.fechaInicio = document.getElementById("inpFecha").value ||
+                           document.getElementById("inpFecha1").value || "";
+        data.fechaFin    = document.getElementById("inpFecha2").value ||
+                           data.fechaInicio;
+    }
+
+    /* -------- RESTAURANTE -------- */
+    if (type === "restaurante") {
+        data.hora = document.getElementById("inpHora").value;
+        data.pax  = document.getElementById("inpPaxRest").value;
+        data.turno = document.getElementById("inpTurno").value;
+        data.precioMenu = document.getElementById("inpPrecioMenu").value;
+        data.estadoRest = document.getElementById("inpEstadoRest").value;
+    }
+
+    /* -------- EVENTO (salones) -------- */
+    if (type === "evento") {
+        data.turno = document.getElementById("inpTurnoEvento").value;
+        data.montaje = document.getElementById("inpMontaje").value;
+        data.paxA = document.getElementById("inpPaxA").value;
+        data.paxN = document.getElementById("inpPaxN").value;
+        data.horaInicio = document.getElementById("inpHoraIni").value;
+        data.horaFin = document.getElementById("inpHoraFin").value;
+    }
+
+    /* -------- PRESUPUESTO -------- */
+    if (type === "presupuesto") {
+
+        // Número único
+        if (id) {
+            data.numero = document.getElementById("refPresupuesto").value;
+        } else {
+            data.numero = "P-" + Date.now().toString(36).toUpperCase();
+        }
+
+        // Valores
+        data.jornada = document.getElementById("inpJornada").value;
+        data.montaje = document.getElementById("inpMontaje").value;
+        data.paxA    = document.getElementById("inpPaxA").value;
+        data.paxN    = document.getElementById("inpPaxN").value;
+
+        // Desglose
+        data.lineas = [];
+        document.querySelectorAll(".linea-serv").forEach(r => {
+            let fecha = r.querySelector(".lin-fecha").value;
+            let concepto = r.querySelector(".lin-concepto").value;
+            let uds    = Number(r.querySelector(".lin-uds").value);
+            let precio = Number(r.querySelector(".lin-precio").value);
+
+            if (concepto.trim() !== "") {
+                data.lineas.push({
+                    fecha, concepto, uds, precio, total: uds*precio
+                });
+            }
+        });
+
+        data.total = Number(document.getElementById("totalPresupuesto").innerText);
+    }
+
+
+    /* -------- GUARDAR EN FIRESTORE -------- */
+    let col = "eventos";
+    if (type === "restaurante") col = "restaurante";
+    if (type === "presupuesto") col = "presupuestos";
+    if (type === "gran_evento") col = "grandes_eventos";
+
+    try {
+        if (id) {
+            await db.collection(col).doc(id).update(data);
+        } else {
+            await db.collection(col).add(data);
+        }
+
+        alert("✔ Guardado correctamente");
+        document.getElementById("modalFicha").style.display = "none";
+
+    } catch (e) {
+        alert("❌ Error al guardar: " + e.message);
+        console.error(e);
+    }
+}
+
+
+/* ============================================================
+   ANULAR PRESUPUESTO
+============================================================ */
+async function anularFicha() {
+
+    const id = document.getElementById("dataId").value;
+    if (!id) return;
+
+    if (!confirm("¿Deseas anular este presupuesto?")) return;
+
+    try {
+        await db.collection("presupuestos")
+            .doc(id)
+            .update({ estado:"anulado", fechaAnulacion:new Date().toISOString() });
+
+        alert("🟥 Presupuesto anulado");
+        document.getElementById("modalFicha").style.display = "none";
+
+    } catch (e) {
+        alert("❌ Error al anular: " + e.message);
+    }
+}
+
+
+/* ============================================================
+   CONFIRMAR PRESUPUESTO → CREAR EVENTO REAL EN SALONES
+============================================================ */
+async function confirmarPresupuesto() {
+
+    const id = document.getElementById("dataId").value;
+    const p = dataCache.find(x => x.id === id);
+
+    if (!p) return alert("❌ No se encuentra el presupuesto");
+
+    if (!confirm("¿Confirmar este presupuesto y ocupar salón en el planning?"))
+        return;
+
+    try {
+
+        /* ---- 1. Actualizar presupuesto a confirmado ---- */
+        await db.collection("presupuestos")
+                .doc(id)
+                .update({ estado:"confirmado" });
+
+        /* ---- 2. Crear evento real en SALONES ---- */
+
+        const ev = {
+            type: "evento",
+            hotel: p.hotel,
+            nombre: p.nombre,
+            salon: p.salon,
+            fechaInicio: p.fechaInicio,
+            fechaFin: p.fechaFin,
+            turno: p.jornada === "completa" ? "dia_completo" :
+                   p.jornada === "mañana"   ? "manana" :
+                   p.jornada === "tarde"    ? "tarde" : "",
+            montaje: p.montaje,
+            paxA: p.paxA,
+            paxN: p.paxN,
+            estado: "confirmado",
+            refPresupuesto: p.numero
+        };
+
+        await db.collection("eventos").add(ev);
+
+        alert("✔ Presupuesto confirmado y salón ocupado correctamente");
+        document.getElementById("modalFicha").style.display="none";
+
+    } catch(e) {
+        alert("❌ Error al confirmar: " + e.message);
+    }
+}
+
+</script>
+
+</body>
+</html>
