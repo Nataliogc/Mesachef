@@ -1,181 +1,249 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 
 <head>
-  <meta charset="UTF-8" />
-  <title>MesaChef Â· Restaurante</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="theme-color" content="#2563eb" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <link rel="manifest" href="manifest.json" />
+    <meta charset="UTF-8" />
+    <title>MesaChef · Restaurante</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#2563eb" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <link rel="manifest" href="manifest.json" />
 
-  <!-- Estilos del mÃ³dulo Restaurante -->
-  <link rel="stylesheet" href="css/styles.css" />
-  <link rel="stylesheet" href="css/restaurante.css" />
+    <link rel="stylesheet" href="css/styles.css" />
+    <link rel="stylesheet" href="css/restaurante.css" />
 
-  <!-- Firebase (mesa-chef-prod) -->
-  <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-firestore-compat.js"></script>
-  <script src="js/firebase-init.js"></script>
+    <style>
+        /* FIX: Force single line layout for controls */
+        .planning-controls-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 16px;
+            background: #f8fafc;
+            border-bottom: 1px solid #e2e8f0;
+            gap: 16px;
+            flex-wrap: nowrap;
+            /* Prevent wrapping */
+        }
 
-  <!-- Utilidades comunes MesaChef (hotel actual, helpers, etc.) -->
-  <script src="js/app-common.js"></script>
+        .planning-nav {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: nowrap;
+        }
 
-  <!-- LÃ³gica especÃ­fica del mÃ³dulo Restaurante -->
-  <script defer src="js/restaurante.js"></script>
+        .btn-icon {
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid #e2e8f0;
+            background: white;
+            border-radius: 6px;
+            cursor: pointer;
+            color: #64748b;
+            font-size: 16px;
+        }
+
+        .btn-icon:hover {
+            background: #f1f5f9;
+            color: #0f172a;
+        }
+
+        .input-date {
+            height: 32px;
+            padding: 0 8px;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            font-family: inherit;
+            color: #334155;
+            width: 140px;
+            /* Fixed compact width */
+        }
+
+        .btn-report {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            height: 32px;
+            padding: 0 12px;
+            font-size: 13px;
+            border-radius: 6px;
+            border: 1px solid #e2e8f0;
+            background: white;
+            cursor: pointer;
+            color: #374151;
+            text-decoration: none;
+            white-space: nowrap;
+        }
+
+        .btn-report:hover {
+            background: #f9fafb;
+            border-color: #d1d5db;
+        }
+    </style>
 </head>
 
-<body>
-  <!-- CABECERA SUPERIOR -->
-  <header class="topbar">
-    <div class="topbar-left">
-      <span class="breadcrumb"><a href="index.html" style="text-decoration:none; color:inherit;">Inicio</a></span>
-      <span class="crumb-sep">Â·</span>
-      <span id="tituloHotel" class="breadcrumb strong">
-        Restaurante
-      </span>
-      <span id="estadoConexion" class="estado-conexion">
-        Conectando...
-      </span>
+<body class="app-body">
+    <div class="mc-shell">
+        <!-- Topbar -->
+        <header class="topbar">
+            <div class="topbar-left">
+                <span class="breadcrumb"><a href="index.html"
+                        style="text-decoration:none; color:inherit;">Inicio</a></span>
+                <span class="crumb-sep"> &middot; </span>
+                <span id="tituloHotel" class="breadcrumb strong">Restaurante</span>
+                <span id="estadoConexion" class="estado-conexion">Conectando...</span>
+            </div>
+            <div class="topbar-right">
+                <div class="search-box">
+                    <input type="text" id="txtBuscar" placeholder="Buscar reserva..." />
+                </div>
+                <button id="btnNuevaReserva" class="btn-primary">+ Nueva Reserva</button>
+            </div>
+        </header>
+
+        <!-- Controls & Filter line -->
+        <div class="planning-controls-bar">
+            <div class="planning-nav">
+                <!-- Arrows with HTML entities -->
+                <button id="btnPrev" class="btn-icon" title="Semana anterior">&larr;</button>
+                <input type="date" id="inputSemana" class="input-date" />
+                <button id="btnNext" class="btn-icon" title="Semana siguiente">&rarr;</button>
+
+                <!-- Report Buttons -->
+                <button id="btnReporteSemana" class="btn-report" title="Imprimir semana actual">
+                    <span>&#x1F5A8;</span> <span>Semana</span>
+                </button>
+                <button id="btnReporteDia" class="btn-report" title="Imprimir día seleccionado">
+                    <span>&#x1F4D1;</span> <span>Diario</span>
+                </button>
+            </div>
+
+            <div class="planning-filters">
+                <select id="filtroEstado" class="select-filter">
+                    <option value="activos">Activos (Sin anuladas)</option>
+                    <option value="todas">Todas</option>
+                    <option value="confirmada">Confirmadas</option>
+                    <option value="pendiente">Pendientes</option>
+                    <option value="anulada">Anuladas</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Main Grid -->
+        <main class="main-content">
+            <div id="gridRestaurante" class="planning-container">
+                <!-- JS renders grid here -->
+            </div>
+        </main>
     </div>
 
-    <div class="topbar-right">
-      <!-- Filtro de estado -->
-      <select id="filtroEstado" class="select-estado">
-        <option value="activos" selected>Ver activos</option>
-        <option value="confirmada">Solo confirmadas</option>
-        <option value="pendiente">Solo en espera</option>
-        <option value="anulada">Solo anuladas</option>
-        <option value="todas">Ver todas</option>
-      </select>
+    <!-- MODAL RESERVA -->
+    <div id="modalReserva" class="modal-overlay hidden">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3 id="tituloModalReserva">Nueva Reserva</h3>
+                <button id="btnCerrarModal" class="btn-close">&times;</button>
+            </div>
+            <form id="formReserva">
+                <div class="modal-body">
+                    <!-- Row 1: Espacio, Fecha, Hora -->
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="modal-label">ESPACIO</label>
+                            <select id="campoEspacio" class="modal-select">
+                                <option value="restaurante">Restaurante</option>
+                                <option value="cafeteria">Cafetería</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="modal-label">FECHA</label>
+                            <input id="campoFecha" type="date" class="modal-input" required />
+                        </div>
+                        <div class="form-group">
+                            <label class="modal-label">HORA</label>
+                            <input id="campoHora" type="time" class="modal-input" />
+                        </div>
+                    </div>
 
-      <!-- Buscador -->
-      <input id="txtBuscar" class="input-buscar" type="search" placeholder="Buscar reserva..." />
+                    <!-- Row 2: Cliente, Tel -->
+                    <div class="form-row">
+                        <div class="form-group flex-2">
+                            <label class="modal-label">CLIENTE</label>
+                            <input id="campoNombre" type="text" class="modal-input" placeholder="Nombre clienta/e"
+                                required />
+                        </div>
+                        <div class="form-group flex-1">
+                            <label class="modal-label">TELÉFONO</label>
+                            <input id="campoTelefono" type="tel" class="modal-input" placeholder="600..." />
+                        </div>
+                    </div>
 
-      <!-- BotÃ³n nueva mesa -->
-      <button id="btnNuevaReserva" class="btn-primary">
-        + Nueva mesa
-      </button>
+                    <!-- Row 3: Pax, Precio, Turno -->
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="modal-label">PAX</label>
+                            <input id="campoPax" type="number" min="1" class="modal-input" />
+                        </div>
+                        <div class="form-group">
+                            <label class="modal-label">PRECIO MENÚ</label>
+                            <input id="campoPrecio" type="number" step="0.01" class="modal-input" />
+                        </div>
+                        <div class="form-group">
+                            <label class="modal-label">TURNO</label>
+                            <select id="campoTurno" class="modal-select">
+                                <option value="almuerzo">Almuerzo</option>
+                                <option value="cena">Cena</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Row 4: Notas Internas -->
+                    <div class="form-group">
+                        <div style="display:flex; justify-content:space-between;">
+                            <label class="modal-label">NOTAS INTERNAS</label>
+                            <button type="button" class="btn-text-action" style="font-size:10px;">✨ Mejorar
+                                texto</button>
+                        </div>
+                        <textarea id="campoNotas" class="modal-textarea" rows="2"
+                            placeholder="Detalles internos..."></textarea>
+                    </div>
+
+                    <!-- Row 6: Estado -->
+                    <div class="form-group">
+                        <label class="modal-label">ESTADO</label>
+                        <select id="campoEstado" class="modal-select">
+                            <option value="pendiente">⏳ Pendiente</option>
+                            <option value="confirmada">✅ Confirmada</option>
+                            <option value="anulada">❌ Anulada</option>
+                        </select>
+                    </div>
+
+                </div>
+                <div class="modal-footer">
+                    <button type="button" id="btnCancelarReserva" class="btn-secondary">Cancelar</button>
+                    <button type="submit" class="btn-primary">GUARDAR</button>
+                </div>
+            </form>
+        </div>
     </div>
-  </header>
 
-  <main class="page">
-    <!-- BARRA DE FECHA / SEMANA -->
-    <section class="toolbar-fecha">
-      <div class="toolbar-fecha-left">
-        <button id="btnPrev" class="btn-icon" type="button">â€¹</button>
-        <input id="inputSemana" type="date" class="input-fecha" />
-        <button id="btnNext" class="btn-icon" type="button">â€º</button>
-        <div style="display:flex; gap:8px;"><button id="btnReporteSemana" class="btn-secondary" style="font-size:12px;">&#x1F5A8; Semana</button><button id="btnReporteDia" class="btn-secondary" style="font-size:12px;">&#x1F4D1; Diario</button></div>
-      </div>
-    </section>
+    <!-- Scripts -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-firestore-compat.js"></script>
+    <script src="js/firebase-init.js"></script>
+    <script src="js/app-common.js"></script>
+    <script src="js/restaurante.js"></script>
 
-    <!-- PLANNING -->
-    <section class="planning-section">
-      <div class="planning-wrapper">
-        <div id="gridRestaurante" class="planning-grid"></div>
-      </div>
-    </section>
-  </main>
-
-  <!-- MODAL RESERVA: DISEÃ‘O ACTUALIZADO -->
-  <div id="modalReserva" class="modal-overlay hidden" aria-hidden="true">
-    <div class="modal" style="max-width: 700px;">
-      <div class="modal-header" style="border-bottom:none; padding-bottom:0;">
-        <h2 id="tituloModalReserva" style="font-size:18px; color:#111827;">Nueva reserva</h2>
-        <button type="button" id="btnCerrarModal" class="modal-close" aria-label="Cerrar">
-          âœ•
-        </button>
-      </div>
-
-      <form id="formReserva" class="modal-body">
-        <hr style="border:0; border-top:1px solid #f3f4f6; margin: 10px 0 20px;">
-
-        <!-- FILA 1: FECHA | ESPACIO -->
-        <div class="modal-grid-row" style="grid-template-columns: 1fr 1fr;">
-          <div>
-            <label for="campoFecha" class="modal-label">FECHA</label>
-            <input id="campoFecha" class="modal-input" type="date" required />
-          </div>
-          <div>
-            <label for="campoEspacio" class="modal-label">ESPACIO / SALÃ“N</label>
-            <select id="campoEspacio" class="modal-select">
-              <option value="restaurante">Restaurante</option>
-              <option value="cafeteria">CafeterÃ­a</option>
-            </select>
-          </div>
-        </div>
-
-        <!-- FILA 2: CLIENTE | TELÃ‰FONO -->
-        <div class="modal-grid-row" style="grid-template-columns: 2fr 1fr;">
-          <div>
-            <label for="campoNombre" class="modal-label">CLIENTE / EVENTO</label>
-            <input id="campoNombre" class="modal-input" type="text" autocomplete="off" required
-              placeholder="Nombre del cliente..." />
-          </div>
-          <div>
-            <label for="campoTelefono" class="modal-label">TELÃ‰FONO</label>
-            <input id="campoTelefono" class="modal-input" type="tel" autocomplete="off" />
-          </div>
-        </div>
-
-        <!-- FILA 3 (Highlight): HORA | â‚¬ MENÃš | PAX | TURNO | ESTADO -->
-        <div class="modal-highlight-row">
-          <div style="display:grid; grid-template-columns: 0.8fr 1fr 0.8fr 1fr 1.2fr; gap:12px; align-items:end;">
-            <div>
-              <label for="campoHora" class="modal-label">HORA</label>
-              <input id="campoHora" class="modal-input" type="time" />
-            </div>
-            <div>
-              <label for="campoPrecio" class="modal-label">â‚¬ MENÃš</label>
-              <input id="campoPrecio" class="modal-input" type="number" step="0.01" />
-            </div>
-            <div>
-              <label for="campoPax" class="modal-label">PAX</label>
-              <input id="campoPax" class="modal-input" type="number" min="1" step="1" />
-            </div>
-            <div>
-              <label for="campoTurno" class="modal-label">TURNO</label>
-              <select id="campoTurno" class="modal-select">
-                <option value="almuerzo">â˜€ï¸ Almuerzo</option>
-                <option value="cena">ðŸŒ™ Cena</option>
-              </select>
-            </div>
-            <div>
-              <label for="campoEstado" class="modal-label">ESTADO</label>
-              <select id="campoEstado" class="modal-select">
-                <option value="confirmada">âœ… Confirmada</option>
-                <option value="pendiente">â³ Pendiente</option>
-                <option value="anulada">âŒ Anulada</option>
-              </select>
-            </div>
-          </div>
-        </div>
-
-        <!-- FILA 4: NOTAS -->
-        <div class="modal-grid-row" style="grid-template-columns: 1fr 1fr;">
-          <div>
-            <label for="campoNotas" class="modal-label">NOTA INTERNA</label>
-            <textarea id="campoNotas" class="modal-textarea" rows="3"></textarea>
-          </div>
-          <div>
-            <div style="display:flex; justify-content:space-between; align-items:center;">
-              <label for="campoNotaCliente" class="modal-label">NOTA PARA CLIENTE (PDF)</label>
-              <button type="button" class="btn-ai-improve">âœ¨ Mejorar</button>
-            </div>
-            <textarea id="campoNotaCliente" class="modal-textarea" rows="3"></textarea>
-          </div>
-        </div>
-
-        <div class="modal-footer" style="padding-top:10px;">
-          <button type="button" id="btnCancelarReserva" class="hidden">Cancelar</button>
-          <!-- Oculto segÃºn diseÃ±o se ve solo guardar -->
-          <button type="submit" class="btn-save-modal">GUARDAR</button>
-        </div>
-      </form>
-    </div>
-  </div>
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js');
+        }
+    </script>
 </body>
 
 </html>
-
