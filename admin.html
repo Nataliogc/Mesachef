@@ -1,436 +1,297 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
+    <title>MesaChef Admin</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Panel de Administración - MesaChef</title>
-    
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
-
+    <!-- Load Tailwind only for inner app -->
+    <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        :root {
-            --primary: #263238;
-            --accent: #10b981;
-            --bg: #f3f4f6;
+        /* CRITICAL INLINE STYLES FOR LOGIN */
+        body,
+        html {
+            margin: 0;
+            padding: 0;
+            font-family: sans-serif;
+            height: 100%;
         }
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: var(--bg); margin: 0; padding: 20px; color: #1f2937; }
-        
-        /* LOGIN MODAL */
-        #loginOverlay {
-            position: fixed; inset: 0; background: #263238; z-index: 9999;
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-        }
-        .login-box {
-            background: white; padding: 30px; border-radius: 12px; width: 300px; text-align: center;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.3);
-        }
-        .login-box h2 { margin-top: 0; color: var(--primary); }
-        .login-input { width: 100%; padding: 10px; margin: 15px 0; border: 2px solid #e5e7eb; border-radius: 6px; font-size: 16px; outline: none; text-align: center;}
-        .login-input:focus { border-color: var(--accent); }
-        .btn-login { background: var(--accent); color: white; width: 100%; padding: 10px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 16px; }
 
-        /* LAYOUT PRINCIPAL */
-        .container { max-width: 1100px; margin: 0 auto; display: none; /* Oculto hasta login */ }
-        
-        .header-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-        .btn-back { text-decoration: none; color: #4b5563; font-weight: 600; display: flex; align-items: center; gap: 5px; background: white; padding: 8px 15px; border-radius: 99px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-        
-        .grid-layout { display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 20px; }
-        
-        /* TARJETAS DE CONFIG */
-        .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.02); border: 1px solid #e5e7eb; }
-        .card h3 { margin-top: 0; border-bottom: 1px solid #f3f4f6; padding-bottom: 10px; color: var(--primary); display: flex; align-items: center; gap: 8px; font-size: 16px; }
-        .full-width { grid-column: 1 / -1; }
-
-        /* FORMULARIOS */
-        label { display: block; font-size: 12px; font-weight: 700; color: #6b7280; margin-bottom: 4px; text-transform: uppercase; }
-        input[type="text"], input[type="number"], input[type="time"], select, textarea {
-            width: 100%; padding: 8px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 13px; margin-bottom: 10px; box-sizing: border-box;
+        #authOverlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #111827;
+            /* Gray-900 */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
         }
-        input:focus, textarea:focus { border-color: var(--accent); outline: none; }
-        
-        .row-horarios { display: flex; gap: 15px; }
-        .alert-info { background: #eff6ff; color: #1e40af; padding: 8px; border-radius: 6px; font-size: 12px; margin-top: 5px; border: 1px solid #dbeafe; }
 
-        /* TABLA SALONES */
-        table { width: 100%; border-collapse: collapse; font-size: 13px; }
-        th { text-align: left; background: #f9fafb; padding: 10px; border-bottom: 1px solid #e5e7eb; color: #374151; }
-        td { padding: 8px; border-bottom: 1px solid #f3f4f6; }
-        .btn-icon { background: none; border: none; cursor: pointer; font-size: 16px; }
-        .btn-add { background: #f3f4f6; border: 1px dashed #9ca3af; color: #4b5563; width: 100%; padding: 8px; margin-top: 10px; border-radius: 6px; cursor: pointer; }
-        
-        /* MONTAJES */
-        .tags-container { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
-        .tag { background: #e0f2fe; color: #0369a1; padding: 4px 10px; border-radius: 99px; font-size: 12px; display: flex; align-items: center; gap: 6px; }
-        .tag-close { cursor: pointer; font-weight: bold; }
-
-        /* BOTÓN FLOTANTE GUARDAR */
-        .fab-save {
-            position: fixed; bottom: 30px; right: 30px;
-            background: var(--primary); color: white;
-            padding: 15px 30px; border-radius: 99px;
-            font-weight: bold; box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-            border: none; cursor: pointer; transition: transform 0.2s;
-            display: flex; align-items: center; gap: 10px; z-index: 100;
+        .login-card {
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            width: 100%;
+            max-width: 350px;
+            text-align: center;
         }
-        .fab-save:hover { transform: translateY(-3px); background: #1f2937; }
+
+        .login-btn {
+            background: #10b981;
+            color: white;
+            border: none;
+            padding: 12px;
+            width: 100%;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+
+        .login-btn:hover {
+            background: #059669;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        /* App Styles */
+        .tab-btn.active {
+            border-bottom: 2px solid #2563eb;
+            color: #2563eb;
+            font-weight: 600;
+        }
     </style>
 </head>
-<body>
 
-    <div id="loginOverlay">
-        <div class="login-box">
-            <h2>🔒 Acceso Admin</h2>
-            <p style="font-size:13px; color:#666;">Introduce la contraseña maestra</p>
-            <input type="password" id="passInput" class="login-input" placeholder="Contraseña...">
-            <button class="btn-login" onclick="checkPassword()">Entrar</button>
-            <p id="errorMsg" style="color:red; font-size:12px; margin-top:10px; display:none;">Contraseña incorrecta</p>
+<body class="bg-gray-100 text-gray-800">
+
+    <!-- LOGIN OVERLAY (Self-contained) -->
+    <div id="authOverlay">
+        <div class="login-card">
+            <div style="font-size: 3rem; margin-bottom: 1rem;">🔒</div>
+            <h2 style="margin: 0 0 0.5rem 0; font-size: 1.5rem; color:#1f2937;">Acceso Admin</h2>
+            <p style="color:#6b7280; margin-bottom: 1.5rem;">Contraseña maestra</p>
+
+            <form onsubmit="event.preventDefault(); checkPass();">
+                <input type="password" id="passInput"
+                    style="width: 100%; padding: 12px; border: 1px solid #d1d5db; border-radius: 8px; box-sizing: border-box; font-size: 16px;"
+                    placeholder="Contraseña..." autofocus>
+                <button type="button" onclick="checkPass()" class="login-btn">Entrar</button>
+            </form>
+            <p id="errorMsg" style="color: #ef4444; margin-top: 1rem; display: none;">Contraseña incorrecta</p>
         </div>
     </div>
 
-    <div class="container" id="adminPanel">
-        
-        <div class="header-bar">
-            <a href="index.html" class="btn-back">⬅ Volver a la App</a>
-            <h1 style="font-size: 20px; color: var(--primary); margin:0;">⚙️ Configuración Global</h1>
-            <div style="background: #fff; padding: 5px 15px; border-radius: 8px; border:1px solid #ddd;">
-                <span style="font-size:11px; font-weight:bold; color:#666; margin-right:5px;">EDITANDO:</span>
-                <select id="hotelSelector" onchange="cargarConfig()" style="border:none; font-weight:bold; font-size:14px; margin:0; width:auto; outline:none;">
-                    <option value="Guadiana">Sercotel Guadiana</option>
-                    <option value="Cumbria">Cumbria Spa&Hotel</option>
-                </select>
+    <!-- MAIN APP -->
+    <div id="appContainer" class="hidden max-w-6xl mx-auto p-4 md:p-8">
+
+        <!-- HEADER -->
+        <div class="flex flex-col md:flex-row justify-between items-center mb-8 bg-white p-6 rounded-lg shadow-sm">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-800">⚙️ MesaChef Enterprise</h1>
+                <p class="text-gray-500">Panel de Configuración</p>
+            </div>
+            <div class="mt-4 md:mt-0">
+                <a href="index.html" class="text-blue-500 hover:underline mr-4">Inicio</a>
+                <button onclick="location.reload()" class="text-red-500 font-medium">Salir</button>
             </div>
         </div>
 
-        <div class="grid-layout">
-            
-            <div class="card">
-                <h3>⏱️ Horarios Restaurante</h3>
-                <div class="row-horarios">
-                    <div style="flex:1">
-                        <label>Apertura Almuerzo</label>
-                        <input type="time" id="confAlmIni">
-                    </div>
-                    <div style="flex:1">
-                        <label>Cierre Almuerzo</label>
-                        <input type="time" id="confAlmFin">
+        <!-- TABS -->
+        <div class="bg-white rounded-t-lg shadow-sm border-b px-6 pt-4 flex gap-6 overflow-x-auto">
+            <button class="tab-btn active pb-4 px-2" onclick="setTab('Guadiana')">Sercotel Guadiana</button>
+            <button class="tab-btn pb-4 px-2" onclick="setTab('Cumbria')">Cumbria Spa&Hotel</button>
+            <button class="tab-btn pb-4 px-2" onclick="setTab('Montajes')">Montajes</button>
+        </div>
+
+        <!-- CONTENT -->
+        <div class="bg-white rounded-b-lg shadow-lg min-h-[400px] p-6">
+            <div id="loading" class="text-center py-20 text-gray-400">
+                <p class="text-2xl">📡</p>
+                <p>Cargando datos...</p>
+            </div>
+
+            <div id="editorArea" class="hidden">
+                <div class="flex justify-between items-center mb-6 pb-4 border-b">
+                    <h2 class="text-xl font-bold text-gray-700" id="sectionTitle">...</h2>
+                    <div id="hotelControls" class="hidden">
+                        <button onclick="addSalon()"
+                            class="bg-blue-50 text-blue-600 hover:bg-blue-100 px-4 py-2 rounded-lg font-medium flex items-center gap-2">
+                            + Añadir Sala
+                        </button>
                     </div>
                 </div>
-                <div class="row-horarios">
-                    <div style="flex:1">
-                        <label>Apertura Cena</label>
-                        <input type="time" id="confCenaIni">
-                    </div>
-                    <div style="flex:1">
-                        <label>Cierre Cena</label>
-                        <input type="time" id="confCenaFin">
-                    </div>
-                </div>
-                <hr style="border:0; border-top:1px dashed #eee; margin:10px 0;">
-                <label>Corte Visual (Cambio de Columna)</label>
-                <input type="time" id="confCorte">
-                <div class="alert-info">A partir de esta hora, las reservas se verán en la columna de Tarde/Cena.</div>
-            </div>
 
-            <div class="card">
-                <h3>🪑 Tipos de Montaje</h3>
-                <p style="font-size:12px; color:#666; margin-bottom:10px;">Opciones disponibles en el desplegable de eventos.</p>
-                <div class="tags-container" id="containerMontajes"></div>
-                <div style="display:flex; gap:5px;">
-                    <input type="text" id="newMontaje" placeholder="Nuevo montaje..." style="margin:0;">
-                    <button onclick="addMontaje()" style="background:var(--primary); color:white; border:none; padding:0 15px; border-radius:6px;">+</button>
-                </div>
-            </div>
-
-            <div class="card">
-                <h3>🤖 Inteligencia Artificial</h3>
-                <label>Tono de comunicación</label>
-                <select id="confIATone">
-                    <option value="formal">Muy Formal (Usted)</option>
-                    <option value="cercano">Cercano y Comercial (Tú)</option>
-                    <option value="lujo">Exclusivo / Lujo</option>
-                    <option value="tecnico">Técnico y Directo</option>
-                </select>
-                <label>Instrucción extra (Prompt)</label>
-                <textarea id="confIAPrompt" rows="2" placeholder="Ej: Mencionar siempre que el parking es gratuito..."></textarea>
-            </div>
-
-            <div class="card" style="border-color: #fca5a5; background: #fef2f2;">
-                <h3 style="color: #b91c1c;">🔒 Seguridad</h3>
-                <label style="display:flex; align-items:center; gap:10px; cursor:pointer; margin-top:10px; color:#b91c1c;">
-                    <input type="checkbox" id="confMantenimiento" style="width:auto; margin:0;">
-                    ACTIVAR MODO MANTENIMIENTO
-                </label>
-                <p style="font-size:11px; color:#7f1d1d; margin-top:5px;">
-                    Si activas esto, la App principal mostrará un aviso de "En Obras" y nadie podrá acceder.
-                </p>
-            </div>
-
-            <div class="card full-width">
-                <h3>🏨 Gestión de Salones y Tarifas</h3>
-                <div style="overflow-x:auto;">
-                    <table>
+                <!-- SALONES -->
+                <div id="tabSalones" class="hidden">
+                    <table class="w-full text-left border-collapse">
                         <thead>
-                            <tr>
-                                <th>Nombre del Espacio</th>
-                                <th width="70">m²</th> <th width="80">Pax Máx</th>
-                                <th width="100">€ 1/2 Día</th>
-                                <th width="100">€ Comp.</th>
-                                <th width="60" style="text-align:center">Activo</th>
-                                <th width="40"></th>
+                            <tr class="text-xs font-semibold tracking-wide text-gray-500 uppercase border-b bg-gray-50">
+                                <th class="px-4 py-3">Nombre</th>
+                                <th class="px-4 py-3 w-20">Pax</th>
+                                <th class="px-4 py-3 w-24">€ Media</th>
+                                <th class="px-4 py-3 w-24">€ Comp.</th>
+                                <th class="px-4 py-3 w-10"></th>
                             </tr>
                         </thead>
-                        <tbody id="bodySalones"></tbody>
+                        <tbody id="tbodySalones"></tbody>
                     </table>
+                    <div id="emptyState" class="hidden text-center py-8 text-gray-400">Sin datos</div>
                 </div>
-                <button class="btn-add" onclick="addSalonRow()">+ Añadir nuevo salón</button>
+
+                <!-- MONTAJES -->
+                <div id="tabMontajes" class="hidden">
+                    <div class="flex gap-4 mb-8 bg-gray-50 p-4 rounded-lg items-center">
+                        <input id="newMontajeCtx" type="text" class="flex-1 border p-2 rounded"
+                            placeholder="Ej: Teatro...">
+                        <button onclick="addMontaje()" class="bg-blue-600 text-white px-6 py-2 rounded">Añadir</button>
+                    </div>
+                    <div id="listMontajes" class="flex flex-wrap gap-2"></div>
+                </div>
+
+                <div class="mt-8 pt-6 border-t flex justify-end">
+                    <button onclick="saveConfig()" id="btnSave"
+                        class="bg-indigo-600 hover:bg-indigo-700 text-white text-lg px-8 py-3 rounded-lg shadow font-bold">
+                        GUARDAR
+                    </button>
+                </div>
             </div>
+        </div>
+    </div>
 
-            <div class="card full-width">
-                <h3>📄 Legal y Condiciones (PDF)</h3>
-                <textarea id="confLegal" rows="5" style="font-family:monospace; font-size:12px;"></textarea>
-                <div class="alert-info">Este texto aparecerá al pie de todos los presupuestos generados.</div>
-            </div>
-
-        </div> <br><br><br> </div>
-
-    <button class="fab-save" onclick="guardarTodo()" id="btnGuardar" style="display:none;">
-        💾 GUARDAR CAMBIOS
-    </button>
+    <!-- FIREBASE -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-firestore-compat.js"></script>
+    <script src="js/firebase-init.js"></script>
 
     <script>
-        /* --- 1. CONFIGURACIÓN FIREBASE --- */
-        const firebaseConfig = {
-            apiKey: "AIzaSyBAK0sGUYpV8KHy1KwIdNRLtHlq5LT3Vwg",
-            authDomain: "gestionsalones-bba4b.firebaseapp.com",
-            projectId: "gestionsalones-bba4b",
-            storageBucket: "gestionsalones-bba4b.firebasestorage.app",
-            messagingSenderId: "860164285474",
-            appId: "1:860164285474:web:ff995e88093e5aa5eb167b"
-        };
-        firebase.initializeApp(firebaseConfig);
+        // Check Dependencies
+        if (typeof firebase === 'undefined') {
+            alert("Error: Firebase no se ha cargado. Revisa tu conexión.");
+        }
+
         const db = firebase.firestore();
+        let currentTab = "Guadiana";
+        let fullConfig = { Guadiana: [], Cumbria: [], montajes: [] };
 
-        /* --- 2. GESTIÓN DE ACCESO --- */
-        const MASTER_PASS = "mesachef2026";
+        function checkPass() {
+            try {
+                const inp = document.getElementById("passInput");
+                const err = document.getElementById("errorMsg");
+                const val = inp.value.trim().toLowerCase();
 
-        function checkPassword() {
-            const input = document.getElementById("passInput");
-            const error = document.getElementById("errorMsg");
-            
-            if (input.value === MASTER_PASS) {
-                document.getElementById("loginOverlay").style.display = "none";
-                document.getElementById("adminPanel").style.display = "block";
-                document.getElementById("btnGuardar").style.display = "flex";
-                cargarConfig(); // Cargar datos al entrar
-            } else {
-                error.style.display = "block";
-                input.value = "";
-                input.focus();
-            }
-        }
-        
-        document.getElementById("passInput").addEventListener("keypress", function(event) {
-            if (event.key === "Enter") checkPassword();
-        });
+                console.log("Checking:", val); // Debug
 
-        /* --- 3. LÓGICA DEL PANEL --- */
-        let fullConfig = {}; 
-        let currentHotel = "Guadiana";
-
-        /* --- DATOS OFICIALES --- */
-        const salonesGuadianaDefault = [
-            { name: "Puerta de Alarcos", size: 570, pax: 800, priceHalf: 0, priceFull: 0, active: true },
-            { name: "Puerta de Calatrava", size: 125, pax: 135, priceHalf: 0, priceFull: 0, active: true },
-            { name: "Puerta del Carmen", size: 110, pax: 120, priceHalf: 0, priceFull: 0, active: true },
-            { name: "Puerta de Ciruela", size: 25, pax: 20, priceHalf: 0, priceFull: 0, active: true },
-            { name: "Puerta de Granada", size: 120, pax: 135, priceHalf: 0, priceFull: 0, active: true },
-            { name: "Puerta de Santa María", size: 70, pax: 80, priceHalf: 0, priceFull: 0, active: true },
-            { name: "Puerta de Toledo", size: 150, pax: 160, priceHalf: 0, priceFull: 0, active: true }
-        ];
-
-        const salonesCumbriaDefault = [
-            { name: "Salón Mercurio", size: 77, pax: 90, priceHalf: 0, priceFull: 0, active: true },
-            { name: "Salón Venus", size: 77, pax: 90, priceHalf: 0, priceFull: 0, active: true },
-            { name: "Salón La Tierra", size: 68, pax: 70, priceHalf: 0, priceFull: 0, active: true },
-            { name: "Salón Marte", size: 77, pax: 90, priceHalf: 0, priceFull: 0, active: true },
-            { name: "Salón Júpiter", size: 68, pax: 70, priceHalf: 0, priceFull: 0, active: true }
-        ];
-
-        function cargarConfig() {
-            currentHotel = document.getElementById("hotelSelector").value;
-            console.log("Cargando...", currentHotel);
-
-            db.collection("master_data").doc("CONFIG_SALONES").get().then((doc) => {
-                if (doc.exists) {
-                    fullConfig = doc.data();
-                    if (currentHotel === "Guadiana" && (!fullConfig.Guadiana || fullConfig.Guadiana.length === 0)) {
-                        fullConfig.Guadiana = salonesGuadianaDefault;
-                    }
-                    if (currentHotel === "Cumbria" && (!fullConfig.Cumbria || fullConfig.Cumbria.length === 0)) {
-                        fullConfig.Cumbria = salonesCumbriaDefault;
-                    }
+                if (val === "mesachef2026") {
+                    document.getElementById("authOverlay").classList.add("hidden");
+                    document.getElementById("appContainer").classList.remove("hidden");
+                    loadData();
                 } else {
-                    fullConfig = { Guadiana: salonesGuadianaDefault, Cumbria: salonesCumbriaDefault, horarios: {} };
+                    err.style.display = "block";
+                    err.innerText = "Contraseña incorrecta: " + inp.value; // Explicit fail
+                    inp.value = "";
                 }
-                renderInterface();
-            }).catch(e => alert("Error conectando: " + e.message));
+            } catch (e) {
+                alert("Error script: " + e.message);
+            }
         }
 
-        function renderInterface() {
-            // A. Horarios
-            const h = fullConfig.horarios || { almIni: "13:00", almFin: "16:00", cenaIni: "20:30", cenaFin: "23:00", corte: "18:00" };
-            document.getElementById("confAlmIni").value = h.almIni;
-            document.getElementById("confAlmFin").value = h.almFin;
-            document.getElementById("confCenaIni").value = h.cenaIni;
-            document.getElementById("confCenaFin").value = h.cenaFin;
-            document.getElementById("confCorte").value = h.corte || "18:00";
+        async function loadData() {
+            try {
+                const doc = await db.collection("master_data").doc("CONFIG_SALONES").get();
+                if (doc.exists) {
+                    const d = doc.data();
+                    fullConfig.Guadiana = d.Guadiana || [];
+                    fullConfig.Cumbria = d.Cumbria || [];
+                    fullConfig.montajes = d.montajes || [];
+                } else {
+                    fullConfig.montajes = ["Escuela", "Teatro"];
+                }
+                document.getElementById("loading").classList.add("hidden");
+                document.getElementById("editorArea").classList.remove("hidden");
+                render();
+            } catch (e) {
+                alert("Error cargando configuración: " + e.message);
+            }
+        }
 
-            // B. Salones
-            const tbody = document.getElementById("bodySalones");
-            tbody.innerHTML = "";
-            const salones = fullConfig[currentHotel] || [];
-            
-            salones.forEach((s, i) => {
-                // Formateo inicial para visualizar: 150.00 €
-                let pFull = (parseFloat(s.priceFull)||0).toFixed(2) + " €";
-                let pHalf = (parseFloat(s.priceHalf)||0).toFixed(2) + " €";
-
-                tbody.innerHTML += `
-                    <tr>
-                        <td><input type="text" value="${s.name}" onchange="updSalon(${i}, 'name', this.value)" style="margin:0"></td>
-                        <td><input type="number" value="${s.size || 0}" onchange="updSalon(${i}, 'size', this.value)" style="margin:0; background:#f9fafb;"></td>
-                        <td><input type="number" value="${s.pax}" onchange="updSalon(${i}, 'pax', this.value)" style="margin:0; font-weight:bold;"></td>
-                        
-                        <td>
-                            <input type="text" 
-                                   value="${pHalf}" 
-                                   onfocus="this.select()" 
-                                   onchange="formatAdminPrice(this, ${i}, 'priceHalf')" 
-                                   style="margin:0; text-align:right;">
-                        </td>
-                        <td>
-                            <input type="text" 
-                                   value="${pFull}" 
-                                   onfocus="this.select()" 
-                                   onchange="formatAdminPrice(this, ${i}, 'priceFull')" 
-                                   style="margin:0; text-align:right;">
-                        </td>
-
-                        <td style="text-align:center"><input type="checkbox" ${s.active ? 'checked' : ''} onchange="updSalon(${i}, 'active', this.checked)"></td>
-                        <td style="text-align:center"><button class="btn-icon" onclick="delSalon(${i})" style="color:red">✕</button></td>
-                    </tr>`;
+        function setTab(t) {
+            currentTab = t;
+            document.querySelectorAll(".tab-btn").forEach(b => {
+                b.classList.toggle("active", b.innerText.includes(t) || (t === "Montajes" && b.innerText.includes("Montajes")));
             });
-
-            // C. Montajes
-            const montajes = fullConfig.montajes || ["Banquete", "Escuela", "Teatro", "Cóctel", "U", "Imperial"];
-            const divM = document.getElementById("containerMontajes");
-            divM.innerHTML = montajes.map((m, i) => 
-                `<div class="tag">${m} <span class="tag-close" onclick="delMontaje(${i})">×</span></div>`
-            ).join("");
-
-            document.getElementById("confLegal").value = fullConfig.textoLegal || "";
-            document.getElementById("confMantenimiento").checked = fullConfig.mantenimiento || false;
-            
-            const ai = fullConfig.aiOptions || {};
-            document.getElementById("confIATone").value = ai.tone || "formal";
-            document.getElementById("confIAPrompt").value = ai.prompt || "";
+            render();
         }
 
-        /* --- HELPERS DE ACTUALIZACIÓN --- */
-        function updSalon(idx, field, val) { fullConfig[currentHotel][idx][field] = val; }
-        
-        // NUEVA FUNCIÓN: Formatea el precio al salir de la casilla y actualiza el dato numérico
-        function formatAdminPrice(el, idx, field) {
-            // 1. Limpiar lo que haya escrito el usuario (quitar €, espacios y cambiar comas)
-            let raw = el.value.replace(' €', '').replace('€', '').replace(',', '.');
-            let val = parseFloat(raw);
-            
-            if(isNaN(val)) val = 0;
+        function render() {
+            const ts = document.getElementById("tabSalones");
+            const tm = document.getElementById("tabMontajes");
+            const hc = document.getElementById("hotelControls");
+            const st = document.getElementById("sectionTitle");
 
-            // 2. Guardar en memoria como NÚMERO PURO
-            fullConfig[currentHotel][idx][field] = val;
-
-            // 3. Mostrar bonito en pantalla
-            el.value = val.toFixed(2) + " €";
-        }
-
-        function addSalonRow() {
-            if(!fullConfig[currentHotel]) fullConfig[currentHotel] = [];
-            fullConfig[currentHotel].push({ name: "Nuevo Espacio", size: 0, pax: 0, priceHalf: 0, priceFull: 0, active: true });
-            renderInterface();
-        }
-        
-        function delSalon(idx) {
-            if(confirm("¿Eliminar este salón?")) {
-                fullConfig[currentHotel].splice(idx, 1);
-                renderInterface();
+            if (currentTab === "Montajes") {
+                ts.classList.add("hidden"); tm.classList.remove("hidden"); hc.classList.add("hidden");
+                st.innerText = "Tipos de Montaje";
+                renderMontajes();
+            } else {
+                ts.classList.remove("hidden"); tm.classList.add("hidden"); hc.classList.remove("hidden");
+                st.innerText = "Salas: " + currentTab;
+                renderSalones(currentTab);
             }
         }
 
-        function addMontaje() {
-            const val = document.getElementById("newMontaje").value.trim();
-            if(val) {
-                if(!fullConfig.montajes) fullConfig.montajes = [];
-                fullConfig.montajes.push(val);
-                document.getElementById("newMontaje").value = "";
-                renderInterface();
-            }
+        function renderSalones(h) {
+            const tb = document.getElementById("tbodySalones");
+            tb.innerHTML = "";
+            const list = fullConfig[h];
+            if (!list.length) { document.getElementById("emptyState").classList.remove("hidden"); return; }
+            document.getElementById("emptyState").classList.add("hidden");
+
+            list.forEach((s, i) => {
+                tb.innerHTML += `
+                    <tr class="border-b">
+                        <td class="p-2"><input class="border-none w-full" value="${s.name}" onchange="upd('${h}',${i},'name',this.value)"></td>
+                        <td class="p-2"><input type="number" class="border-none w-full text-center" value="${s.pax || 0}" onchange="upd('${h}',${i},'pax',this.value)"></td>
+                        <td class="p-2"><input type="number" class="border-none w-full text-right" value="${s.priceHalf || 0}" onchange="upd('${h}',${i},'priceHalf',this.value)"></td>
+                        <td class="p-2"><input type="number" class="border-none w-full text-right" value="${s.priceFull || 0}" onchange="upd('${h}',${i},'priceFull',this.value)"></td>
+                        <td class="p-2 text-center"><button class="text-red-500 font-bold" onclick="del('${h}',${i})">&times;</button></td>
+                    </tr>
+                 `;
+            });
         }
-        
-        function delMontaje(idx) {
-            fullConfig.montajes.splice(idx, 1);
-            renderInterface();
+
+        function renderMontajes() {
+            const list = document.getElementById("listMontajes");
+            list.innerHTML = "";
+            fullConfig.montajes.forEach((m, i) => {
+                list.innerHTML += `<div class="bg-blue-100 px-3 py-1 rounded-full text-blue-800 flex gap-2"><span>${m}</span><button onclick="delM(${i})" class="font-bold text-red-500">&times;</button></div>`;
+            });
         }
 
-        /* --- GUARDADO GLOBAL --- */
-        function guardarTodo() {
-            // LIMPIEZA DE SEGURIDAD ANTES DE ENVIAR
-            if(fullConfig[currentHotel]) {
-                fullConfig[currentHotel].forEach(s => {
-                    // Nos aseguramos de que todo se guarde como número
-                    s.pax = parseInt(s.pax) || 0;
-                    s.size = parseInt(s.size) || 0;
-                    
-                    // Limpieza extra por si acaso
-                    let ph = String(s.priceHalf).replace(',', '.').replace(' €', '').replace('€', '');
-                    let pf = String(s.priceFull).replace(',', '.').replace(' €', '').replace('€', '');
-                    
-                    s.priceHalf = parseFloat(ph) || 0;
-                    s.priceFull = parseFloat(pf) || 0;
-                });
-            }
+        window.upd = (h, i, f, v) => { if (f !== 'name') v = parseFloat(v) || 0; fullConfig[h][i][f] = v; };
+        window.del = (h, i) => { if (confirm("¿Borrar?")) { fullConfig[h].splice(i, 1); render(); } };
+        window.addSalon = () => { fullConfig[currentTab].push({ name: "Nueva Sala", pax: 0, priceHalf: 0, priceFull: 0 }); render(); };
+        window.addMontaje = () => { const v = document.getElementById("newMontajeCtx").value; if (v) { fullConfig.montajes.push(v); render(); } };
+        window.delM = (i) => { fullConfig.montajes.splice(i, 1); render(); };
 
-            fullConfig.horarios = {
-                almIni: document.getElementById("confAlmIni").value,
-                almFin: document.getElementById("confAlmFin").value,
-                cenaIni: document.getElementById("confCenaIni").value,
-                cenaFin: document.getElementById("confCenaFin").value,
-                corte: document.getElementById("confCorte").value
-            };
+        window.saveConfig = async () => {
+            document.getElementById("btnSave").innerText = "Guardando...";
+            try {
+                await db.collection("master_data").doc("CONFIG_SALONES").set(fullConfig);
+                alert("Guardado correctamente");
+                document.getElementById("btnSave").innerText = "GUARDAR";
+            } catch (e) { alert("Error: " + e.message); }
+        };
 
-            fullConfig.textoLegal = document.getElementById("confLegal").value;
-            fullConfig.mantenimiento = document.getElementById("confMantenimiento").checked;
-            
-            fullConfig.aiOptions = {
-                tone: document.getElementById("confIATone").value,
-                prompt: document.getElementById("confIAPrompt").value
-            };
-
-            db.collection("master_data").doc("CONFIG_SALONES").set(fullConfig)
-                .then(() => {
-                    const btn = document.getElementById("btnGuardar");
-                    const prevText = btn.innerText;
-                    btn.innerText = "✅ ¡GUARDADO!";
-                    btn.style.background = "#059669";
-                    setTimeout(() => {
-                        btn.innerText = prevText;
-                        btn.style.background = "";
-                    }, 2000);
-                })
-                .catch(e => alert("Error guardando: " + e.message));
-        }
     </script>
 </body>
+
 </html>
