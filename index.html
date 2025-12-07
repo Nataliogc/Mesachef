@@ -2,490 +2,543 @@
 <html lang="es">
 
 <head>
-  <meta charset="UTF-8" />
-  <title>MesaChef Enterprise · Inicio</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="theme-color" content="#2563eb" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <link rel="manifest" href="manifest.json" />
+    <meta charset="UTF-8" />
+    <title>MesaChef Enterprise · Inicio</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#2563eb" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <link rel="manifest" href="manifest.json" />
 
-  <!-- Hoja de estilos base de la aplicación -->
-  <link rel="stylesheet" href="css/base.css" />
+    <!-- Hoja de estilos base de la aplicación -->
+    <link rel="stylesheet" href="css/base.css" />
 
-  <style>
-    /* ======= Portada MesaChef (sólo index) ======= */
+    <style>
+        /* ======= Portada MesaChef (sólo index) ======= */
 
-    body.app-body {
-      background: radial-gradient(circle at top, #e0ecff 0, #f3f4f6 45%, #e5e7eb 100%);
-    }
+        body.app-body {
+            background: radial-gradient(circle at top, #e0ecff 0, #f3f4f6 45%, #e5e7eb 100%);
+        }
 
-    .mc-shell {
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-    }
+        .mc-shell {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
 
-    .mc-main {
-      flex: 1 1 auto;
-      display: flex;
-      justify-content: center;
-      padding: 20px 16px 28px;
-    }
+        .mc-header {
+            background: #0f172a;
+            height: 60px;
+            padding: 0 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+            z-index: 50;
+        }
 
-    .mc-card {
-      width: 100%;
-      max-width: 1120px;
-      border-radius: 24px;
-      background: rgba(255, 255, 255, 0.98);
-      box-shadow:
-        0 24px 40px rgba(15, 23, 42, 0.18),
-        0 0 0 1px rgba(148, 163, 184, 0.25);
-      padding: 18px 20px 20px;
-    }
+        .mc-brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: white;
+            text-decoration: none;
+        }
 
-    .mc-header {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      margin-bottom: 12px;
-    }
+        .mc-logo {
+            height: 32px;
+            width: auto;
+        }
 
-    .mc-header-icon {
-      width: 40px;
-      height: 40px;
-      border-radius: 14px;
-      object-fit: cover;
-      box-shadow:
-        0 0 0 2px rgba(15, 23, 42, 0.85),
-        0 10px 22px rgba(15, 23, 42, 0.5);
-    }
+        .mc-brand-text {
+            font-size: 18px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
 
-    .mc-header-text-main {
-      font-size: 15px;
-      font-weight: 700;
-      color: #111827;
-    }
+        .mc-user-area {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
 
-    .mc-header-text-sub {
-      font-size: 12px;
-      color: #6b7280;
-    }
+        .btn-admin-access {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #e2e8f0;
+            border-radius: 99px;
+            padding: 6px 16px;
+            font-size: 13px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
 
-    .mc-tag {
-      margin-left: auto;
-      padding: 4px 10px;
-      border-radius: 999px;
-      font-size: 11px;
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      background: #eef2ff;
-      color: #4f46e5;
-      border: 1px solid #c7d2fe;
-      white-space: nowrap;
-    }
+        .btn-admin-access:hover {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+        }
 
-    .mc-tag span:first-child {
-      font-size: 13px;
-    }
+        .mc-main {
+            flex: 1 1 auto;
+            display: flex;
+            justify-content: center;
+            padding: 30px 16px 40px;
+        }
 
-    .mc-title {
-      margin: 12px 0 4px;
-      font-size: 20px;
-      font-weight: 700;
-      color: #111827;
-    }
+        /* Card principal */
+        .mc-app-container {
+            width: 100%;
+            max-width: 1000px;
+            background: #ffffff;
+            border-radius: 24px;
+            box-shadow: 0 20px 60px -10px rgba(0, 0, 0, 0.1);
+            padding: 40px;
+            display: flex;
+            flex-direction: column;
+            gap: 40px;
+            animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+        }
 
-    .mc-subtitle {
-      margin: 0 0 14px;
-      font-size: 13px;
-      color: #4b5563;
-    }
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
 
-    .mc-layout {
-      display: grid;
-      grid-template-columns: minmax(260px, 360px) minmax(260px, 1fr);
-      gap: 18px;
-      align-items: flex-start;
-    }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
 
-    /* Columna izquierda: selector de hotel */
+        .mc-hero-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
 
-    .mc-column-left {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
+        .mc-title h1 {
+            font-size: 28px;
+            font-weight: 800;
+            margin: 0 0 8px;
+            background: linear-gradient(135deg, #0f172a 0%, #334155 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
 
-    .mc-steps {
-      font-size: 12px;
-      color: #6b7280;
-      background: #f9fafb;
-      border-radius: 14px;
-      border: 1px dashed #e5e7eb;
-      padding: 8px 10px;
-    }
+        .mc-title p {
+            color: #64748b;
+            font-size: 15px;
+            max-width: 500px;
+            line-height: 1.5;
+        }
 
-    .mc-field-label {
-      font-size: 13px;
-      font-weight: 500;
-      color: #374151;
-      margin-bottom: 3px;
-    }
+        .mc-badge {
+            background: #eff6ff;
+            color: #2563eb;
+            padding: 6px 12px;
+            border-radius: 99px;
+            font-size: 12px;
+            font-weight: 600;
+            border: 1px solid #dbeafe;
+        }
 
-    .mc-hotel-select {
-      width: 100%;
-      padding: 7px 12px;
-      border-radius: 999px;
-      border: 1px solid #d1d5db;
-      background: #f9fafb;
-      font-size: 14px;
-    }
+        /* Sección Hoteles */
+        .mc-section-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            align-items: start;
+        }
 
-    .mc-cta-row {
-      margin-top: 8px;
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-    }
+        .mc-steps {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
 
-    .mc-cta-main {
-      padding-inline: 18px;
-    }
+        .mc-step-item {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            padding: 20px;
+            border-radius: 16px;
+        }
 
-    .mc-note {
-      margin-top: 6px;
-      font-size: 11px;
-      color: #9ca3af;
-    }
+        .mc-label {
+            display: block;
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: #94a3b8;
+            margin-bottom: 8px;
+        }
 
-    /* Columna derecha: logos de hotel */
+        .mc-select {
+            width: 100%;
+            padding: 12px 16px;
+            border-radius: 12px;
+            border: 1px solid #cbd5e1;
+            font-size: 15px;
+            background: white;
+            color: #0f172a;
+            font-weight: 500;
+        }
 
-    .mc-logos {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
+        .mc-btn-module {
+            background: #2563eb;
+            color: white;
+            border: none;
+            padding: 14px 24px;
+            border-radius: 99px;
+            font-weight: 600;
+            font-size: 15px;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 10px;
+            box-shadow: 0 10px 20px -5px rgba(37, 99, 235, 0.4);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
 
-    .mc-hotel-card {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 10px 12px;
-      border-radius: 18px;
-      background: linear-gradient(135deg, #ffffff, #f9fafb);
-      border: 1px solid #e5e7eb;
-      box-shadow: 0 10px 22px rgba(15, 23, 42, 0.1);
-    }
+        .mc-btn-module:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 14px 24px -5px rgba(37, 99, 235, 0.5);
+        }
 
-    .mc-hotel-logo {
-      width: 100px;
-      max-height: 52px;
-      object-fit: contain;
-      flex-shrink: 0;
-    }
+        /* Lista Visual de hoteles */
+        .mc-hotels-visual {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
 
-    .mc-hotel-name {
-      margin: 0;
-      font-size: 15px;
-      font-weight: 600;
-      color: #111827;
-    }
+        .mc-hotel-card {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            background: white;
+            border: 1px solid #e2e8f0;
+            padding: 12px 20px;
+            border-radius: 16px;
+            transition: all 0.2s;
+        }
 
-    .mc-hotel-meta {
-      margin: 0;
-      font-size: 12px;
-      color: #6b7280;
-    }
+        .mc-hotel-card.active {
+            border-color: #2563eb;
+            background: #eff6ff;
+            box-shadow: 0 4px 12px -2px rgba(37, 99, 235, 0.15);
+        }
 
-    .mc-divider {
-      margin: 16px 0 10px;
-      border: 0;
-      border-top: 1px dashed #e5e7eb;
-    }
+        .mc-hotel-img {
+            height: 36px;
+            width: auto;
+            object-fit: contain;
+        }
 
-    /* Bloque de módulos */
+        .mc-hotel-info h4 {
+            margin: 0;
+            font-size: 15px;
+            color: #0f172a;
+        }
 
-    .mc-modules-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: baseline;
-      gap: 8px;
-      margin-bottom: 6px;
-    }
+        .mc-hotel-info p {
+            margin: 2px 0 0;
+            font-size: 12px;
+            color: #64748b;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
 
-    .mc-modules-title {
-      margin: 0;
-      font-size: 15px;
-      font-weight: 600;
-      color: #111827;
-    }
+        /* Footer dentro del card */
+        .mc-footer-note {
+            padding-top: 20px;
+            border-top: 1px solid #f1f5f9;
+            font-size: 12px;
+            color: #94a3b8;
+        }
 
-    .mc-modules-sub {
-      margin: 0;
-      font-size: 12px;
-      color: #6b7280;
-    }
+        /* Accesos Rápidos */
+        .mc-quick-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+        }
 
-    .mc-modules-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-      gap: 10px;
-    }
+        .mc-module-card {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 16px;
+            padding: 20px;
+            text-decoration: none;
+            transition: all 0.2s;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
 
-    .mc-module-card {
-      border-radius: 18px;
-      padding: 10px 12px;
-      border: 1px solid #e5e7eb;
-      background: linear-gradient(135deg, #ffffff, #f9fafb);
-      box-shadow: 0 10px 22px rgba(15, 23, 42, 0.06);
-      display: flex;
-      align-items: flex-start;
-      gap: 10px;
-      cursor: pointer;
-      text-align: left;
-      transition:
-        transform 0.15s ease,
-        box-shadow 0.15s ease,
-        border-color 0.15s ease;
-    }
+        .mc-module-card:hover {
+            border-color: #94a3b8;
+            transform: translateY(-2px);
+        }
 
-    .mc-module-card:hover,
-    .mc-module-card:focus-visible {
-      transform: translateY(-2px);
-      box-shadow: 0 18px 32px rgba(15, 23, 42, 0.18);
-      border-color: #a5b4fc;
-      outline: none;
-    }
+        .mc-module-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
 
-    .mc-module-icon {
-      width: 38px;
-      height: 38px;
-      border-radius: 999px;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 20px;
-    }
+        .icon-rest {
+            background: #ffedd5;
+            color: #c2410c;
+        }
 
-    .mc-module-restaurante .mc-module-icon {
-      background: radial-gradient(circle at 30% 20%, #fed7aa, #f97316);
-      color: #7c2d12;
-    }
+        .icon-sala {
+            background: #dbeafe;
+            color: #2563eb;
+        }
 
-    .mc-module-salones .mc-module-icon {
-      background: radial-gradient(circle at 30% 20%, #bfdbfe, #3b82f6);
-      color: #1e3a8a;
-    }
+        .icon-pres {
+            background: #dcfce7;
+            color: #15803d;
+        }
 
-    .mc-module-presupuestos .mc-module-icon {
-      background: radial-gradient(circle at 30% 20%, #bbf7d0, #22c55e);
-      color: #14532d;
-    }
+        .icon-event {
+            background: #f3e8ff;
+            color: #7e22ce;
+        }
 
-    .mc-module-grandes .mc-module-icon {
-      background: radial-gradient(circle at 30% 20%, #e9d5ff, #a855f7);
-      color: #581c87;
-    }
+        .mc-module-text h3 {
+            margin: 0;
+            font-size: 15px;
+            color: #0f172a;
+            font-weight: 700;
+        }
 
-    .mc-module-text h3 {
-      margin: 0 0 2px;
-      font-size: 14px;
-      font-weight: 600;
-      color: #111827;
-    }
+        .mc-module-text p {
+            margin: 4px 0 0;
+            font-size: 12px;
+            color: #64748b;
+            line-height: 1.4;
+        }
 
-    .mc-module-text p {
-      margin: 0;
-      font-size: 12px;
-      color: #4b5563;
-    }
+        .mc-link-hint {
+            font-size: 11px;
+            font-weight: 600;
+            margin-top: auto;
+            color: #3b82f6;
+        }
 
-    .mc-module-cta {
-      margin-top: 6px;
-      font-size: 11px;
-      color: #4f46e5;
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      font-weight: 500;
-    }
+        /* Footer Global */
+        .mc-global-footer {
+            text-align: center;
+            padding: 16px;
+            background: #f8fafc;
+            border-top: 1px solid #e2e8f0;
+            font-size: 11px;
+            color: #64748b;
+            margin-top: auto;
+        }
 
-    .mc-module-cta span:first-child {
-      font-size: 13px;
-    }
+        @media (max-width: 768px) {
+            .mc-section-grid {
+                grid-template-columns: 1fr;
+            }
 
-    @media (max-width: 768px) {
-      .mc-card {
-        padding: 14px 12px 16px;
-        border-radius: 20px;
-      }
-
-      .mc-layout {
-        grid-template-columns: 1fr;
-      }
-
-      .mc-header {
-        flex-direction: row;
-        align-items: center;
-      }
-
-      .mc-header-text-main {
-        font-size: 14px;
-      }
-
-      .mc-title {
-        font-size: 18px;
-      }
-    }
-  </style>
+            .mc-header {
+                padding: 0 16px;
+            }
+        }
+    </style>
 </head>
 
 <body class="app-body">
-  <div class="mc-shell">
-    <header class="app-topbar">
-      <div class="app-topbar-left">
-        <img src="mesa-chef-192.png" alt="MesaChef" class="mc-header-icon" />
-        <div class="app-logo">
-          <span class="app-logo-title">MesaChef Enterprise</span>
-          <span class="app-logo-subtitle">
-            Reservas de Salas &amp; Restaurante · Guadiana &amp; Cumbria
-          </span>
-        </div>
-      </div>
-      <div class="app-topbar-right">
-        <div class="chip">
-          <span class="chip-icon">🔐</span>
-          <span>Acceso interno</span>
-        </div>
-      </div>
-    </header>
-
-    <main class="mc-main">
-      <section class="mc-card" aria-labelledby="mcTitle">
-        <div class="mc-header">
-          <div>
-            <h1 id="mcTitle" class="mc-title">Elige hotel y módulo</h1>
-            <p class="mc-subtitle">
-              Selecciona el hotel y entra directamente en Restaurante, Salones
-              o Presupuestos.
-            </p>
-          </div>
-          <div class="mc-tag">
-            <span>v8.1</span>
-            <span>Entorno MesaChef</span>
-          </div>
-        </div>
-
-        <div class="mc-layout">
-          <!-- Columna izquierda: selector de hotel -->
-          <div class="mc-column-left">
-            <p class="mc-steps">
-              <strong>1.</strong> Elige el hotel sobre el que quieres trabajar.<br />
-              <strong>2.</strong> Abre un módulo con los accesos rápidos de abajo.
-            </p>
-
-            <div>
-              <label for="selHotel" class="mc-field-label">Hotel</label>
-              <select id="selHotel" class="mc-hotel-select">
-                <option value="Guadiana">Sercotel Guadiana</option>
-                <option value="Cumbria">Cumbria Spa&amp;Hotel</option>
-              </select>
+    <div class="mc-shell">
+        <!-- CABECERA -->
+        <header class="mc-header">
+            <a href="#" class="mc-brand">
+                <!-- Logo Mesa Chef -->
+                <img src="Img/Mesa chet.png" alt="Mesa Chef" class="mc-logo" />
+                <span class="mc-brand-text">MesaChef Enterprise</span>
+            </a>
+            <div class="mc-user-area">
+                <a href="admin.html" class="btn-admin-access">
+                    <span>🔒</span>
+                    <span>Acceso admin</span>
+                </a>
             </div>
+        </header>
 
-            <div class="mc-cta-row">
-              <button id="btnRestaurante" type="button" class="btn-primary mc-cta-main">
-                Abrir directamente Restaurante
-              </button>
+        <!-- CONTENIDO CENTRAL -->
+        <main class="mc-main">
+            <div class="mc-app-container">
+
+                <div class="mc-hero-header">
+                    <div class="mc-title">
+                        <h1>Elige hotel y módulo</h1>
+                        <p>Selecciona el hotel y entra directamente en Restaurante, Salones, Presupuestos o Grandes
+                            Eventos.</p>
+                    </div>
+                    <div class="mc-badge">v8.2 Entorno MesaChef</div>
+                </div>
+
+                <div class="mc-section-grid">
+
+                    <!-- Izquierda: Selección -->
+                    <div class="mc-steps">
+                        <div class="mc-step-item">
+                            <label class="mc-label">1. Hotel de trabajo</label>
+                            <select id="selectHotelIndex" class="mc-select">
+                                <option value="Guadiana" selected>Sercotel Guadiana</option>
+                                <option value="Cumbria">Cumbria Spa&Hotel</option>
+                            </select>
+                        </div>
+
+                        <!-- Botones de Acción Directa Simulada (redirige al módulo guardando en LS) -->
+                        <button id="btnEnterRestaurante" class="mc-btn-module">
+                            Entrar en Restaurante →
+                        </button>
+                    </div>
+
+                    <!-- Derecha: Visual -->
+                    <div class="mc-hotels-visual">
+                        <div class="mc-hotel-card active" id="cardGuadiana">
+                            <img src="Img/logo-guadiana.svg" alt="Sercotel" class="mc-hotel-img" />
+                            <div class="mc-hotel-info">
+                                <h4>Sercotel Guadiana</h4>
+                                <p>🏛 Ciudad Real · Centro histórico</p>
+                            </div>
+                        </div>
+                        <div class="mc-hotel-card" id="cardCumbria">
+                            <img src="Img/logo-cumbria.svg" alt="Cumbria" class="mc-hotel-img" />
+                            <div class="mc-hotel-info">
+                                <h4>Cumbria Spa&Hotel</h4>
+                                <p>🌳 Ciudad Real · Zona Norte</p>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Accesos Rápidos -->
+                <div>
+                    <label class="mc-label" style="margin-bottom:12px;">Todos los módulos disponibles</label>
+                    <div class="mc-quick-grid">
+                        <!-- Restaurante -->
+                        <a href="#" id="linkRestaurante" class="mc-module-card">
+                            <div class="mc-module-icon icon-rest">🍽</div>
+                            <div class="mc-module-text">
+                                <h3>Restaurante</h3>
+                                <p>Mesas, grupos, menús y servicios diarios.</p>
+                            </div>
+                            <span class="mc-link-hint">→ Abrir planificador</span>
+                        </a>
+                        <!-- Salones -->
+                        <a href="#" id="linkSalones" class="mc-module-card">
+                            <div class="mc-module-icon icon-sala">📅</div>
+                            <div class="mc-module-text">
+                                <h3>Salas & eventos</h3>
+                                <p>Ocupación de salones por día, montajes y jornadas.</p>
+                            </div>
+                            <span class="mc-link-hint">→ Ver planning</span>
+                        </a>
+                        <!-- Presupuestos -->
+                        <a href="#" id="linkPresupuestos" class="mc-module-card">
+                            <div class="mc-module-icon icon-pres">📄</div>
+                            <div class="mc-module-text">
+                                <h3>Presupuestos</h3>
+                                <p>Propuestas, estados y totales económicos.</p>
+                            </div>
+                            <span class="mc-link-hint">→ Gestionar</span>
+                        </a>
+                        <!-- Grandes Eventos -->
+                        <a href="#" id="linkGrandesEventos" class="mc-module-card">
+                            <div class="mc-module-icon icon-event">🎉</div>
+                            <div class="mc-module-text">
+                                <h3>Grandes eventos</h3>
+                                <p>Bodas, congresos y proyectos especiales.</p>
+                            </div>
+                            <span class="mc-link-hint">→ Entrar al módulo</span>
+                        </a>
+                    </div>
+                </div>
+
             </div>
+        </main>
 
-            <p class="mc-note">
-              Tu elección de hotel se recordará automáticamente para el resto
-              de módulos.
-            </p>
-          </div>
+        <!-- FOOTER GLOBAL -->
+        <footer class="mc-global-footer">
+            © 2025 Mesa Chef Enterprise · Versión Interna v8.2 <br>
+            <strong>USO EXCLUSIVO PARA LA GESTIÓN INTERNA. SE PROHÍBE EL USO FUERA DE LA ORGANIZACIÓN.</strong>
+        </footer>
+    </div>
 
-          <!-- Columna derecha: logos -->
-          <div class="mc-logos">
-            <article class="mc-hotel-card">
-              <img src="Img/logo-guadiana.svg" alt="Sercotel Guadiana" class="mc-hotel-logo" />
-              <div>
-                <p class="mc-hotel-name">Sercotel Guadiana</p>
-                <p class="mc-hotel-meta">🏛️ Ciudad Real · Centro histórico</p>
-              </div>
-            </article>
+    <!-- Scripts -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-firestore-compat.js"></script>
+    <script src="js/firebase-init.js"></script>
+    <script src="js/app-common.js"></script>
 
-            <article class="mc-hotel-card">
-              <img src="Img/logo-cumbria.svg" alt="Cumbria Spa&Hotel" class="mc-hotel-logo" />
-              <div>
-                <p class="mc-hotel-name">Cumbria Spa&amp;Hotel</p>
-                <p class="mc-hotel-meta">🌄 Ciudad Real · Zona Norte</p>
-              </div>
-            </article>
-          </div>
-        </div>
+    <script>
+        // Lógica simple para Index
+        (function () {
+            // Referencias
+            const sel = document.getElementById("selectHotelIndex");
+            const cardG = document.getElementById("cardGuadiana");
+            const cardC = document.getElementById("cardCumbria");
 
-        <hr class="mc-divider" />
+            const btnRest = document.getElementById("btnEnterRestaurante");
+            const lnkRest = document.getElementById("linkRestaurante");
+            const lnkSala = document.getElementById("linkSalones");
+            const lnkPres = document.getElementById("linkPresupuestos");
+            const lnkEven = document.getElementById("linkGrandesEventos");
 
-        <div class="mc-modules-header">
-          <h2 class="mc-modules-title">Accesos rápidos MesaChef</h2>
-          <p class="mc-modules-sub">
-            Trabajando sobre <span id="mcHotelActual">Sercotel Guadiana</span>.
-          </p>
-        </div>
+            // init
+            const currentH = localStorage.getItem("mesaChef_hotel") || "Guadiana";
+            sel.value = currentH;
+            updateVisuals(currentH);
 
-        <div class="mc-modules-grid">
-          <button type="button" class="mc-module-card mc-module-restaurante" data-module="restaurante">
-            <div class="mc-module-icon">🍽️</div>
-            <div class="mc-module-text">
-              <h3>Restaurante</h3>
-              <p>Mesas, grupos, menús y servicios diarios.</p>
-              <div class="mc-module-cta">
-                <span>→</span><span>Abrir planificador</span>
-              </div>
-            </div>
-          </button>
+            sel.addEventListener("change", () => {
+                const val = sel.value;
+                localStorage.setItem("mesaChef_hotel", val);
+                updateVisuals(val);
+            });
 
-          <button type="button" class="mc-module-card mc-module-salones" data-module="salones">
-            <div class="mc-module-icon">📅</div>
-            <div class="mc-module-text">
-              <h3>Salas &amp; eventos</h3>
-              <p>Ocupación de salones por día, montajes y jornadas.</p>
-              <div class="mc-module-cta">
-                <span>→</span><span>Ver planning semanal</span>
-              </div>
-            </div>
-          </button>
+            function updateVisuals(h) {
+                if (h === "Guadiana") {
+                    cardG.classList.add("active");
+                    cardC.classList.remove("active");
+                } else {
+                    cardC.classList.add("active");
+                    cardG.classList.remove("active");
+                }
+            }
 
-          <button type="button" class="mc-module-card mc-module-presupuestos" data-module="presupuestos">
-            <div class="mc-module-icon">📄</div>
-            <div class="mc-module-text">
-              <h3>Presupuestos</h3>
-              <p>Propuestas, estados y totales económicos.</p>
-              <div class="mc-module-cta">
-                <span>→</span><span>Gestionar propuestas</span>
-              </div>
-            </div>
-          </button>
+            function navigate(mod) {
+                localStorage.setItem("mesaChef_hotel", sel.value);
+                window.location.href = mod;
+            }
 
-          <button type="button" class="mc-module-card mc-module-grandes" data-module="grandes-eventos">
-            <div class="mc-module-icon">🎉</div>
-            <div class="mc-module-text">
-              <h3>Grandes eventos</h3>
-              <p>Bodas, congresos y proyectos especiales.</p>
-              <div class="mc-module-cta">
-                <span>→</span><span>Entrar al módulo</span>
-              </div>
-            </div>
-          </button>
-        </div>
-      </section>
-    </main>
-  </div>
+            btnRest.onclick = (e) => { e.preventDefault(); navigate("restaurante.html"); };
+            lnkRest.onclick = (e) => { e.preventDefault(); navigate("restaurante.html"); };
+            lnkSala.onclick = (e) => { e.preventDefault(); navigate("salones.html"); };
+            lnkPres.onclick = (e) => { e.preventDefault(); navigate("presupuestos.html"); };
+            lnkEven.onclick = (e) => { e.preventDefault(); navigate("grandes-eventos.html"); };
 
-  <script src="js/app-common.js"></script>
-  <script src="js/index.js"></script>
+        })();
+
+        // PWA Service Worker
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js');
+        }
+    </script>
 </body>
 
 </html>
