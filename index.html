@@ -224,6 +224,13 @@
             padding: 12px 20px;
             border-radius: 16px;
             transition: all 0.2s;
+            cursor: pointer;
+            /* Clickable */
+        }
+
+        .mc-hotel-card:hover {
+            background: #f8fafc;
+            border-color: #cbd5e1;
         }
 
         .mc-hotel-card.active {
@@ -520,6 +527,17 @@
                     cardG.classList.remove("active");
                 }
             }
+
+            // Click en cards para seleccionar
+            cardG.addEventListener("click", () => {
+                sel.value = "Guadiana";
+                sel.dispatchEvent(new Event("change"));
+            });
+
+            cardC.addEventListener("click", () => {
+                sel.value = "Cumbria";
+                sel.dispatchEvent(new Event("change"));
+            });
 
             function navigate(mod) {
                 localStorage.setItem("mesaChef_hotel", sel.value);
