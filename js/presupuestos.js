@@ -8,7 +8,8 @@
         presupuestos: [],
         filtroEstado: "activos", // activos, pendientes, confirmados, anulados, todos
         filtroTexto: "",
-        editingId: null
+        editingId: null,
+        currentTotal: 0
     };
 
     // --- DOM Refs ---
@@ -24,18 +25,29 @@
     const formPresupuesto = document.getElementById("formPresupuesto");
     const tituloModal = document.getElementById("tituloModal");
     const btnCerrarModal = document.getElementById("btnCerrarModal");
-    const btnCancelar = document.getElementById("btnCancelar");
 
-    // Form Fields
+    // New Actions
+    const btnPDF = document.getElementById("btnPDF");
+    const btnGuardar = document.getElementById("btnGuardar");
+    const btnConfirmar = document.getElementById("btnConfirmar");
+    const btnAddLine = document.getElementById("btnAddLine");
+    const linesContainer = document.getElementById("linesContainer");
+    const totalDisplay = document.getElementById("totalDisplay");
+
+    // Form Fields (Updated)
     const labelRef = document.getElementById("labelRef");
+    const campoFechaDesde = document.getElementById("campoFechaDesde");
+    const campoFechaHasta = document.getElementById("campoFechaHasta");
+    const campoSalon = document.getElementById("campoSalon");
     const campoCliente = document.getElementById("campoCliente");
-    const campoFechaEvento = document.getElementById("campoFechaEvento");
-    const campoTipoEvento = document.getElementById("campoTipoEvento");
-    const campoPax = document.getElementById("campoPax");
-    const campoImporte = document.getElementById("campoImporte");
+    const campoTelefono = document.getElementById("campoTelefono");
+    const campoEmail = document.getElementById("campoEmail");
     const campoEstado = document.getElementById("campoEstado");
+    const campoJornada = document.getElementById("campoJornada");
+    const campoMontaje = document.getElementById("campoMontaje");
+    const campoPax = document.getElementById("campoPax");
     const campoNotas = document.getElementById("campoNotas");
-    const containerItems = document.getElementById("containerItems"); // Para items (opcional futura expansión)
+    const campoNotasCliente = document.getElementById("campoNotasCliente");
 
     // --- UI Helpers ---
     function nombreHotelCompleto(id) {
@@ -66,7 +78,6 @@
     }
 
     // --- INIT UI ---
-    // if (tituloHotel) tituloHotel.textContent = `Presupuestos · ${nombreHotelCompleto(hotelId)}`;
     const headerHotelName = document.getElementById("headerHotelName");
     if (headerHotelName) {
         if (hotelId === "Guadiana") {
@@ -86,14 +97,86 @@
     const colPresupuestos = db.collection("presupuestos");
     const docCounter = db.collection("counters").doc(`presupuestos_${hotelId}`);
 
+    // --- LOGIC ---
+    let currentLines = [];
+
+    // Load Salones from Config (Admin)
+    async function loadSalonConfig() {
+        if (!campoSalon) return;
+        // Keep first option
+        const first = campoSalon.querySelector('option[value=""]');
+        campoSalon.innerHTML = '';
+        if (first) campoSalon.appendChild(first);
+
+        try {
+            const snap = await db.collection("config").doc("global").get();
+            if (snap.exists) {
+                const data = snap.data();
+                const salones = data[`salones_${hotelId}`] || [];
+                salones.forEach(s => {
+                    const opt = document.createElement("option");
+                    opt.value = s.name;
+                    opt.textContent = s.name;
+                    campoSalon.appendChild(opt);
+                });
+            }
+        } catch (e) { console.error("Error loading salones config", e); }
+    }
+
+    // Lines Logic
+    function renderLines() {
+        if (!linesContainer) return;
+        linesContainer.innerHTML = "";
+        let total = 0;
+
+        currentLines.forEach((line, index) => {
+            const lineTotal = (line.uds || 0) * (line.precio || 0);
+            total += lineTotal;
+
+            const row = document.createElement("div");
+            row.className = "grid grid-cols-[120px_1fr_60px_80px_80px_40px] gap-2 px-4 py-2 items-center text-sm border-b border-slate-50 last:border-0";
+            row.innerHTML = `
+                <input type="date" class="border border-slate-200 rounded px-1 py-1 text-xs" value="${line.fecha || ''}" onchange="updateLine(${index}, 'fecha', this.value)">
+                <input type="text" class="border border-slate-200 rounded px-1 py-1 text-xs" value="${line.concepto || ''}" onchange="updateLine(${index}, 'concepto', this.value)" placeholder="Concepto...">
+                <input type="number" class="border border-slate-200 rounded px-1 py-1 text-xs text-center" value="${line.uds || 1}" onchange="updateLine(${index}, 'uds', this.value)">
+                <input type="number" class="border border-slate-200 rounded px-1 py-1 text-xs text-right" value="${line.precio || 0}" step="0.01" onchange="updateLine(${index}, 'precio', this.value)">
+                <div class="text-right font-mono text-slate-700">${formatEuro(lineTotal)}</div>
+                <button type="button" class="text-red-400 hover:text-red-600 flex justify-center" onclick="removeLine(${index})">✕</button>
+            `;
+            linesContainer.appendChild(row);
+        });
+
+        if (totalDisplay) totalDisplay.textContent = formatEuro(total);
+        state.currentTotal = total; // Store for save
+    }
+
+    window.updateLine = function (index, field, value) {
+        currentLines[index][field] = (field === 'uds' || field === 'precio') ? parseFloat(value) : value;
+        renderLines();
+    };
+
+    window.removeLine = function (index) {
+        currentLines.splice(index, 1);
+        renderLines();
+    };
+
+    if (btnAddLine) {
+        btnAddLine.onclick = () => {
+            currentLines.push({
+                fecha: campoFechaDesde.value || toIsoDate(new Date()),
+                concepto: "",
+                uds: 1,
+                precio: 0
+            });
+            renderLines();
+        };
+    }
+
     // 1. Escuchar datos (Read)
     function escucharPresupuestos() {
         actualizarEstadoConexion("pending");
         colPresupuestos
             .where("hotel", "==", hotelId)
-            .orderBy("createdAt", "desc") // Ordenar por creación (más reciente arriba)
-            // Nota: Si falta índice compuesto, Firestore avisará en consola.
-            // Si falla por índice, haremos ordenación en cliente.
             .onSnapshot(
                 (snap) => {
                     actualizarEstadoConexion("ok");
@@ -104,29 +187,24 @@
                         let fechaJS = new Date();
                         if (data.createdAt && data.createdAt.toDate) fechaJS = data.createdAt.toDate();
 
+                        // Map old fields if needed for sorting
+                        const dateSort = data.fechaDesde || data.fechaEvento;
+
                         state.presupuestos.push({
                             id: d.id,
                             ...data,
-                            _createdAtJS: fechaJS
+                            _createdAtJS: fechaJS,
+                            _dateSort: dateSort
                         });
                     });
+                    // Client-side Sort
+                    state.presupuestos.sort((a, b) => (b._createdAtJS || 0) - (a._createdAtJS || 0));
+
                     renderList();
                 },
                 (err) => {
                     console.error("Error escuchando presupuestos", err);
                     actualizarEstadoConexion("error");
-                    // Fallback a sin order si falla indice
-                    if (err.code === "failed-precondition") {
-                        console.warn("Intentando sin orderBy (falta índice)...");
-                        colPresupuestos.where("hotel", "==", hotelId).onSnapshot(s => {
-                            actualizarEstadoConexion("ok");
-                            state.presupuestos = [];
-                            s.forEach(d => state.presupuestos.push({ id: d.id, ...d.data() }));
-                            // Ordenar manual en cliente
-                            state.presupuestos.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
-                            renderList();
-                        });
-                    }
                 }
             );
     }
@@ -145,21 +223,17 @@
 
                 if (cDoc.exists) {
                     const data = cDoc.data();
-                    // Si cambiamos de año, reset? (Opcional, aquí mantendré simple)
                     if (data.year === year) {
                         currentSeq = data.seq || 0;
                     } else {
-                        // Cambio de año, reset seq
                         currentSeq = 0;
                     }
                 }
 
                 const nextSeq = currentSeq + 1;
                 const seqStr = String(nextSeq).padStart(4, "0"); // 0001
-
                 transaction.set(docCounter, { year: year, seq: nextSeq });
-
-                return prefix + seqStr; // G2025-0001
+                return prefix + seqStr;
             });
             return nuevaRef;
         } catch (e) {
@@ -168,7 +242,7 @@
         }
     }
 
-    // 3. Render
+    // 3. Render List
     function renderList() {
         if (!listContainer) return;
 
@@ -211,7 +285,10 @@
     `;
 
         filtered.forEach(p => {
-            const fechaFmt = p.fechaEvento ? formatDateES(new Date(p.fechaEvento)) : "-";
+            // Display main Date (Fecha Desde or old fechaEvento)
+            const mainDate = p.fechaDesde || p.fechaEvento;
+            const fechaFmt = mainDate ? formatDateES(new Date(mainDate)) : "-";
+
             let badgeClass = "badge-gray";
             if (p.estado === "confirmada" || p.estado === "aceptada") badgeClass = "badge-green";
             if (p.estado === "anulada" || p.estado === "rechazada") badgeClass = "badge-red";
@@ -223,7 +300,7 @@
           <div class="p-fecha">${fechaFmt}</div>
           <div class="p-cliente">
              <div class="p-cliente-nombre">${p.cliente || "Cliente"}</div>
-             <div class="p-cliente-sub">${p.tipoEvento || ""}</div>
+             <div class="p-cliente-sub">${p.tipoEvento || p.salon || ""}</div>
           </div>
           <div class="p-pax">${p.pax || 0} pax</div>
           <div class="p-importe font-mono">${formatEuro(p.importeTotal)}</div>
@@ -239,9 +316,11 @@
         listContainer.innerHTML = html;
     }
 
-    // --- 4. Modal Logic ---
+    // --- 4. Modal Logic (Updated) ---
     async function abrirModal(id = null) {
         modalPresupuesto.classList.remove("hidden");
+        await loadSalonConfig(); // Refresh options
+
         if (id) {
             state.editingId = id;
             const item = state.presupuestos.find(x => x.id === id);
@@ -250,25 +329,48 @@
             tituloModal.textContent = `Editar Presupuesto ${item.referencia || ""}`;
             labelRef.textContent = item.referencia || "REF-???";
 
+            // Populate Fields
+            campoFechaDesde.value = item.fechaDesde || item.fechaEvento || ""; // Migration
+            campoFechaHasta.value = item.fechaHasta || item.fechaEvento || "";
+            campoSalon.value = item.salon || "";
             campoCliente.value = item.cliente || "";
-            campoFechaEvento.value = item.fechaEvento || "";
-            campoTipoEvento.value = item.tipoEvento || "";
-            campoPax.value = item.pax || 0;
-            campoImporte.value = item.importeTotal || 0;
+            campoTelefono.value = item.telefono || "";
+            campoEmail.value = item.email || "";
             campoEstado.value = item.estado || "pendiente";
+            campoJornada.value = item.jornada || "todo";
+            campoMontaje.value = item.montaje || "banquete";
+            campoPax.value = item.pax || 0;
             campoNotas.value = item.notas || "";
+            campoNotasCliente.value = item.notasCliente || "";
+
+            // Restore Lines
+            currentLines = item.lines || [];
+            if (currentLines.length === 0 && item.importeTotal > 0) {
+                // Migration: If no lines but total exists, create dummy line
+                currentLines.push({ fecha: item.fechaDesde || item.fechaEvento, concepto: "Importe Migrado", uds: 1, precio: item.importeTotal });
+            }
+            renderLines();
+
         } else {
             state.editingId = null;
             tituloModal.textContent = "Nuevo Presupuesto";
-            labelRef.textContent = "(Generando Ref...)";
+            labelRef.textContent = "(Nueva Ref)";
 
+            // Defaults
+            campoFechaDesde.value = toIsoDate(new Date());
+            campoFechaHasta.value = toIsoDate(new Date());
+            campoSalon.value = "";
             campoCliente.value = "";
-            campoFechaEvento.value = toIsoDate(new Date());
-            campoTipoEvento.value = "";
-            campoPax.value = "";
-            campoImporte.value = "";
+            campoTelefono.value = "";
+            campoEmail.value = "";
             campoEstado.value = "pendiente";
+            campoJornada.value = "todo";
+            campoMontaje.value = "banquete";
+            campoPax.value = "";
             campoNotas.value = "";
+            campoNotasCliente.value = "";
+            currentLines = [];
+            renderLines();
         }
     }
 
@@ -279,7 +381,7 @@
     // Listeners
     if (btnNuevo) btnNuevo.addEventListener("click", () => abrirModal(null));
     if (btnCerrarModal) btnCerrarModal.addEventListener("click", cerrarModal);
-    if (btnCancelar) btnCancelar.addEventListener("click", cerrarModal);
+    // REMOVED btnCancelar Logic as it's not in the new layout footer (handled by X or outside click)
     if (modalPresupuesto) modalPresupuesto.addEventListener("click", (e) => {
         if (e.target === modalPresupuesto) cerrarModal();
     });
@@ -309,52 +411,62 @@
         });
     }
 
-    // Submit
-    if (formPresupuesto) {
-        formPresupuesto.addEventListener("submit", async (e) => {
-            e.preventDefault();
+    // SAVE LOGIC
+    async function guardarDatos(esConfirmacion = false) {
+        if (!campoCliente.value) { alert("Cliente es obligatorio"); return; }
 
-            if (!campoCliente.value) {
-                alert("El cliente es obligatorio");
-                return;
+        const payload = {
+            hotel: hotelId,
+            fechaDesde: campoFechaDesde.value,
+            fechaHasta: campoFechaHasta.value,
+            // Main date for sorting/grid is 'Fecha Desde'
+            fechaEvento: campoFechaDesde.value,
+
+            salon: campoSalon.value,
+            cliente: campoCliente.value.trim(),
+            telefono: campoTelefono.value.trim(),
+            email: campoEmail.value.trim(),
+
+            estado: esConfirmacion ? "confirmada" : campoEstado.value,
+            jornada: campoJornada.value,
+            montaje: campoMontaje.value,
+            pax: parseInt(campoPax.value) || 0,
+
+            notas: campoNotas.value.trim(),
+            notasCliente: campoNotasCliente.value.trim(),
+
+            lines: currentLines,
+            importeTotal: state.currentTotal || 0,
+
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        };
+
+        try {
+            if (state.editingId) {
+                await colPresupuestos.doc(state.editingId).update(payload);
+            } else {
+                // Generar Ref Unique only on Create
+                const newRef = await generarReferenciaUnica();
+                const newDoc = { ...payload, referencia: newRef, createdAt: firebase.firestore.FieldValue.serverTimestamp() };
+                await colPresupuestos.add(newDoc);
+                alert("Presupuesto " + newRef + " crado.");
             }
 
-            const payload = {
-                hotel: hotelId,
-                cliente: campoCliente.value.trim(),
-                fechaEvento: campoFechaEvento.value,
-                tipoEvento: campoTipoEvento.value.trim(),
-                pax: parseInt(campoPax.value) || 0,
-                importeTotal: parseFloat(campoImporte.value) || 0,
-                estado: campoEstado.value,
-                notas: campoNotas.value.trim(),
-                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-            };
-
-            try {
-                if (state.editingId) {
-                    await colPresupuestos.doc(state.editingId).update(payload);
-                } else {
-                    // CREATE
-                    // 1. Generate REF
-                    const newRef = await generarReferenciaUnica();
-
-                    const nuevoDoc = {
-                        ...payload,
-                        referencia: newRef,
-                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                    };
-
-                    await colPresupuestos.add(nuevoDoc);
-                    alert("Presupuesto creado con referencia: " + newRef);
-                }
-                cerrarModal();
-            } catch (err) {
-                console.error("Error guardando presupuesto", err);
-                alert("Error al guardar. Inténtalo de nuevo.");
+            if (esConfirmacion) {
+                // FUTURE: Create real reservation in Salones...
+                alert("Presupuesto marcado como confirmado.");
             }
-        });
+
+            cerrarModal();
+        } catch (e) {
+            console.error("Error saving:", e);
+            alert("Error al guardar.");
+        }
     }
+
+    if (btnGuardar) btnGuardar.onclick = (e) => { e.preventDefault(); guardarDatos(false); };
+    if (btnConfirmar) btnConfirmar.onclick = (e) => { e.preventDefault(); guardarDatos(true); };
+    if (formPresupuesto) formPresupuesto.onsubmit = (e) => { e.preventDefault(); guardarDatos(false); };
 
     // --- GLOBAL SEARCH LOGIC (Presupuestos) ---
     let searchDebounce = null;

@@ -166,6 +166,13 @@
         }
     };
 
+    function getCellId(hotel, salonName, dateStr) {
+        // ID SAFE GENERATION: Lowercase, underscores only
+        const h = (hotel || "").toLowerCase().replace(/[^a-z0-9]/g, '_');
+        const s = (salonName || "").toLowerCase().replace(/[^a-z0-9]/g, '_');
+        return `cell_${h}_${s}_${dateStr}`;
+    }
+
     window.renderGrid = function () {
         const hotel = localStorage.getItem(STORAGE_KEY) || "Guadiana";
         const container = document.getElementById("calendarGrid");
@@ -243,31 +250,30 @@
                     });
 
                     if (isBlocked) {
-                        html += `<div id="cell_${hotel.replace(/\s/g, '_')}_${salon.name.replace(/\s/g, '_')}_${dateStr}"
+                        html += `<div id="${getCellId(hotel, salon.name, dateStr)}"
                                     class="bg-red-50 hover:bg-red-100 border-r border-slate-100 last:border-r-0 transition p-1 relative flex flex-col items-center justify-center group cursor-not-allowed" title="${blockReason}">
                                     <span class="text-lg">🔒</span>
                                     <span class="text-[9px] text-red-600 font-bold uppercase mt-1 text-center leading-tight">${blockReason}</span>
                                </div>`;
                     } else {
-                        // VISUAL SPLIT: Morning / Afternoon click zones
-                        // Layout: Grid with 2 rows (Morning/Afternoon). Explicit rows allow cards to be placed in specific slots.
-                        html += `<div id="cell_${hotel.replace(/\s/g, '_')}_${salon.name.replace(/\s/g, '_')}_${dateStr}"
-                                    style="display: grid; grid-template-rows: minmax(50px, 1fr) minmax(50px, 1fr);"
-                                    class="bg-white min-h-[100px] border-r border-slate-100 last:border-r-0 relative group">
+                        // VISUAL: Single Flex Cell with Hover Add
+                        html += `<div id="${getCellId(hotel, salon.name, dateStr)}"
+                                    class="bg-white min-h-[100px] border-r border-slate-100 last:border-r-0 relative group flex flex-col p-1 gap-1">
                                         
-                                        <!-- Morning Zone -->
-                                        <div onclick="window.openBooking('${safeName}', '${dateStr}', null, 'mañana')" 
-                                            style="grid-row: 1;"
-                                            class="border-b border-dashed border-slate-200 hover:bg-blue-50 cursor-pointer flex items-center justify-center group/morning transition">
-                                            <span class="opacity-0 group-hover/morning:opacity-100 text-[9px] font-bold text-blue-400">MAÑANA</span>
+                                        <!-- Hover Placeholders / Add Button -->
+                                        <div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 pointer-events-none z-0">
+                                            <span class="text-4xl text-slate-100 font-bold">+</span>
                                         </div>
+                                        
+                                        <!-- Floating Add Button (Top Right) -->
+                                        <button onclick="window.openBooking('${safeName}', '${dateStr}')" 
+                                            class="absolute top-1 right-1 w-6 h-6 flex items-center justify-center bg-blue-50 text-blue-600 rounded-full shadow-sm opacity-0 group-hover:opacity-100 transition z-30 hover:bg-blue-600 hover:text-white font-bold pb-0.5"
+                                            title="Añadir evento">
+                                            +
+                                        </button>
 
-                                        <!-- Afternoon Zone -->
-                                        <div onclick="window.openBooking('${safeName}', '${dateStr}', null, 'tarde')"
-                                            style="grid-row: 2;"
-                                            class="hover:bg-blue-50 cursor-pointer flex items-center justify-center group/afternoon transition">
-                                            <span class="opacity-0 group-hover/afternoon:opacity-100 text-[9px] font-bold text-blue-400">TARDE</span>
-                                        </div>
+                                        <!-- Invisible Click Area for Empty Cells -->
+                                        <div onclick="window.openBooking('${safeName}', '${dateStr}')" class="absolute inset-0 z-0 cursor-pointer"></div>
                                   </div>`;
                     }
                 });
@@ -405,7 +411,7 @@
 
             const sample = group[0];
             // construct ID using CANONICAL salon name from sample._canonicalSalon
-            const cellId = `cell_${hotel.replace(/\s/g, '_')}_${sample._canonicalSalon.replace(/\s/g, '_')}_${sample.fecha}`;
+            const cellId = getCellId(hotel, sample._canonicalSalon, sample.fecha);
             const cell = document.getElementById(cellId);
 
             if (!cell) {
@@ -434,24 +440,14 @@
                 else if (res.estado === 'cancelada') colorClass = 'bg-red-100 border-red-500 text-red-800 opacity-60'; // Dimmed
 
                 const card = document.createElement("div");
-                // DEBUG LOG
-                // console.log(`Painting ${res.cliente} at ${cellId} (Jornada: ${jornada})`);
 
-
-                // Base classes (Auto Height for expansion)
-                let classes = `booking-card w-[96%] mx-auto rounded border-l-4 ${colorClass} shadow-sm px-1 py-1 text-[10px] flex flex-col justify-between relative box-border hover:z-20 hover:shadow-md transition h-auto min-h-full`;
+                // Base classes (FLEX grow) - w-full to fill width, flex-1 to grow height
+                let classes = `booking-card w-full rounded border-l-4 ${colorClass} shadow-sm px-1 py-1 text-[10px] flex flex-col justify-between relative box-border hover:z-20 hover:shadow-md transition flex-1 cursor-pointer min-h-[50px]`;
                 card.className = classes;
-
-                // GRID PLACEMENT (No absolute)
                 card.style.zIndex = "10";
 
-                if (jornada === "todo") {
-                    card.style.gridRow = "1 / span 2";
-                } else if (jornada === "mañana") {
-                    card.style.gridRow = "1";
-                } else if (jornada === "tarde") {
-                    card.style.gridRow = "2";
-                }
+                // Add margins if multiple items to separate them
+                if (group.length > 1) card.classList.add("mb-1", "last:mb-0");
 
                 card.onclick = (e) => { e.stopPropagation(); openBooking(res.salon, res.fecha, res); };
 
@@ -468,6 +464,21 @@
                 const hasNote = res.notas && res.notas.interna && res.notas.interna.trim().length > 0;
                 const noteStr = hasNote ? `<span title="Nota Interna: ${res.notas.interna.replace(/"/g, '&quot;')}" class="cursor-help ml-1">📝</span>` : '';
 
+                // Jornada Styling
+                let jText = (jornada || "").toUpperCase();
+                let jClass = "text-slate-600";
+
+                if (jText.includes("MAÑANA")) {
+                    jText = "1/2 MAÑ";
+                    jClass = "text-sky-700 bg-sky-100/50";
+                } else if (jText.includes("TARDE")) {
+                    jText = "1/2 TARD";
+                    jClass = "text-orange-700 bg-orange-100/50";
+                } else if (jText.includes("TODO")) {
+                    jText = "COMP";
+                    jClass = "text-indigo-700 bg-indigo-100/50";
+                }
+
                 card.innerHTML = `
                     ${redDot}
                     <div class="flex items-center justify-between">
@@ -476,8 +487,11 @@
                     </div>
                     
                     <div class="flex justify-between items-end mt-1 text-[9px]">
-                        <span class="truncate opacity-80">${res.detalles?.montaje || '-'}</span>
-                         <div class="flex items-center space-x-1">
+                        <div class="flex flex-col min-w-0 pr-1">
+                             <span class="text-[8px] font-extrabold uppercase tracking-tight leading-none mb-0.5 px-1 rounded w-fit ${jClass}">${jText}</span>
+                             <span class="truncate opacity-90">${res.detalles?.montaje || '-'}</span>
+                        </div>
+                         <div class="flex items-center space-x-1 shrink-0">
                             ${timeStr}
                             ${paxStr}
                         </div>
@@ -621,6 +635,53 @@
     let currentBookingId = null;
 
     window.openBooking = function (salonName, dateStr, existing = null, defaultJornada = 'todo') {
+        const currentHotel = localStorage.getItem(STORAGE_KEY) || "Guadiana";
+
+        // Check for existing reservations in this slot (if new)
+        if (!existing && salonName && dateStr) {
+            const salonRaw = salonName.replace(/\s/g, '').toLowerCase();
+
+            // Find existing for this salon/date
+            const conflictCandidates = loadedReservations.filter(r => {
+                if (r.hotel !== currentHotel) return false;
+                // Check status
+                if (['cancelada', 'anulada'].includes((r.estado || '').toLowerCase())) return false;
+
+                // Check Date
+                let rDate = "";
+                if (r.fecha && r.fecha.toDate) rDate = utils.toIsoDate(r.fecha.toDate());
+                else if (typeof r.fecha === 'string') rDate = r.fecha;
+                if (rDate !== dateStr) return false;
+
+                // Check Salon (Normalize name)
+                const rSalonRaw = (r.salon || "").replace(/\s/g, '').toLowerCase();
+                return rSalonRaw === salonRaw;
+            });
+
+            // Analyze conflicts
+            const hasTodo = conflictCandidates.some(r => (r.detalles?.jornada || 'todo') === 'todo');
+            const hasMorning = conflictCandidates.some(r => (r.detalles?.jornada || 'todo') === 'mañana');
+            const hasAfternoon = conflictCandidates.some(r => (r.detalles?.jornada || 'todo') === 'tarde');
+
+            if (hasTodo) {
+                alert("⛔ SALÓN OCUPADO: Ya existe un evento de día completo.");
+                return; // Block opening
+            }
+
+            if (hasMorning && hasAfternoon) {
+                alert("⛔ SALÓN OCUPADO: Mañana y Tarde ya están reservadas.");
+                return; // Block opening
+            }
+
+            if (hasMorning) {
+                defaultJornada = 'tarde';
+                // Ideally we could warn the user: "Mañana ocupada, seleccionando Tarde"
+            } else if (hasAfternoon) {
+                defaultJornada = 'mañana';
+            }
+        }
+
+
         const sSel = document.getElementById("evt-salon");
         const mSel = document.getElementById("evt-montaje");
 
@@ -633,8 +694,8 @@
             updateRentalPrice(); // Update rental row if present
         };
 
-        const hotel = localStorage.getItem(STORAGE_KEY) || "Guadiana";
-        const salons = globalConfig[hotel] || [];
+
+        const salons = globalConfig[currentHotel] || [];
 
         salons.forEach(s => {
             const op = document.createElement("option");
@@ -967,9 +1028,17 @@
         `;
 
         // 0. Collect Rows
+        // 0. Collect Rows
         let rows = [];
         loadedReservations.forEach(r => {
-            if (filterFn(r) && ['pendiente', 'confirmada', 'pending', 'confirmed'].includes(r.estado)) {
+            // 1. Hotel Check (Critical for multi-hotel data)
+            if (r.hotel && r.hotel !== hotel) return;
+
+            // 2. Status Check (Case Insensitive)
+            const st = (r.estado || 'pendiente').toLowerCase();
+            const validStatuses = ['pendiente', 'confirmada', 'pending', 'confirmed'];
+
+            if (filterFn(r) && validStatuses.includes(st)) {
                 rows.push({ ...r, ts: new Date(r.fecha + 'T' + (r.detalles?.hora || '00:00')) });
             }
         });
@@ -990,57 +1059,70 @@
             const dayName = dateObj.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' });
             const dayNameCap = dayName.charAt(0).toUpperCase() + dayName.slice(1);
 
-            html += `< h3 style = "font-size: 16px; font-weight: bold; margin-top: 20px; margin-bottom: 5px; color: #2c3e50; border-bottom: 2px solid #ddd; padding-bottom: 5px;" >📅 ${dayNameCap}</h3> `;
+            html += `<h3 style="font-size: 16px; font-weight: bold; margin-top: 20px; margin-bottom: 5px; color: #2c3e50; border-bottom: 2px solid #ddd; padding-bottom: 5px;">📅 ${dayNameCap}</h3>`;
 
             // Table Header
-            html += `< table style = "width: 100%; border-collapse: collapse; font-size: 11px; margin-bottom: 20px;" >
+            html += `<table style="width: 100%; border-collapse: collapse; font-size: 11px; margin-bottom: 20px;">
                         <thead>
                             <tr style="background: #f1f5f9; color: #475569; text-align: left;">
                                 <th style="padding: 6px; width: 45px; border-bottom: 2px solid #ddd;">Hora</th>
                                 <th style="padding: 6px; width: 90px; border-bottom: 2px solid #ddd;">Salón</th>
                                 <th style="padding: 6px; width: 130px; border-bottom: 2px solid #ddd;">Cliente</th>
                                 <th style="padding: 6px; width: 80px; border-bottom: 2px solid #ddd;">Montaje</th>
+                                <th style="padding: 6px; width: 60px; border-bottom: 2px solid #ddd;">Jornada</th>
                                 <th style="padding: 6px; width: 30px; border-bottom: 2px solid #ddd; text-align:center;">Pax</th>
-                                <th style="padding: 6px; border-bottom: 2px solid #ddd;">Notas / Observaciones</th>
                                 <th style="padding: 6px; width: 40px; border-bottom: 2px solid #ddd;">Est.</th>
                             </tr>
                         </thead>
                         <tbody>`;
 
             let dailyPax = 0;
-            // Counters for breakdown? Salones has many montajes. Maybe just list them?
-            // Or simple count of events.
             let eventCount = 0;
 
-            groups[dateStr].forEach(r => {
+            groups[dateStr].forEach((r, index) => {
                 const pax = (parseInt(r.detalles?.pax_adultos) || 0) + (parseInt(r.detalles?.pax_ninos) || 0);
                 dailyPax += pax;
                 eventCount++;
 
                 const time = r.detalles?.hora || "--:--";
                 const space = r.salon || "Salon";
-                const spaceAbbr = space.substring(0, 15) + (space.length > 15 ? '.' : ''); // Slightly longer for Salon names
+                const spaceAbbr = space.substring(0, 15) + (space.length > 15 ? '.' : '');
                 const clientName = r.cliente || "Sin Nombre";
                 const montaje = r.detalles?.montaje || "-";
+                const jornada = r.detalles?.jornada || "-";
 
                 let statusFull = r.estado || "";
                 let statusAbbr = (statusFull === 'confirmada' || statusFull === 'confirmed') ? 'Conf' : 'Pend';
-
                 let notesText = r.notas?.interna || "";
 
-                // Row
-                html += `<tr style="border-bottom: 1px solid #eee;">
+                // Add a top border only if it's not the first item, to separate groups
+                const borderStyle = index > 0 ? "border-top: 1px solid #ddd;" : "";
+
+                // Main Row
+                html += `<tr style="${borderStyle}">
                             <td style="padding: 6px; font-weight:bold;">${time}</td>
                             <td style="padding: 6px; color:#555;">${spaceAbbr}</td>
                             <td style="padding: 6px; font-weight:600; color:#333;">${clientName.substring(0, 20)}</td>
                             <td style="padding: 6px;">${montaje.substring(0, 10)}</td>
+                            <td style="padding: 6px;">${jornada}</td>
                             <td style="padding: 6px; text-align:center;">${pax}</td>
-                            <td style="padding: 6px; font-style:italic; color:#444;">${notesText}</td>
                             <td style="padding: 6px;">${statusAbbr}</td>
                         </tr>`;
+
+                // Notes Row
+                if (notesText) {
+                    html += `<tr>
+                                <td colspan="7" style="padding: 2px 6px 8px 6px; color:#666; font-style:italic; font-size:10px;">
+                                    📝 ${notesText}
+                                </td>
+                             </tr>`;
+                } else {
+                    // Empty row to keep spacing consistent if no notes? Or just omit.
+                    // Omitting assumes the top border of next row handles separation.
+                }
             });
 
-            html += `</tbody></table > `;
+            html += `</tbody></table>`;
 
             html += `<div style="font-size: 13px; font-weight: bold; color: #333; margin-bottom: 30px; background: #fafafa; padding: 10px; border-left: 4px solid #666;">
                 Resumen día ${dateObj.getDate()}: Total ${dailyPax} personas (${eventCount} eventos)

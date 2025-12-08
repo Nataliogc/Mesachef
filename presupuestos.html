@@ -133,6 +133,9 @@
     }
   </style>
 
+  <!-- Tailwind CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
   <!-- Firebase -->
   <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-firestore-compat.js"></script>
@@ -263,55 +266,163 @@
         <button id="btnCerrarModal" class="modal-close">✕</button>
       </div>
 
-      <form id="formPresupuesto" class="modal-body">
-        <div class="form-row form-row-inline">
-          <div class="form-field">
-            <label>Cliente / Empresa / Contacto</label>
-            <input id="campoCliente" type="text" required placeholder="Nombre principal..." />
-          </div>
-        </div>
+      <form id="formPresupuesto" class="modal-body p-6 space-y-6">
 
-        <div class="form-row form-row-inline">
-          <div class="form-field">
-            <label>Tipo Evento</label>
-            <input id="campoTipoEvento" type="text" placeholder="Ej: Boda, Reunión, Banquete..." />
+        <!-- ROW 1: Dates & Context -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div class="form-control">
+            <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Desde</label>
+            <input type="date" id="campoFechaDesde"
+              class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:border-blue-500 outline-none"
+              required>
           </div>
-          <div class="form-field">
-            <label>Fecha Evento</label>
-            <input id="campoFechaEvento" type="date" required />
+          <div class="form-control">
+            <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Hasta</label>
+            <input type="date" id="campoFechaHasta"
+              class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:border-blue-500 outline-none"
+              required>
           </div>
-        </div>
-
-        <div class="form-row form-row-inline">
-          <div class="form-field">
-            <label>Pax Aprox.</label>
-            <input id="campoPax" type="number" min="0" />
-          </div>
-          <div class="form-field">
-            <label>Importe Estimado Total (€)</label>
-            <input id="campoImporte" type="number" min="0" step="0.01" />
-          </div>
-          <div class="form-field">
-            <label>Estado</label>
-            <select id="campoEstado">
-              <option value="pendiente">Pendiente</option>
-              <option value="enviada">Enviada al Cliente</option>
-              <option value="aceptada">Aceptada / Confirmada</option>
-              <option value="rechazada">Rechazada</option>
-              <option value="anulada">Anulada (Interna)</option>
+          <div class="form-control">
+            <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Espacio / Salón</label>
+            <select id="campoSalon"
+              class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:border-blue-500 outline-none">
+              <option value="">-- Seleccionar --</option>
+              <!-- Populated via JS -->
             </select>
           </div>
         </div>
 
-        <div class="form-row">
-          <label>Notas Internas</label>
-          <textarea id="campoNotas" rows="4" placeholder="Detalles, recordatorios, etc."></textarea>
+        <!-- ROW 2: CRM -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div class="form-control">
+            <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Cliente / Evento</label>
+            <input type="text" id="campoCliente"
+              class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:border-blue-500 outline-none"
+              placeholder="Nombre del cliente...">
+          </div>
+          <div class="form-control">
+            <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Teléfono</label>
+            <input type="tel" id="campoTelefono"
+              class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:border-blue-500 outline-none">
+          </div>
+          <div class="form-control">
+            <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Email</label>
+            <input type="email" id="campoEmail"
+              class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:border-blue-500 outline-none">
+          </div>
         </div>
 
-        <div class="modal-footer">
-          <button type="button" id="btnCancelar" class="btn-secondary">Cancelar</button>
-          <!-- Nota: El botón submit no se llamará "Borrar" jamás -->
-          <button type="submit" class="btn-primary">Guardar Datos</button>
+        <!-- ROW 3: Details -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div class="form-control">
+            <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Estado</label>
+            <select id="campoEstado"
+              class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:border-blue-500 outline-none">
+              <option value="pendiente" selected>⏳ Pendiente</option>
+              <option value="confirmada">✅ Confirmada</option>
+              <option value="rechazada">❌ Rechazada</option>
+            </select>
+          </div>
+          <div class="form-control">
+            <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Jornada</label>
+            <select id="campoJornada"
+              class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:border-blue-500 outline-none">
+              <option value="todo">Jornada Comp.</option>
+              <option value="mañana">Mañana</option>
+              <option value="tarde">Tarde</option>
+            </select>
+          </div>
+          <div class="form-control">
+            <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Montaje</label>
+            <select id="campoMontaje"
+              class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:border-blue-500 outline-none">
+              <option value="banquete">Banquete</option>
+              <option value="escuela">Escuela</option>
+              <option value="imperial">Imperial</option>
+              <option value="u">En U</option>
+              <option value="teatro">Teatro</option>
+              <option value="cocktail">Cocktail</option>
+            </select>
+          </div>
+          <div class="form-control">
+            <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Pax A.</label>
+            <input type="number" id="campoPax"
+              class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:border-blue-500 outline-none"
+              min="0">
+          </div>
+        </div>
+
+        <!-- SEPARATOR: SERVICES -->
+        <div class="flex justify-between items-center pt-4 border-t border-slate-100">
+          <h3 class="text-sm font-bold text-slate-700 uppercase">Desglose / Servicios</h3>
+          <button type="button"
+            class="bg-purple-600/10 text-purple-700 hover:bg-purple-600/20 px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1 transition">
+            ✨ Menú IA
+          </button>
+        </div>
+
+        <!-- ROW 5: Services Table -->
+        <div class="bg-slate-50 rounded-lg border border-slate-200 overflow-hidden">
+          <!-- Header -->
+          <div
+            class="grid grid-cols-[120px_1fr_60px_80px_80px_40px] gap-2 px-4 py-2 bg-slate-100 text-[10px] font-bold text-slate-500 uppercase border-b border-slate-200">
+            <div>Fecha</div>
+            <div>Concepto</div>
+            <div class="text-center">Uds</div>
+            <div class="text-right">Precio</div>
+            <div class="text-right">Total</div>
+            <div></div>
+          </div>
+
+          <!-- Rows Container -->
+          <div id="linesContainer" class="divide-y divide-slate-100">
+            <!-- JS will inject rows here -->
+          </div>
+
+          <!-- Add Button -->
+          <button type="button" id="btnAddLine"
+            class="w-full py-2 text-center text-blue-600 text-xs font-bold hover:bg-blue-50 transition border-t border-dashed border-blue-200">
+            + Añadir línea
+          </button>
+        </div>
+
+        <!-- Total -->
+        <div class="flex justify-end pt-2">
+          <div class="text-right">
+            <span class="text-2xl font-bold text-slate-800" id="totalDisplay">0.00 €</span>
+          </div>
+        </div>
+
+        <!-- ROW 8: Notes -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Notas Internas</label>
+            <textarea id="campoNotas"
+              class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:border-blue-500 outline-none h-20 resize-none"></textarea>
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Nota Cliente (PDF)</label>
+            <textarea id="campoNotasCliente"
+              class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:border-blue-500 outline-none h-20 resize-none"></textarea>
+          </div>
+        </div>
+
+        <!-- Footer Actions -->
+        <div class="modal-footer flex justify-between items-center pt-6 border-t border-gray-100 mt-4">
+          <button type="button" id="btnPDF"
+            class="flex items-center gap-2 px-4 py-2 bg-white border border-slate-300 text-slate-700 rounded hover:bg-slate-50 font-semibold text-sm transition">
+            📄 PDF
+          </button>
+          <div class="flex items-center gap-3">
+            <button type="submit" id="btnConfirmar"
+              class="px-6 py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded font-bold text-sm shadow-sm hover:shadow transition flex items-center gap-2">
+              ✅ Confirmar
+            </button>
+            <button type="button" id="btnGuardar"
+              class="px-6 py-2 bg-slate-800 hover:bg-slate-900 text-white rounded font-bold text-sm shadow-sm hover:shadow transition">
+              GUARDAR
+            </button>
+          </div>
         </div>
       </form>
     </div>
