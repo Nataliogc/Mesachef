@@ -1,474 +1,273 @@
-// js/salones.js
+// js/salones.js - v7 (Fix Key Mismatch)
+
 (function () {
-    const {
-        getCurrentHotel,
-        getWeekDates,
-        toIsoDate,
-        formatDayHeader,
-        formatDateES
-    } = window.MesaChef;
+    function ensureFirebase(callback) {
+        if (window.firebase && window.firebase.apps.length) { callback(); return; }
+        const s1 = document.createElement("script");
+        s1.src = "https://www.gstatic.com/firebasejs/9.6.7/firebase-app-compat.js";
+        s1.onload = function () {
+            const s2 = document.createElement("script");
+            s2.src = "https://www.gstatic.com/firebasejs/9.6.7/firebase-firestore-compat.js";
+            s2.onload = function () { initFirebase(callback); };
+            document.head.appendChild(s2);
+        };
+        document.head.appendChild(s1);
+    }
 
-    const hotelId = getCurrentHotel();
+    function initFirebase(callback) {
+        const firebaseConfig = {
+            apiKey: "AIzaSyBAK0sGUYpV8KHy1KwIdNRLtHlq5LT3Vwg",
+            authDomain: "gestionsalones-bba4b.firebaseapp.com",
+            projectId: "gestionsalones-bba4b",
+            storageBucket: "gestionsalones-bba4b.firebasestorage.app",
+            messagingSenderId: "860164285474",
+            appId: "1:860164285474:web:ff995e88093e5aa5eb167b"
+        };
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+        callback();
+    }
 
-    const state = {
-        baseDate: new Date(),
-        eventos: [],
-        configSalones: [],
-        configMontajes: [],
-        editingId: null,
-        currentConceptos: [] // Array { concepto, uds, precio }
+    let db;
+    let globalConfig = null;
+    let currentWeekStart = new Date();
+
+    // Key used by index.html
+    const STORAGE_KEY = "mesaChef_hotel";
+
+    const utils = window.MesaChef || {
+        getWeekDates: (d) => {
+            const start = new Date(d);
+            const day = start.getDay();
+            const diff = start.getDate() - day + (day === 0 ? -6 : 1);
+            start.setDate(diff);
+            let dates = [];
+            for (let i = 0; i < 7; i++) {
+                let temp = new Date(start);
+                temp.setDate(temp.getDate() + i);
+                dates.push(temp);
+            }
+            return dates;
+        },
+        toIsoDate: (d) => d.toISOString().split('T')[0],
+        formatDateES: (d) => d.toLocaleDateString('es-ES', { weekday: 'short', day: 'numeric', month: 'short' })
     };
 
-    // DOM
-    const tituloHotel = document.getElementById("tituloHotel");
-    const estadoConexion = document.getElementById("estadoConexion");
-    const btnPrev = document.getElementById("btnPrev");
-    const btnNext = document.getElementById("btnNext");
-    const inputSemana = document.getElementById("inputSemana");
-    const grid = document.getElementById("gridSalones");
-    const btnNuevoEvento = document.getElementById("btnNuevoEvento");
-    const btnReporteSemana = document.getElementById("btnReporteSemana");
+    function startApp() {
+        console.log("Salones: Iniciando aplicación...");
+        db = firebase.firestore();
 
-    // Modal
-    const modalEvento = document.getElementById("modalEvento");
-    const formEvento = document.getElementById("formEvento");
-    const tituloModalEvento = document.getElementById("tituloModalEvento");
-    const btnCerrarModal = document.getElementById("btnCerrarModal");
-    const btnCancelarEvento = document.getElementById("btnCancelarEvento");
+        // 1. HOTEL IDENTITY CHECK
+        // Align with index.html key
+        let currentHotel = localStorage.getItem(STORAGE_KEY);
+        console.log("Salones: Hotel detectado (" + STORAGE_KEY + "): ", currentHotel);
 
-    const campoSalon = document.getElementById("campoSalon");
-    const campoFecha = document.getElementById("campoFecha");
-    const campoNombre = document.getElementById("campoNombre");
-    const campoPax = document.getElementById("campoPax");
-    const campoTurno = document.getElementById("campoTurno");
-    const campoMontaje = document.getElementById("campoMontaje");
-    const campoNotas = document.getElementById("campoNotas");
-    const campoEstado = document.getElementById("campoEstado"); // Nuevo
+        const headerName = document.getElementById("headerHotelName");
+        let displayName = "Seleccione Hotel en Inicio";
 
-    // Conceptos
-    const tbodyConceptos = document.getElementById("tbodyConceptos");
-    const btnAddLine = document.getElementById("btnAddLine");
-    const lblTotalGeneral = document.getElementById("lblTotalGeneral");
-
-    // --- Utils ---
-    function actualizarEstadoConexion(estado) {
-        if (!estadoConexion) return;
-        estadoConexion.className = "estado-conexion";
-        if (estado === "ok") {
-            estadoConexion.classList.add("estado-ok");
-            estadoConexion.textContent = "Conectado";
-        } else if (estado === "error") {
-            estadoConexion.classList.add("estado-error");
-            estadoConexion.textContent = "Sin conexión";
-        } else {
-            estadoConexion.textContent = "Cargando...";
+        if (currentHotel === "Guadiana") displayName = "Sercotel Guadiana";
+        else if (currentHotel === "Cumbria") displayName = "Cumbria Spa & Hotel";
+        else {
+            // Fallback
+            if (!currentHotel) {
+                currentHotel = "Guadiana";
+                // Do not write back to avoid interfering with Dashboard logic unless needed
+                displayName = "Sercotel Guadiana (Default)";
+            }
         }
-    }
 
-    function getLogoPath(id) {
-        if (id === "Guadiana") return "Img/logo-guadiana.svg";
-        if (id === "Cumbria") return "Img/logo-cumbria.svg";
-        return "";
-    }
+        if (headerName) headerName.innerText = displayName;
 
-    function nombreHotelCompleto(id) {
-        if (id === "Guadiana") return "Sercotel Guadiana";
-        if (id === "Cumbria") return "Cumbria Spa&Hotel";
-        return id || "Hotel";
-    }
-
-    if (tituloHotel) {
-        const logo = getLogoPath(hotelId);
-        tituloHotel.innerHTML = `
-        <div style="display:flex; align-items:center; gap:8px;">
-           ${logo ? `<img src="${logo}" style="height:24px; width:auto;" alt="Logo" />` : ''}
-           <span>Salas & Eventos · ${nombreHotelCompleto(hotelId)}</span>
-        </div>
-      `;
-    }
-
-    // --- Config Logic ---
-    async function cargarConfiguracion() {
-        try {
-            const doc = await db.collection("master_data").doc("CONFIG_SALONES").get();
+        // 2. LOAD CONFIG
+        db.collection("master_data").doc("CONFIG_SALONES").get().then(doc => {
             if (doc.exists) {
-                const data = doc.data();
-                if (data[hotelId]) {
-                    state.configSalones = data[hotelId].map((s, i) => ({
-                        id: "salon_" + i,
-                        nombre: s.name,
-                        paxCap: s.pax,
-                        precioMedia: s.priceHalf,
-                        precioCompleta: s.priceFull
-                    }));
-                } else {
-                    state.configSalones = [{ id: "def1", nombre: "Salón Principal (Default)", precioMedia: 0, precioCompleta: 0 }];
-                }
-
-                if (data.montajes && Array.isArray(data.montajes)) {
-                    state.configMontajes = data.montajes;
-                } else {
-                    state.configMontajes = ["Escuela", "Teatro", "Imperial", "U", "Cocktail", "Banquete"];
-                }
+                globalConfig = doc.data();
             } else {
-                state.configSalones = [{ id: "def1", nombre: "Default Salon" }];
-                state.configMontajes = ["Escuela"];
+                globalConfig = { montajes: ["Banquete"], Guadiana: [], Cumbria: [] };
             }
-        } catch (e) {
-            console.warn("Error config", e);
-            state.configSalones = [{ id: "err", nombre: "Error Config" }];
-        }
-        renderSelectSalones();
-        renderSelectMontajes();
-        render();
-    }
-
-    function renderSelectSalones() {
-        campoSalon.innerHTML = "";
-        state.configSalones.forEach(s => {
-            const op = document.createElement("option");
-            op.value = s.id;
-            op.textContent = s.nombre;
-            campoSalon.appendChild(op);
+            renderGrid();
+        }).catch(err => {
+            console.error("Salones: Error config", err);
+            globalConfig = { montajes: ["Banquete"], Guadiana: [], Cumbria: [] };
+            renderGrid();
         });
     }
 
-    function renderSelectMontajes() {
-        if (!campoMontaje) return;
-        campoMontaje.innerHTML = "";
-        state.configMontajes.forEach(m => {
-            const op = document.createElement("option");
-            op.value = m;
-            op.textContent = m;
-            campoMontaje.appendChild(op);
-        });
-    }
+    function renderGrid() {
+        // Read consistently
+        const hotel = localStorage.getItem(STORAGE_KEY) || "Guadiana";
+        const container = document.getElementById("calendarGrid");
+        if (!container) return;
 
-    const colEventos = db.collection("reservas_salones");
-    function initListener() {
-        actualizarEstadoConexion("pending");
-        colEventos.where("hotelId", "==", hotelId).onSnapshot(
-            (snap) => {
-                state.eventos = [];
-                snap.forEach((d) => { state.eventos.push({ id: d.id, ...d.data() }); });
-                actualizarEstadoConexion("ok");
-                render();
-            },
-            (err) => {
-                console.error("Error salones:", err);
-                actualizarEstadoConexion("error");
-            }
-        );
-    }
+        const salons = (globalConfig[hotel] || []).filter(s => s.active !== false);
+        const dates = utils.getWeekDates(currentWeekStart);
 
-    // --- Grid Render ---
-    function render() {
-        if (!grid) return;
-        if (inputSemana) inputSemana.value = toIsoDate(state.baseDate);
-        const days = getWeekDates(state.baseDate);
+        const rangeEl = document.getElementById("currentWeekRange");
+        if (rangeEl) rangeEl.innerText = `${dates[0].toLocaleDateString()} - ${dates[6].toLocaleDateString()}`;
 
-        let html = `<div class="planning-grid" style="grid-template-columns: 120px repeat(7, 1fr);">`;
+        let html = `
+        <div style="display:grid; grid-template-columns: 150px repeat(7, 1fr); gap:1px; background:#e5e7eb; border-radius:8px; overflow:hidden;">
+            <div class="bg-gray-50 p-3 font-bold text-gray-600 border-b flex items-center justify-center text-sm">SALA</div>
+            ${dates.map(d => `<div class="bg-gray-50 p-2 font-bold text-center border-b text-sm uppercase text-slate-500">${utils.formatDateES(d)}</div>`).join('')}
+        `;
 
-        html += `<div class="planning-header"><div class="planning-header-cell">SALA</div>`;
-        days.forEach(d => html += `<div class="planning-header-cell">${formatDayHeader(d)}</div>`);
-        html += `</div>`;
-
-        state.configSalones.forEach(sala => {
-            html += `<div class="planning-row">`;
-            html += `<div class="planning-row-label">${sala.nombre}</div>`;
-
-            days.forEach(d => {
-                const iso = toIsoDate(d);
-                const evs = state.eventos.filter(e => {
-                    if ((e.salonId || "def1") !== sala.id) return false;
-                    const fEvent = (e.fechaInicio || "").slice(0, 10);
-                    return fEvent === iso;
+        if (salons.length === 0) {
+            html += `<div style="grid-column: 1/-1; padding:30px; text-align:center; background:white;">
+                        <span class="text-2xl block mb-2">🏨</span>
+                        <b>No hay salones activos para ${hotel}.</b><br>
+                     </div>`;
+        } else {
+            salons.forEach(salon => {
+                html += `<div class="bg-white p-3 border-r font-bold text-slate-700 flex flex-col justify-center border-b">
+                            <span class="text-sm">${salon.name}</span>
+                            <span class="text-xs text-slate-400 font-normal">Max: ${salon.pax}</span>
+                          </div>`;
+                dates.forEach(d => {
+                    const dateStr = utils.toIsoDate(d);
+                    const safeName = salon.name.replace(/'/g, "\\'");
+                    html += `<div id="cell_${hotel}_${salon.name.replace(/\s/g, '_')}_${dateStr}" 
+                                   class="bg-white hover:bg-blue-50 cursor-pointer min-h-[80px] border-b border-r transition p-1 relative group flex flex-col items-center justify-center"
+                                   onclick="openBooking('${safeName}', '${dateStr}')">
+                                    <button class="hidden group-hover:flex bg-blue-100 text-blue-600 rounded-full w-8 h-8 items-center justify-center text-lg font-bold shadow-sm">+</button>
+                              </div>`;
                 });
-
-                html += `<div class="planning-cell cell-dia"><div class="planning-cell-inner">`;
-
-                ["mañana", "tarde"].forEach(slotName => {
-                    const enSlot = evs.filter(e => {
-                        const t = (e.turno || "mañana").toLowerCase();
-                        if (t === "completa") return true;
-                        return t === slotName;
-                    });
-
-                    // If empty, show "+" button. If items, show items.
-                    // If "completa" occupies both, the visual logic handles it by mapping filter.
-
-                    const hasItems = enSlot.length > 0 ? "has-items" : "";
-                    // const icon = slotName==="mañana" ? "☀️" : "🌙"; // Optional depending on design reqs (screen doesn't show icons)
-
-                    html += `<div class="turn-slot ${hasItems} slot-jornada" 
-                               data-date="${iso}" data-salon="${sala.id}" data-turn="${slotName}">`;
-
-                    if (enSlot.length === 0) {
-                        // EMPTY SLOT with + Button
-                        html += `<button class="btn-add-slot" title="Añadir evento">+</button>`;
-                    } else {
-                        // Render cards
-                        enSlot.forEach(ev => {
-                            const isComplete = (ev.turno || "").toLowerCase() === "completa";
-                            const styleClass = isComplete ? "reserva-completa" : "reserva-confirmada";
-                            // Simplified visual
-                            html += `
-                            <div class="reserva-card ${styleClass}" data-id="${ev.id}">
-                               <div class="reserva-name">${ev.nombre}</div>
-                            </div>
-                          `;
-                        });
-                    }
-                    html += `</div>`;
-                });
-                html += `</div></div>`;
             });
-            html += `</div>`;
-        });
+        }
         html += `</div>`;
-        grid.innerHTML = html;
+        container.innerHTML = html;
     }
 
-    // --- Modal Logic ---
+    // --- FORM LOGIC ---
+    window.openBooking = function (salonName, dateStr) {
+        const sSel = document.getElementById("evt-salon");
+        const mSel = document.getElementById("evt-montaje");
 
-    function applyDefaultConcept(salonId, turno) {
-        // Find tariff
-        const salon = state.configSalones.find(s => s.id === salonId);
-        let price = 0;
-        if (salon) {
-            if (turno === "completa") price = salon.precioCompleta;
-            else price = salon.precioMedia;
-        }
-        // Add or update first line
-        state.currentConceptos = [
-            { concepto: "Alquiler " + (salon ? salon.nombre : "Sala"), uds: 1, precio: price }
-        ];
-        renderConceptos();
-    }
+        sSel.innerHTML = "";
+        mSel.innerHTML = "";
 
-    function renderConceptos() {
-        tbodyConceptos.innerHTML = "";
-        let totalSum = 0;
-        state.currentConceptos.forEach((c, idx) => {
-            const subtotal = (parseFloat(c.uds) || 0) * (parseFloat(c.precio) || 0);
-            totalSum += subtotal;
+        const hotel = localStorage.getItem(STORAGE_KEY) || "Guadiana";
+        const salons = globalConfig[hotel] || [];
 
-            const tr = document.createElement("tr");
-            tr.innerHTML = `
-           <td><input type="text" class="input-concept js-desc" value="${c.concepto || ''}" data-idx="${idx}"></td>
-           <td><input type="number" class="input-uds js-uds" value="${c.uds || 1}" min="1" data-idx="${idx}"></td>
-           <td><input type="number" step="0.01" class="input-price js-price" value="${c.precio || 0}" data-idx="${idx}"></td>
-           <td class="cell-total">${subtotal.toFixed(2)}€</td>
-           <td><button type="button" class="btn-del-row js-del" data-idx="${idx}">&times;</button></td>
-         `;
-            tbodyConceptos.appendChild(tr);
+        salons.forEach(s => {
+            const op = document.createElement("option");
+            op.value = s.name;
+            op.text = s.name;
+            sSel.appendChild(op);
         });
-        lblTotalGeneral.textContent = totalSum.toFixed(2) + "€";
-    }
 
-    // Conceptos Event Delegation
-    tbodyConceptos.addEventListener("input", (e) => {
-        if (e.target.matches(".js-desc") || e.target.matches(".js-uds") || e.target.matches(".js-price")) {
-            const idx = parseInt(e.target.dataset.idx);
-            const field = e.target.classList.contains("js-desc") ? "concepto"
-                : e.target.classList.contains("js-uds") ? "uds" : "precio";
-
-            let val = e.target.value;
-            if (field !== "concepto") val = parseFloat(val) || 0;
-
-            state.currentConceptos[idx][field] = val;
-            // Refresh render to update subtotal (debouncing could be better but this is fast enough)
-            // To maintain focus we might avoid full re-render, but simplest is re-calc.
-            // Let's just update the specific total cell to avoid focus loss.
-            const subtotal = (state.currentConceptos[idx].uds * state.currentConceptos[idx].precio).toFixed(2);
-            const row = e.target.closest("tr");
-            row.querySelector(".cell-total").textContent = subtotal + "€";
-
-            // Update grand total
-            let grand = state.currentConceptos.reduce((acc, curr) => acc + (curr.uds * curr.precio), 0);
-            lblTotalGeneral.textContent = grand.toFixed(2) + "€";
+        if (globalConfig.montajes) {
+            globalConfig.montajes.forEach(m => {
+                const op = document.createElement("option");
+                op.value = m;
+                op.text = m;
+                mSel.appendChild(op);
+            });
         }
-    });
 
-    tbodyConceptos.addEventListener("click", (e) => {
-        if (e.target.matches(".js-del")) {
-            const idx = parseInt(e.target.dataset.idx);
-            state.currentConceptos.splice(idx, 1);
-            renderConceptos();
-        }
-    });
+        document.getElementById("evt-nombre").value = "";
+        document.getElementById("evt-telefono").value = "";
+        document.getElementById("evt-email").value = "";
+        document.getElementById("services-list").innerHTML = "";
+        document.getElementById("evt-total").innerText = "0.00 €";
 
-    btnAddLine.addEventListener("click", () => {
-        state.currentConceptos.push({ concepto: "", uds: 1, precio: 0 });
-        renderConceptos();
-    });
+        document.getElementById("evt-fecha").value = dateStr;
+        sSel.value = salonName;
 
-    // Salon/Turno change -> Auto update price? Only if new event.
-    const handleTariffChange = () => {
-        if (!state.editingId && state.currentConceptos.length > 0) {
-            // Check if first line resembles rental
-            if (state.currentConceptos[0].concepto.includes("Alquiler")) {
-                const salon = state.configSalones.find(s => s.id === campoSalon.value);
-                if (salon) {
-                    const p = (campoTurno.value === "completa") ? salon.precioCompleta : salon.precioMedia;
-                    state.currentConceptos[0].precio = p;
-                    state.currentConceptos[0].concepto = "Alquiler " + salon.nombre;
-                    renderConceptos();
-                }
-            }
-        }
+        document.getElementById("modal-evt").classList.remove("hidden");
     };
-    campoSalon.addEventListener("change", handleTariffChange);
-    campoTurno.addEventListener("change", handleTariffChange);
 
+    window.closeModal = function () {
+        document.getElementById("modal-evt").classList.add("hidden");
+    };
 
-    async function guardarEvento(e) {
-        e.preventDefault();
-        // Calculate Total
-        let total = state.currentConceptos.reduce((acc, curr) => acc + (curr.uds * curr.precio), 0);
+    window.addServiceRow = function () {
+        const row = document.createElement("tr");
+        row.innerHTML = `
+            <td class="p-2 border-b"><input type="date" value="${document.getElementById("evt-fecha").value}" class="text-xs bg-gray-50 w-full rounded border-gray-200"></td>
+            <td class="p-2 border-b"><input type="text" placeholder="Concepto" class="text-xs font-bold w-full rounded border-gray-200"></td>
+            <td class="p-2 border-b"><input type="number" onchange="calcTotal()" value="1" class="text-xs text-center row-uds w-full rounded border-gray-200"></td>
+            <td class="p-2 border-b"><input type="number" onchange="calcTotal()" value="0" class="text-xs text-right row-price w-full rounded border-gray-200"></td>
+            <td class="p-2 border-b text-right font-bold text-xs row-total text-slate-600">0.00 €</td>
+            <td class="p-2 border-b text-center"><button onclick="this.closest('tr').remove(); calcTotal()" class="text-red-400 hover:text-red-600 font-bold">&times;</button></td>
+        `;
+        document.getElementById("services-list").appendChild(row);
+    };
+
+    window.calcTotal = function () {
+        let total = 0;
+        document.querySelectorAll("#services-list tr").forEach(row => {
+            const uds = parseFloat(row.querySelector(".row-uds").value) || 0;
+            const price = parseFloat(row.querySelector(".row-price").value) || 0;
+            const sub = uds * price;
+            row.querySelector(".row-total").innerText = sub.toFixed(2) + " €";
+            total += sub;
+        });
+        document.getElementById("evt-total").innerText = total.toFixed(2) + " €";
+    };
+
+    window.saveBooking = async function () {
+        const btn = document.querySelector("button[onclick='saveBooking()']");
+        const originalText = btn.innerText;
+        btn.innerText = "Guardando...";
+        btn.disabled = true;
 
         const payload = {
-            hotelId,
-            salonId: campoSalon.value,
-            fechaInicio: campoFecha.value,
-            nombre: campoNombre.value,
-            pax: parseInt(campoPax.value) || 0,
-            turno: campoTurno.value,
-            montaje: campoMontaje.value,
-            notas: campoNotas.value,
-            estado: campoEstado.value || "pendiente",
-            // New
-            conceptos: state.currentConceptos,
-            importeTotal: total,
-
-            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+            hotel: localStorage.getItem(STORAGE_KEY) || "Guadiana",
+            created_at: new Date().toISOString(),
+            fecha: document.getElementById("evt-fecha").value,
+            salon: document.getElementById("evt-salon").value,
+            cliente: document.getElementById("evt-nombre").value,
+            contact: {
+                tel: document.getElementById("evt-telefono").value,
+                email: document.getElementById("evt-email").value
+            },
+            estado: document.getElementById("evt-estado").value,
+            detalles: {
+                jornada: document.getElementById("evt-jornada").value,
+                montaje: document.getElementById("evt-montaje").value,
+                hora: document.getElementById("evt-hora").value,
+                pax_adultos: parseInt(document.getElementById("evt-pax-a").value) || 0,
+                pax_ninos: parseInt(document.getElementById("evt-pax-n").value) || 0
+            },
+            notas: {
+                interna: document.getElementById("evt-nota-interna").value,
+                cliente: document.getElementById("evt-nota-cliente").value
+            },
+            servicios: []
         };
 
+        document.querySelectorAll("#services-list tr").forEach(row => {
+            const inputs = row.querySelectorAll("input");
+            payload.servicios.push({
+                fecha: inputs[0].value,
+                concepto: inputs[1].value,
+                uds: parseFloat(inputs[2].value) || 0,
+                precio: parseFloat(inputs[3].value) || 0,
+                total: parseFloat(row.querySelector(".row-total").innerText)
+            });
+        });
+
+        console.log("Saving Event:", payload);
+
         try {
-            if (state.editingId) {
-                await colEventos.doc(state.editingId).update(payload);
-            } else {
-                payload.createdAt = firebase.firestore.FieldValue.serverTimestamp();
-                await colEventos.add(payload);
-            }
-            cerrarModal();
-        } catch (err) {
-            console.error(err);
-            alert("Error al guardar");
-        }
-    }
-
-    function abrirModal(ev, defaults = null) {
-        modalEvento.classList.remove("hidden");
-        if (ev) {
-            state.editingId = ev.id;
-            tituloModalEvento.textContent = "Editar Evento";
-            campoSalon.value = ev.salonId || (state.configSalones[0]?.id);
-            campoFecha.value = ev.fechaInicio || "";
-            campoNombre.value = ev.nombre || "";
-            campoPax.value = ev.pax || "";
-            campoTurno.value = ev.turno || "mañana";
-            campoEstado.value = ev.estado || "pendiente";
-
-            // Montaje
-            if (state.configMontajes.includes(ev.montaje)) campoMontaje.value = ev.montaje;
-            else if (state.configMontajes.length > 0) campoMontaje.value = state.configMontajes[0];
-
-            campoNotas.value = ev.notas || "";
-
-            // Conceptos Legacy Support
-            if (ev.conceptos && Array.isArray(ev.conceptos)) {
-                state.currentConceptos = JSON.parse(JSON.stringify(ev.conceptos)); // Clone
-            } else if (ev.precio) {
-                // Migrate old price
-                state.currentConceptos = [{ concepto: "Concepto General", uds: 1, precio: ev.precio }];
-            } else {
-                state.currentConceptos = [];
-            }
-            renderConceptos();
-        } else {
-            state.editingId = null;
-            tituloModalEvento.textContent = "Ficha";
-            campoFecha.value = defaults ? defaults.date : toIsoDate(state.baseDate);
-            campoNombre.value = "";
-            campoPax.value = "";
-            campoTurno.value = defaults ? defaults.turn : "mañana";
-            campoEstado.value = "pendiente";
-
-            if (state.configMontajes.length > 0) campoMontaje.value = state.configMontajes[0];
-            campoNotas.value = "";
-
-            if (defaults && defaults.salonId) campoSalon.value = defaults.salonId;
-
-            // Apply Default Tariff
-            applyDefaultConcept(campoSalon.value, campoTurno.value);
-        }
-    }
-    function cerrarModal() { modalEvento.classList.add("hidden"); }
-
-    if (btnPrev) btnPrev.onclick = () => { const d = new Date(state.baseDate); d.setDate(d.getDate() - 7); state.baseDate = d; render(); };
-    if (btnNext) btnNext.onclick = () => { const d = new Date(state.baseDate); d.setDate(d.getDate() + 7); state.baseDate = d; render(); };
-    if (inputSemana) inputSemana.onchange = () => { if (inputSemana.value) { state.baseDate = new Date(inputSemana.value); render(); } };
-
-    if (btnNuevoEvento) btnNuevoEvento.onclick = () => abrirModal(null);
-    if (btnCerrarModal) btnCerrarModal.onclick = cerrarModal;
-    if (btnCancelarEvento) btnCancelarEvento.onclick = cerrarModal;
-    formEvento.onsubmit = guardarEvento;
-
-    grid.onclick = (e) => {
-        // 1. Click on Card
-        const card = e.target.closest(".reserva-card");
-        if (card && card.dataset.id) {
-            const ev = state.eventos.find(x => x.id === card.dataset.id);
-            if (ev) abrirModal(ev);
-            return;
-        }
-
-        // 2. Click on Add Button
-        if (e.target.matches(".btn-add-slot")) {
-            const slot = e.target.closest(".slot-jornada");
-            if (slot) {
-                const date = slot.dataset.date;
-                const salon = slot.dataset.salon;
-                const turn = slot.dataset.turn;
-                abrirModal(null, { date, salonId: salon, turn });
-            }
+            await db.collection("reservas_salones").add(payload);
+            closeModal();
+            alert("Evento creado exitosamente.");
+        } catch (e) {
+            alert("Error: " + e.message);
+        } finally {
+            btn.innerText = originalText;
+            btn.disabled = false;
         }
     };
 
-    // Imprimir logic (simplified)
-    if (btnReporteSemana) {
-        btnReporteSemana.onclick = () => {
-            const days = getWeekDates(state.baseDate);
-            const start = toIsoDate(days[0]);
-            const end = toIsoDate(days[6]);
-            const data = state.eventos.filter(e => {
-                const f = (e.fechaInicio || "").slice(0, 10);
-                return f >= start && f <= end;
-            }).sort((a, b) => (a.fechaInicio || "").localeCompare(b.fechaInicio || ""));
-
-            const logo = getLogoPath(hotelId);
-            let html = `<html><head><title>Informe</title><style>body{font-family:sans-serif;padding:20px;} table{width:100%;border-collapse:collapse;margin-top:20px;} th,td{border:1px solid #ccc;padding:8px;} th{background:#eee;}</style></head><body>
-            <div style="display:flex;align-items:center;gap:15px;margin-bottom:20px;">
-                <img src="${logo}" style="height:40px;">
-                <h2>Informe Semanal Salones (${nombreHotelCompleto(hotelId)})</h2>
-            </div>
-            <table><thead><tr><th>Fecha</th><th>Sala</th><th>Evento</th><th>Pax</th><th>Turno</th><th>Total</th></tr></thead><tbody>`;
-            data.forEach(e => {
-                const sName = state.configSalones.find(s => s.id === e.salonId)?.nombre || e.salonId;
-                // Calculate total from concepts if not present
-                let total = e.importeTotal;
-                if (total === undefined && e.conceptos) total = e.conceptos.reduce((a, c) => a + (c.uds * c.precio), 0);
-                if (total === undefined) total = e.precio || 0;
-
-                html += `<tr><td>${formatDateES(new Date(e.fechaInicio))}</td><td>${sName}</td><td>${e.nombre}</td><td>${e.pax}</td><td>${e.turno}</td><td>${parseFloat(total).toFixed(2)}€</td></tr>`;
-            });
-            html += `</tbody></table></body></html>`;
-            const w = window.open("", "_blank"); w.document.write(html); w.document.close(); w.print();
-        };
+    window.changeWeek = function (delta) {
+        currentWeekStart.setDate(currentWeekStart.getDate() + (delta * 7));
+        renderGrid();
+    }
+    window.resetToday = function () {
+        currentWeekStart = new Date();
+        renderGrid();
     }
 
-    cargarConfiguracion();
-    initListener();
-
+    ensureFirebase(startApp);
 })();

@@ -2,302 +2,266 @@
 <html lang="es">
 
 <head>
-    <meta charset="UTF-8" />
+    <meta charset="UTF-8">
     <title>MesaChef · Salones</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#2563eb" />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <link rel="manifest" href="manifest.json" />
-
-    <link rel="stylesheet" href="css/styles.css" />
-    <link rel="stylesheet" href="css/restaurante.css" />
-
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#2563eb',
+                        secondary: '#475569',
+                    }
+                }
+            }
+        }
+    </script>
     <style>
-        /* Buttons Logic */
-        .btn-report {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            padding: 6px 12px;
-            font-size: 13px;
-            border-radius: 6px;
-            border: 1px solid #e2e8f0;
-            background: white;
-            cursor: pointer;
-            color: #374151;
-            text-decoration: none;
+        body {
+            background-color: #f8fafc;
+            font-family: 'Segoe UI', sans-serif;
         }
 
-        .btn-report:hover {
-            background: #f9fafb;
-            border-color: #d1d5db;
+        .modal-content {
+            animation: slideUp 0.3s ease-out;
         }
 
-        /* Grid Overrides */
-        .slot-jornada {
-            min-height: 80px;
-            position: relative;
-            /* For absolutely positioned add button if we wanted, or flex centered */
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
+        @keyframes slideUp {
+            from {
+                transform: translateY(20px);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
         }
 
-        /* Hover effect for add button */
-        .slot-jornada:hover .btn-add-slot {
-            opacity: 1;
-        }
-
-        .btn-add-slot {
-            opacity: 0.5;
-            /* Subtle by default */
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            background: #eff6ff;
-            color: #2563eb;
-            border: none;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 20px;
-            margin: auto;
-            /* Center in slot */
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .btn-add-slot:hover {
-            opacity: 1;
-            background: #2563eb;
-            color: white;
-            transform: scale(1.1);
-        }
-
-        .reserva-completa {
-            background-color: #dbeafe;
-            border-left: 3px solid #2563eb;
-        }
-
-        /* Modal Concepts Table */
-        .concepts-table {
+        input,
+        select,
+        textarea {
+            border: 1px solid #cbd5e1;
+            border-radius: 0.5rem;
+            padding: 0.5rem;
             width: 100%;
-            border-collapse: collapse;
-            margin-top: 10px;
-            font-size: 13px;
+            outline: none;
         }
 
-        .concepts-table th {
-            text-align: left;
+        input:focus {
+            border-color: #2563eb;
+            ring: 2px solid #bfdbfe;
+        }
+
+        label {
+            font-size: 0.75rem;
+            font-weight: 700;
             color: #64748b;
-            font-weight: 600;
-            font-size: 11px;
             text-transform: uppercase;
-            padding: 8px 4px;
-            border-bottom: 1px solid #e2e8f0;
-        }
-
-        .concepts-table td {
-            padding: 4px;
-        }
-
-        .input-concept {
-            width: 100%;
-            padding: 6px;
-            border: 1px solid #e2e8f0;
-            border-radius: 4px;
-        }
-
-        .input-uds {
-            width: 60px;
-            padding: 6px;
-            border: 1px solid #e2e8f0;
-            border-radius: 4px;
-            text-align: center;
-        }
-
-        .input-price {
-            width: 80px;
-            padding: 6px;
-            border: 1px solid #e2e8f0;
-            border-radius: 4px;
-            text-align: right;
-        }
-
-        .cell-total {
-            width: 80px;
-            text-align: right;
-            font-weight: 600;
-            color: #1e293b;
-        }
-
-        .btn-del-row {
-            color: #ef4444;
-            background: none;
-            border: none;
-            cursor: pointer;
-            font-size: 16px;
-            padding: 0 8px;
-        }
-
-        .btn-add-line {
-            margin-top: 10px;
-            background: none;
-            border: none;
-            color: #475569;
-            font-weight: 600;
-            font-size: 12px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 4px;
-        }
-
-        .btn-add-line:hover {
-            color: #1e293b;
+            margin-bottom: 0.25rem;
+            display: block;
         }
     </style>
 </head>
 
-<body class="app-body">
-    <div class="mc-shell">
-        <header class="topbar">
-            <div class="topbar-left">
-                <span class="breadcrumb"><a href="index.html"
-                        style="text-decoration:none; color:inherit;">Inicio</a></span>
-                <span class="crumb-sep"> &middot; </span>
-                <span id="tituloHotel" class="breadcrumb strong">Salas & Eventos</span>
-                <span id="estadoConexion" class="estado-conexion">Conectando...</span>
-            </div>
-            <div class="topbar-right">
-                <div class="search-box">
-                    <input type="text" id="txtBuscar" placeholder="Buscar evento..." />
+<body class="bg-slate-50 text-slate-800">
+
+    <!-- NAV -->
+    <nav class="bg-white shadow-sm sticky top-0 z-30 border-b border-gray-100">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+
+                <!-- LEFT: LOGO & STATUS & HOTEL -->
+                <div class="flex items-center gap-6">
+                    <!-- MesaChef Logo -->
+                    <div class="flex items-center gap-2">
+                        <span class="text-2xl">👨‍🍳</span>
+                        <div class="flex flex-col leading-none">
+                            <span class="text-primary font-bold text-lg tracking-tight">MesaChef</span>
+                            <span
+                                class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Enterprise</span>
+                        </div>
+                    </div>
+
+                    <!-- Vertical Divider -->
+                    <div class="h-8 w-px bg-slate-200"></div>
+
+                    <!-- Connection Status -->
+                    <div class="flex items-center gap-2 px-3 py-1 bg-green-50 rounded-full border border-green-100"
+                        id="connStatus">
+                        <div
+                            class="w-2 h-2 bg-green-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.6)]">
+                        </div>
+                        <span class="text-xs font-bold text-green-700 uppercase tracking-wide">Online</span>
+                    </div>
+
+                    <!-- Hotel Identity (Static) -->
+                    <div class="flex items-center gap-2">
+                        <span class="text-xl">🏨</span>
+                        <span id="headerHotelName" class="font-bold text-slate-700 text-lg">Cargando...</span>
+                    </div>
                 </div>
-                <button id="btnNuevoEvento" class="btn-primary">+ Nuevo Evento</button>
+
+                <!-- RIGHT: EXIT & NEW EVENT -->
+                <div class="flex items-center gap-4">
+                    <!-- Exit Button -->
+                    <a href="index.html"
+                        class="flex items-center gap-2 text-slate-400 hover:text-red-500 font-bold text-sm transition group">
+                        <span class="group-hover:-translate-x-1 transition-transform">⬅</span>
+                        Volver al Inicio
+                    </a>
+
+                    <div class="h-6 w-px bg-slate-200"></div>
+
+                    <!-- Add Event Button -->
+                    <button onclick="openBooking()"
+                        class="bg-primary hover:bg-blue-700 text-white px-5 py-2 rounded-lg font-bold shadow-lg shadow-blue-500/30 transition flex items-center gap-2 transform hover:scale-105 active:scale-95">
+                        <span class="text-xl leading-none">+</span>
+                        <span>Nuevo Evento</span>
+                    </button>
+                </div>
             </div>
-        </header>
+        </div>
+    </nav>
 
-        <div class="planning-controls-bar">
-            <div class="planning-nav">
-                <button id="btnPrev" class="btn-icon" title="Semana anterior">&larr;</button>
-                <input type="date" id="inputSemana" class="input-date" style="width:140px;" />
-                <button id="btnNext" class="btn-icon" title="Semana siguiente">&rarr;</button>
-
-                <button id="btnReporteSemana" class="btn-report" title="Imprimir semana">
-                    <span>&#x1F5A8;</span> <span>Semana</span>
-                </button>
+    <!-- CONTENT -->
+    <div class="max-w-[1600px] mx-auto p-4 lg:p-6" id="app">
+        <!-- Toolbar -->
+        <div class="flex justify-between items-center mb-6">
+            <div class="flex items-center gap-2 bg-white p-1 rounded-lg border shadow-sm">
+                <button onclick="changeWeek(-1)"
+                    class="p-2 hover:bg-slate-100 rounded text-slate-500 font-bold">⬅</button>
+                <div class="px-4 font-bold text-lg text-slate-800" id="currentWeekRange">Semana Actual</div>
+                <button onclick="changeWeek(1)"
+                    class="p-2 hover:bg-slate-100 rounded text-slate-500 font-bold">➡</button>
+                <button onclick="resetToday()"
+                    class="text-xs text-blue-600 font-bold ml-2 uppercase tracking-wide">HOY</button>
+            </div>
+            <div class="border rounded-lg bg-white flex items-center px-4 py-2 gap-2 shadow-sm w-72">
+                <span class="text-slate-400">🔍</span>
+                <input type="text" placeholder="Buscar evento..." class="border-none p-0 text-sm focus:ring-0 w-full">
             </div>
         </div>
 
-        <main class="main-content">
-            <div id="gridSalones" class="planning-container">
-                <!-- JS renders grid -->
+        <!-- Grid -->
+        <div id="calendarGrid"
+            class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden min-h-[400px]">
+            <div class="flex items-center justify-center h-full text-slate-400 gap-2 p-10">
+                <span class="animate-spin">⏳</span> Conectando con servidor...
             </div>
-        </main>
-    </div>
-
-    <!-- MODAL EVENTO (Diseño Ficha) -->
-    <div id="modalEvento" class="modal-overlay hidden">
-        <div class="modal-card" style="max-width: 700px;"> <!-- Wider for table -->
-            <div class="modal-header">
-                <h3 id="tituloModalEvento">Ficha Evento</h3>
-                <button id="btnCerrarModal" class="btn-close">&times;</button>
-            </div>
-            <form id="formEvento">
-                <div class="modal-body">
-                    <!-- Ficha Header info -->
-                    <div class="form-row">
-                        <div class="form-group" style="flex:0 0 140px;">
-                            <label class="modal-label">FECHA</label>
-                            <input id="campoFecha" type="date" class="modal-input" required />
-                        </div>
-                        <div class="form-group flex-1">
-                            <label class="modal-label">NOMBRE / EVENTO</label>
-                            <input id="campoNombre" type="text" class="modal-input" placeholder="Ej: Boda García"
-                                required />
-                        </div>
-                    </div>
-
-                    <div class="form-row">
-                        <div class="form-group flex-1">
-                            <label class="modal-label">SALÓN</label>
-                            <select id="campoSalon" class="modal-select"></select>
-                        </div>
-                        <div class="form-group flex-1">
-                            <label class="modal-label">JORNADA</label>
-                            <select id="campoTurno" class="modal-select">
-                                <option value="mañana">Mañana (Media)</option>
-                                <option value="tarde">Tarde (Media)</option>
-                                <option value="completa">Jornada Completa</option>
-                            </select>
-                        </div>
-                        <div class="form-group" style="flex:0 0 120px;">
-                            <label class="modal-label">ESTADO</label>
-                            <!-- Simplified status for Ficha view -->
-                            <select id="campoEstado" class="modal-select">
-                                <option value="pendiente">Pendiente</option>
-                                <option value="confirmada">Confirmada</option>
-                                <option value="anulada">Anulada</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <div class="form-row">
-                        <div class="form-group flex-1">
-                            <label class="modal-label">MONTAJE</label>
-                            <select id="campoMontaje" class="modal-select"></select>
-                        </div>
-                        <div class="form-group" style="flex:0 0 80px;">
-                            <label class="modal-label">PAX</label>
-                            <input id="campoPax" type="number" class="modal-input" />
-                        </div>
-                    </div>
-
-                    <!-- Conceptos Table -->
-                    <div
-                        style="background:#f8fafc; padding:10px; border-radius:6px; margin-top:10px; border:1px solid #e2e8f0;">
-                        <table class="concepts-table">
-                            <thead>
-                                <tr>
-                                    <th>CONCEPTO</th>
-                                    <th>UDS</th>
-                                    <th>PRECIO</th>
-                                    <th>TOTAL</th>
-                                    <th></th>
-                                </tr>
-                            </thead>
-                            <tbody id="tbodyConceptos">
-                                <!-- Rows rendered by JS -->
-                            </tbody>
-                        </table>
-                        <button type="button" id="btnAddLine" class="btn-add-line">+ AÑADIR LÍNEA</button>
-
-                        <div style="text-align:right; margin-top:10px; font-weight:700; font-size:14px; color:#1e293b;">
-                            TOTAL: <span id="lblTotalGeneral">0.00€</span>
-                        </div>
-                    </div>
-
-                    <div class="form-group" style="margin-top:15px;">
-                        <label class="modal-label">NOTAS INTERNAS</label>
-                        <textarea id="campoNotas" class="modal-textarea" rows="2"></textarea>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" id="btnCancelarEvento" class="btn-secondary">Cancelar</button>
-                    <button type="submit" class="btn-primary">GUARDAR</button>
-                </div>
-            </form>
         </div>
     </div>
 
-    <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-firestore-compat.js"></script>
-    <script src="js/firebase-init.js"></script>
-    <script src="js/app-common.js"></script>
+    <!-- MODAL -->
+    <div id="modal-evt" class="fixed inset-0 z-50 hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+        <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity"></div>
+        <div class="fixed inset-0 z-10 overflow-y-auto">
+            <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
+                <div
+                    class="relative transform overflow-hidden rounded-xl bg-white text-left shadow-2xl transition-all sm:my-8 sm:w-full sm:max-w-5xl modal-content">
+
+                    <div class="bg-white px-6 py-4 border-b flex justify-between items-center">
+                        <h3 class="text-xl font-bold text-slate-800">Nuevo Evento</h3>
+                        <button onclick="closeModal()"
+                            class="text-slate-400 hover:text-slate-600 font-bold text-2xl">&times;</button>
+                    </div>
+
+                    <div class="px-6 py-6 space-y-6 bg-slate-50/50">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <!-- FECHA -->
+                            <div>
+                                <label>FECHA (Día/Mes/Año)</label>
+                                <input type="date" id="evt-fecha"
+                                    class="text-lg font-bold bg-white text-slate-900 shadow-sm border-slate-300">
+                            </div>
+
+                            <!-- SALON -->
+                            <div>
+                                <label>SALÓN SELECCIONADO</label>
+                                <select id="evt-salon"
+                                    class="text-lg font-bold bg-white text-slate-900 shadow-sm border-slate-300">
+                                    <option>Cargando salones...</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-12 gap-4">
+                            <div class="md:col-span-6"><label>Cliente / Empresa / Evento</label><input type="text"
+                                    id="evt-nombre" placeholder="Nombre..." class="font-bold"></div>
+                            <div class="md:col-span-3"><label>Teléfono</label><input type="tel" id="evt-telefono"
+                                    placeholder="600..."></div>
+                            <div class="md:col-span-3"><label>Email</label><input type="email" id="evt-email"
+                                    placeholder="@"></div>
+                        </div>
+
+                        <div class="grid grid-cols-2 md:grid-cols-6 gap-4">
+                            <div><label>Estado</label><select id="evt-estado"
+                                    class="text-amber-600 font-bold bg-amber-50">
+                                    <option value="pendiente">⏳ Pendiente</option>
+                                    <option value="confirmada">✅ Confirmada</option>
+                                    <option value="pagada">💰 Pagada</option>
+                                </select></div>
+                            <div><label>Jornada</label><select id="evt-jornada">
+                                    <option value="todo">Todo el día</option>
+                                    <option value="mañana">Mañana</option>
+                                    <option value="tarde">Tarde</option>
+                                </select></div>
+                            <div><label>Montaje</label><select id="evt-montaje">
+                                    <option>Banquete</option>
+                                </select></div>
+                            <div><label>Hora</label><input type="time" id="evt-hora"></div>
+                            <div><label>Pax A</label><input type="number" id="evt-pax-a"></div>
+                            <div><label>Pax N</label><input type="number" id="evt-pax-n"></div>
+                        </div>
+
+                        <hr>
+                        <div>
+                            <div class="flex justify-between mb-2"><label>Servicios</label><button
+                                    class="bg-purple-600 text-white text-xs px-2 py-1 rounded font-bold">✨ AI
+                                    Menu</button></div>
+                            <div class="bg-white border rounded shadow-sm">
+                                <table class="w-full text-sm">
+                                    <thead class="bg-slate-50">
+                                        <tr>
+                                            <th class="p-2">Fecha</th>
+                                            <th class="p-2">Concepto</th>
+                                            <th class="p-2 text-center">Uds</th>
+                                            <th class="p-2 text-right">Pre</th>
+                                            <th class="p-2 text-right">Tot</th>
+                                            <th></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="services-list"></tbody>
+                                </table><button onclick="addServiceRow()"
+                                    class="w-full text-center text-blue-600 font-bold py-2 border-t text-xs hover:bg-blue-50">+
+                                    Añadir Servicio</button>
+                            </div>
+                            <div class="text-right font-bold text-lg mt-2">Total: <span id="evt-total">0.00 €</span>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-4">
+                            <div><label>Nota Interna</label><textarea id="evt-nota-interna" rows="2"
+                                    class="text-sm"></textarea></div>
+                            <div><label>Nota Cliente</label><textarea id="evt-nota-cliente" rows="2"
+                                    class="text-sm"></textarea></div>
+                        </div>
+                    </div>
+
+                    <div class="bg-gray-50 px-6 py-4 flex flex-row-reverse border-t gap-2">
+                        <button class="bg-gray-900 text-white font-bold py-2 px-6 rounded hover:bg-black shadow-lg"
+                            onclick="saveBooking()">GUARDAR EVENTO</button>
+                        <button class="bg-white text-gray-700 font-bold py-2 px-4 border rounded hover:bg-gray-50"
+                            onclick="closeModal()">Cancelar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="js/salones.js"></script>
-    <script>
-        if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
-    </script>
 </body>
 
 </html>

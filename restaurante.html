@@ -10,8 +10,11 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <link rel="manifest" href="manifest.json" />
 
-    <link rel="stylesheet" href="css/styles.css" />
+    <!-- DESIGN LOCKED: DO NOT EDIT WITHOUT AUTHORIZATION -->
+    <!-- This module uses a specific copy of styles to prevent regressions -->
+    <link rel="stylesheet" href="css/styles_restaurante.css" />
     <link rel="stylesheet" href="css/restaurante.css" />
+    <script src="https://cdn.tailwindcss.com"></script>
 
     <style>
         /* FIX: Force single line layout for controls */
@@ -24,7 +27,6 @@
             border-bottom: 1px solid #e2e8f0;
             gap: 16px;
             flex-wrap: nowrap;
-            /* Prevent wrapping */
         }
 
         .planning-nav {
@@ -61,7 +63,6 @@
             font-family: inherit;
             color: #334155;
             width: 140px;
-            /* Fixed compact width */
         }
 
         .btn-report {
@@ -134,110 +135,612 @@
             </div>
         </div>
 
-        <!-- Main Grid -->
+        <!-- Main Grid Container -->
         <main class="main-content">
             <div id="gridRestaurante" class="planning-container">
-                <!-- JS renders grid here -->
+                <!-- Grid Content Injected by JS -->
             </div>
         </main>
     </div>
 
-    <!-- MODAL RESERVA -->
-    <div id="modalReserva" class="modal-overlay hidden">
-        <div class="modal-card">
-            <div class="modal-header">
-                <h3 id="tituloModalReserva">Nueva Reserva</h3>
-                <button id="btnCerrarModal" class="btn-close">&times;</button>
+    <!-- Hidden Print Area -->
+    <div id="printArea"></div>
+
+    <!-- MODAL RESERVA ("FICHA") -->
+    <div id="modalReserva"
+        class="fixed inset-0 z-50 hidden flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm">
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-2xl overflow-hidden animate-fade-in-up">
+            <div class="bg-slate-800 text-white px-4 py-3 flex justify-between items-center">
+                <h3 class="font-bold text-lg">Ficha de Reserva</h3>
+                <button type="button" id="btnCerrarModal" class="text-gray-400 hover:text-white">&times;</button>
             </div>
-            <form id="formReserva">
-                <div class="modal-body">
-                    <!-- Row 1: Espacio, Fecha, Hora -->
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label class="modal-label">ESPACIO</label>
-                            <select id="campoEspacio" class="modal-select">
-                                <option value="restaurante">Restaurante</option>
-                                <option value="cafeteria">Cafetería</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label class="modal-label">FECHA</label>
-                            <input id="campoFecha" type="date" class="modal-input" required />
-                        </div>
-                        <div class="form-group">
-                            <label class="modal-label">HORA</label>
-                            <input id="campoHora" type="time" class="modal-input" />
-                        </div>
+            <form id="formReserva" class="p-4 space-y-4">
+                <!-- Row 1: Fecha & Nombre -->
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 uppercase">Fecha</label>
+                        <input type="date" id="campoFecha"
+                            class="w-full border p-2 rounded bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none"
+                            required>
                     </div>
-
-                    <!-- Row 2: Cliente, Tel -->
-                    <div class="form-row">
-                        <div class="form-group flex-2">
-                            <label class="modal-label">CLIENTE</label>
-                            <input id="campoNombre" type="text" class="modal-input" placeholder="Nombre clienta/e"
-                                required />
-                        </div>
-                        <div class="form-group flex-1">
-                            <label class="modal-label">TELÉFONO</label>
-                            <input id="campoTelefono" type="tel" class="modal-input" placeholder="600..." />
-                        </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 uppercase">Nombre Cliente</label>
+                        <input type="text" id="campoNombre"
+                            class="w-full border p-2 rounded focus:ring-2 focus:ring-blue-500 outline-none font-bold text-gray-800"
+                            placeholder="Nombre..." required>
                     </div>
+                </div>
 
-                    <!-- Row 3: Pax, Precio, Turno -->
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label class="modal-label">PAX</label>
-                            <input id="campoPax" type="number" min="1" class="modal-input" />
-                        </div>
-                        <div class="form-group">
-                            <label class="modal-label">PRECIO MENÚ</label>
-                            <input id="campoPrecio" type="number" step="0.01" class="modal-input" />
-                        </div>
-                        <div class="form-group">
-                            <label class="modal-label">TURNO</label>
-                            <select id="campoTurno" class="modal-select">
-                                <option value="almuerzo">Almuerzo</option>
-                                <option value="cena">Cena</option>
-                            </select>
-                        </div>
+                <!-- Row 2: Hora, Pax, Zona, Turno -->
+                <div class="grid grid-cols-4 gap-4 p-3 bg-gray-50 rounded border border-gray-100">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-400 uppercase">Hora</label>
+                        <input type="time" id="campoHora" class="w-full border p-1 rounded">
                     </div>
-
-                    <!-- Row 4: Notas Internas -->
-                    <div class="form-group">
-                        <div style="display:flex; justify-content:space-between;">
-                            <label class="modal-label">NOTAS INTERNAS</label>
-                            <button type="button" class="btn-text-action" style="font-size:10px;">✨ Mejorar
-                                texto</button>
-                        </div>
-                        <textarea id="campoNotas" class="modal-textarea" rows="2"
-                            placeholder="Detalles internos..."></textarea>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-400 uppercase">Pax</label>
+                        <input type="number" id="campoPax" class="w-full border p-1 rounded" min="1">
                     </div>
-
-                    <!-- Row 6: Estado -->
-                    <div class="form-group">
-                        <label class="modal-label">ESTADO</label>
-                        <select id="campoEstado" class="modal-select">
-                            <option value="pendiente">⏳ Pendiente</option>
-                            <option value="confirmada">✅ Confirmada</option>
-                            <option value="anulada">❌ Anulada</option>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-400 uppercase">Espacio</label>
+                        <select id="campoEspacio" class="w-full border p-1 rounded">
+                            <option value="Restaurante">Restaurante</option>
+                            <option value="Cafeteria">Cafetería</option>
                         </select>
                     </div>
-
+                    <div>
+                        <label class="block text-xs font-bold text-gray-400 uppercase">Turno</label>
+                        <select id="campoTurno" class="w-full border p-1 rounded">
+                            <option value="almuerzo">Almuerzo</option>
+                            <option value="cena">Cena</option>
+                        </select>
+                    </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" id="btnCancelarReserva" class="btn-secondary">Cancelar</button>
-                    <button type="submit" class="btn-primary">GUARDAR</button>
+
+                <!-- Row 3: Phone, Price, Status -->
+                <div class="grid grid-cols-3 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 uppercase">Teléfono</label>
+                        <input type="tel" id="campoTelefono" class="w-full border p-2 rounded" placeholder="600...">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 uppercase">Importe (€)</label>
+                        <input type="number" step="0.01" id="campoPrecio"
+                            class="w-full border p-2 rounded text-right font-mono" placeholder="0.00">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 uppercase">Estado</label>
+                        <select id="campoEstado" class="w-full border p-2 rounded font-medium">
+                            <option value="pendiente" class="text-orange-500">Pendiente</option>
+                            <option value="confirmada" class="text-green-600">Confirmada</option>
+                            <option value="anulada" class="text-red-500">Anulada</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Row 4: Notes -->
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase">Notas Internas</label>
+                    <textarea id="campoNotas" rows="2" class="w-full border p-2 rounded text-sm text-gray-600"
+                        placeholder="Detalles internos..."></textarea>
+                </div>
+
+                <!-- Hidden Fields -->
+                <input type="hidden" id="campoNotaCliente">
+                <input type="hidden" id="campoId">
+
+                <!-- Buttons -->
+                <div class="flex justify-end gap-3 pt-2 border-t mt-2">
+                    <button type="button" id="btnCancelarReserva"
+                        class="px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded transition font-medium">
+                        Cancelar
+                    </button>
+                    <button type="submit"
+                        class="px-6 py-2 text-sm bg-slate-800 text-white rounded hover:bg-slate-700 font-bold shadow-lg transform active:scale-95 transition">
+                        GUARDAR
+                    </button>
                 </div>
             </form>
         </div>
     </div>
 
     <!-- Scripts -->
-    <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-firestore-compat.js"></script>
-    <script src="js/firebase-init.js"></script>
     <script src="js/app-common.js"></script>
-    <script src="js/restaurante.js"></script>
+
+    <!-- INLINE RESTAURANTE JS v14 (Fixed & Clean) -->
+    <script>
+        (function () {
+            // UTIL: Log to the UI header so user sees connection status
+            function logUI(msg) {
+                const el = document.getElementById("estadoConexion");
+                if (el) {
+                    el.innerText = msg;
+                    // visual cue
+                    el.style.color = msg.includes("Error") ? "red" : (msg.includes("Conectado") ? "green" : "#64748b");
+                }
+                console.log("[MesaChef]", msg);
+            }
+
+            logUI("Iniciando...");
+
+            // --- FIREBASE INIT ---
+            function ensureFirebase(callback) {
+                if (window.firebase && window.firebase.apps && window.firebase.apps.length && window.firebase.auth) {
+                    callback();
+                    return;
+                }
+
+                // Check if scripts are already in DOM to avoid duplicates
+                const existingScript = document.querySelector('script[src*="firebase-app-compat.js"]');
+                if (existingScript) {
+                    // Wait a bit for it to load if it's there but firebase isn't ready
+                    const interval = setInterval(() => {
+                        if (window.firebase && window.firebase.firestore && window.firebase.auth) {
+                            clearInterval(interval);
+                            initFirebase(callback);
+                        }
+                    }, 100);
+                    return;
+                }
+
+                // Load dynamically if not present
+                const s1 = document.createElement("script");
+                s1.src = "https://www.gstatic.com/firebasejs/9.6.7/firebase-app-compat.js";
+                s1.onload = function () {
+                    const s2 = document.createElement("script");
+                    s2.src = "https://www.gstatic.com/firebasejs/9.6.7/firebase-auth-compat.js";
+                    s2.onload = function () {
+                        const s3 = document.createElement("script");
+                        s3.src = "https://www.gstatic.com/firebasejs/9.6.7/firebase-firestore-compat.js";
+                        s3.onload = function () { initFirebase(callback); };
+                        s3.onerror = function () { logUI("Error: Firestore script failed"); };
+                        document.head.appendChild(s3);
+                    };
+                    s2.onerror = function () { logUI("Error: Auth script failed"); };
+                    document.head.appendChild(s2);
+                };
+                s1.onerror = function () { logUI("Error: Firebase script failed"); };
+                document.head.appendChild(s1);
+            }
+
+            function initFirebase(callback) {
+                try {
+                    const firebaseConfig = {
+                        apiKey: "AIzaSyAXv_wKD48EFDe8FBQ-6m0XGUNoxSRiTJY",
+                        authDomain: "mesa-chef-prod.firebaseapp.com",
+                        projectId: "mesa-chef-prod",
+                        storageBucket: "mesa-chef-prod.firebasestorage.app",
+                        messagingSenderId: "43170330072",
+                        appId: "1:43170330072:web:bcdd09e39930ad08bf2ead"
+                    };
+                    if (!firebase.apps.length) {
+                        firebase.initializeApp(firebaseConfig);
+                    }
+
+                    // AUTHENTICATE
+                    logUI("Autenticando...");
+                    firebase.auth().onAuthStateChanged((user) => {
+                        if (user) {
+                            callback();
+                        } else {
+                            firebase.auth().signInAnonymously().catch((error) => {
+                                logUI("Error Auth: " + error.message);
+                            });
+                        }
+                    });
+
+                } catch (e) {
+                    if (e.code === 'app/duplicate-app') {
+                        // If app exists, just hook into auth
+                        firebase.auth().onAuthStateChanged((user) => {
+                            if (user) callback();
+                            else firebase.auth().signInAnonymously();
+                        });
+                    } else {
+                        logUI("Error Config: " + e.message);
+                    }
+                }
+            }
+
+            let db;
+            let currentWeekStart = new Date();
+            const cleanDay = currentWeekStart.getDay();
+            const diff = currentWeekStart.getDate() - cleanDay + (cleanDay === 0 ? -6 : 1);
+            currentWeekStart.setDate(diff);
+
+            let loadedReservations = [];
+            const STORAGE_KEY = "mesaChef_hotel";
+            const SPACES = ["Restaurante", "Cafeteria"];
+
+            const utils = {
+                getWeekDates: (d) => {
+                    const start = new Date(d);
+                    const dates = [];
+                    for (let i = 0; i < 7; i++) {
+                        let temp = new Date(start);
+                        temp.setDate(temp.getDate() + i);
+                        dates.push(temp);
+                    }
+                    return dates;
+                },
+                toIsoDate: (d) => d.toISOString().split('T')[0],
+                formatDateES: (d) => d.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }),
+                formatDateShort: (d) => d.toLocaleDateString('es-ES', { weekday: 'short', day: 'numeric' })
+            };
+
+            function startApp() {
+                logUI("Conectando DB...");
+                try {
+                    db = firebase.firestore();
+                } catch (e) {
+                    logUI("Error DB: " + e.message);
+                    return;
+                }
+
+                // 1. HOTEL
+                let currentHotel = localStorage.getItem(STORAGE_KEY);
+                if (!currentHotel) currentHotel = "Guadiana";
+
+                const titleHotel = document.getElementById("tituloHotel");
+                if (titleHotel) {
+                    const logoSrc = currentHotel === "Guadiana" ? "Img/logo-guadiana.svg" : "Img/logo-cumbria.svg";
+                    titleHotel.innerHTML = `<img src="${logoSrc}" class="h-8 mr-2 inline-block"> Restaurante · ${currentHotel === "Guadiana" ? "Sercotel Guadiana" : "Cumbria Spa"}`;
+                }
+
+                // 2. LISTENERS
+                safeAddListener("btnNuevaReserva", "click", () => openBooking());
+                safeAddListener("btnCerrarModal", "click", closeModal);
+                safeAddListener("btnCancelarReserva", "click", closeModal);
+                safeAddListener("formReserva", "submit", saveReservation);
+                safeAddListener("btnPrev", "click", () => changeWeek(-1));
+                safeAddListener("btnNext", "click", () => changeWeek(1));
+
+                // PRINT
+                safeAddListener("btnReporteSemana", "click", () => printReport('semana'));
+                safeAddListener("btnReporteDia", "click", () => printReport('dia'));
+
+                // FILTERS
+                safeAddListener("filtroEstado", "change", () => paintReservations(loadedReservations));
+                safeAddListener("txtBuscar", "input", () => paintReservations(loadedReservations));
+
+                loadReservations();
+            }
+
+            function safeAddListener(id, event, handler) {
+                const el = document.getElementById(id);
+                if (el) el.addEventListener(event, handler);
+                else console.warn("Element not found:", id);
+            }
+
+            function renderGridStructure() {
+                const grid = document.getElementById("gridRestaurante");
+                if (!grid) return;
+
+                const dates = utils.getWeekDates(currentWeekStart);
+                const inpSemana = document.getElementById("inputSemana");
+                if (inpSemana) inpSemana.value = utils.toIsoDate(dates[0]);
+
+                let html = ``;
+                html += `<div class="grid-header-cell">ESPACIO</div>`;
+                dates.forEach(d => {
+                    html += `<div class="grid-header-cell">${utils.formatDateShort(d)}</div>`;
+                });
+
+                SPACES.forEach(space => {
+                    html += `<div class="space-label pl-4">${space}</div>`;
+                    dates.forEach(d => {
+                        const dateStr = utils.toIsoDate(d);
+                        html += `
+                     <div class="day-column">
+                        <!-- ALMUERZO -->
+                        <div class="turn-cell group">
+                             <div class="flex justify-between items-center mb-1">
+                                <span class="text-xs text-amber-500 font-bold flex items-center">
+                                    ☀️ <span id="pax_${space}_${dateStr}_almuerzo" class="ml-1 text-gray-600">0 pax</span>
+                                </span>
+                                <button onclick="openBooking('${space}', '${dateStr}', 'almuerzo')" class="opacity-0 group-hover:opacity-100 text-blue-600 font-bold bg-blue-50 px-1.5 rounded text-[10px] transition">+</button>
+                             </div>
+                             <div id="zone_${space}_${dateStr}_almuerzo" class="flex flex-col gap-1"></div>
+                        </div>
+                        <!-- CENA -->
+                        <div class="turn-cell group">
+                             <div class="flex justify-between items-center mb-1">
+                                <span class="text-xs text-slate-400 font-bold flex items-center">
+                                    🌙 <span id="pax_${space}_${dateStr}_cena" class="ml-1 text-gray-600">0 pax</span>
+                                </span>
+                                <button onclick="openBooking('${space}', '${dateStr}', 'cena')" class="opacity-0 group-hover:opacity-100 text-blue-600 font-bold bg-blue-50 px-1.5 rounded text-[10px] transition">+</button>
+                             </div>
+                             <div id="zone_${space}_${dateStr}_cena" class="flex flex-col gap-1"></div>
+                        </div>
+                     </div>`;
+                    });
+                });
+
+                grid.innerHTML = html;
+                if (loadedReservations.length > 0) paintReservations(loadedReservations);
+            }
+
+            function loadReservations() {
+                // logUI("Cargando..."); 
+                try {
+                    db.collection("reservas_restaurante")
+                        .onSnapshot(snapshot => {
+                            logUI("Conectado");
+                            loadedReservations = [];
+                            snapshot.forEach(doc => {
+                                const r = doc.data();
+                                r.id = doc.id;
+                                loadedReservations.push(r);
+                            });
+                            renderGridStructure();
+                        }, err => {
+                            logUI("Error: " + err.message);
+                        });
+                } catch (e) {
+                    logUI("Fatal: " + e.message);
+                }
+            }
+
+            function paintReservations(reservations) {
+                const dates = utils.getWeekDates(currentWeekStart);
+                const startStr = utils.toIsoDate(dates[0]);
+                const endStr = utils.toIsoDate(dates[6]);
+                const hotel = localStorage.getItem(STORAGE_KEY) || "Guadiana";
+
+                const filterEl = document.getElementById("filtroEstado");
+                const filterStatus = filterEl ? filterEl.value : "activos";
+
+                const searchEl = document.getElementById("txtBuscar");
+                const searchText = (searchEl ? searchEl.value : "").toLowerCase();
+
+                const zones = document.querySelectorAll("[id^='zone_']");
+                zones.forEach(z => z.innerHTML = '');
+
+                // Reset Totals buckets
+                const totals = {}; // key: zoneId, val: pax
+
+                reservations.forEach(r => {
+                    if (r.hotel && r.hotel !== hotel) return;
+
+                    let rDateStr = "";
+                    if (r.fecha && r.fecha.toDate) rDateStr = utils.toIsoDate(r.fecha.toDate());
+                    else if (typeof r.fecha === 'string') rDateStr = r.fecha;
+
+                    if (rDateStr < startStr || rDateStr > endStr) return;
+
+                    const rStatus = (r.estado || "pendiente").toLowerCase();
+                    if (filterStatus === 'activos') {
+                        if (rStatus === 'anulada') return;
+                    } else if (filterStatus !== 'todas') {
+                        if (rStatus !== filterStatus) return;
+                    }
+
+                    if (searchText) {
+                        const combined = `${r.nombre || ''} ${r.telefono || ''} ${r.id || ''}`.toLowerCase();
+                        if (!combined.includes(searchText)) return;
+                    }
+
+                    const space = r.espacio || "Restaurante";
+                    const turno = r.turno || "almuerzo";
+                    const time = r.hora || "--:--";
+                    const name = r.nombre || r.cliente || "Sin nombre";
+                    const pax = parseInt(r.pax) || 0;
+                    const precio = r.precio || "";
+
+                    const zoneId = `zone_${space}_${rDateStr}_${turno}`;
+                    const zone = document.getElementById(zoneId);
+
+                    // Accumulate Totals
+                    const paxKey = `pax_${space}_${rDateStr}_${turno}`;
+                    if (!totals[paxKey]) totals[paxKey] = 0;
+                    // Only count active reservations for totals
+                    if (rStatus !== 'anulada') {
+                        totals[paxKey] += pax;
+                    }
+
+                    if (zone) {
+                        const div = document.createElement("div");
+                        // Style matching reference: Rounded, Border-Left, White, Shadow
+                        // State colors for border
+                        let borderClass = 'border-amber-400'; // Pendiente (Yellow/Orange)
+                        if (rStatus === 'confirmada') borderClass = 'border-emerald-500'; // Confirmada (Green)
+                        if (rStatus === 'anulada') borderClass = 'border-red-400 opacity-60'; // Anulada (Red)
+
+                        // Notes Indicator
+                        const hasNotes = r.notas && r.notas.trim().length > 0;
+                        const notesIcon = hasNotes ? `<span class="text-[10px] text-amber-500 ml-1" title="Notas">📝</span>` : '';
+
+                        div.className = `bg-white border-l-[4px] ${borderClass} rounded-r-md shadow-sm p-1.5 cursor-pointer hover:shadow-md transition mb-1 relative border-t border-b border-r border-gray-100`;
+
+                        div.innerHTML = `
+                        <div class="flex justify-between items-center leading-none mb-1">
+                            <span class="font-bold text-gray-800 text-[13px]">${time}</span>
+                            <span class="text-[12px] text-gray-600 font-medium truncate max-w-[90px] text-right">${name}</span>
+                        </div>
+                        <div class="flex justify-between items-end leading-none">
+                             <div class="text-[11px] text-gray-400 flex items-center gap-1">
+                                <span>${pax} pax</span>
+                                ${notesIcon}
+                             </div>
+                             <span class="text-[11px] font-mono text-gray-400">${precio ? Math.round(precio) + ' €' : ''}</span>
+                        </div>
+                    `;
+                        div.onclick = (e) => { e.stopPropagation(); openBooking(space, rDateStr, turno, r); };
+                        zone.appendChild(div);
+                    }
+                });
+
+                // Update Header Totals
+                for (const [key, val] of Object.entries(totals)) {
+                    const el = document.getElementById(key);
+                    if (el) el.innerText = val + " pax";
+                }
+            }
+
+            window.printReport = function (mode) {
+                const hotel = localStorage.getItem(STORAGE_KEY) || "Guadiana";
+                const dates = utils.getWeekDates(currentWeekStart);
+                let title = "";
+                let filterFn;
+
+                if (mode === 'dia') {
+                    const todayStr = utils.toIsoDate(new Date());
+                    const startStr = utils.toIsoDate(dates[0]);
+                    const endStr = utils.toIsoDate(dates[6]);
+                    let targetDateStr = todayStr;
+                    if (todayStr < startStr || todayStr > endStr) targetDateStr = startStr;
+                    const prettyDate = utils.formatDateES(new Date(targetDateStr));
+                    title = `Informe Diario - ${prettyDate}`;
+                    filterFn = (r, dateStr) => dateStr === targetDateStr;
+                } else {
+                    const d1 = utils.formatDateES(dates[0]);
+                    const d2 = utils.formatDateES(dates[6]);
+                    title = `Informe Semanal (${d1} - ${d2})`;
+                    filterFn = (r, dateStr) => dateStr >= utils.toIsoDate(dates[0]) && dateStr <= utils.toIsoDate(dates[6]);
+                }
+
+                let html = `
+                <div style="font-family: sans-serif; padding: 20px;">
+                    <h1 style="font-size: 24px; font-weight: bold; margin-bottom: 5px;">${hotel === "Guadiana" ? "Sercotel Guadiana" : "Cumbria Spa"}</h1>
+                    <h2 style="font-size: 18px; color: #555; margin-bottom: 20px;">${title}</h2>
+                    <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
+                        <thead>
+                            <tr style="background: #f3f3f3; border-bottom: 2px solid #ccc;">
+                                <th style="padding: 8px; text-align: left;">Fecha</th>
+                                <th style="padding: 8px; text-align: left;">Hora</th>
+                                <th style="padding: 8px; text-align: left;">Espacio</th>
+                                <th style="padding: 8px; text-align: left;">Cliente</th>
+                                <th style="padding: 8px; text-align: left;">Pax</th>
+                                <th style="padding: 8px; text-align: left;">Teléfono</th>
+                                <th style="padding: 8px; text-align: left;">Notas</th>
+                                <th style="padding: 8px; text-align: left;">Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+
+                let rows = [];
+                loadedReservations.forEach(r => {
+                    if (r.hotel && r.hotel !== hotel) return;
+                    let rDateStr = "";
+                    if (r.fecha && r.fecha.toDate) rDateStr = utils.toIsoDate(r.fecha.toDate());
+                    else if (typeof r.fecha === 'string') rDateStr = r.fecha;
+
+                    if (filterFn(r, rDateStr)) {
+                        rows.push({ ...r, dateStr: rDateStr, ts: new Date(rDateStr + 'T' + (r.hora || '00:00')) });
+                    }
+                });
+
+                rows.sort((a, b) => a.ts - b.ts);
+
+                rows.forEach(r => {
+                    const dateDisplay = new Date(r.dateStr).toLocaleDateString('es-ES', { weekday: 'short', day: 'numeric' });
+                    html += `
+                    <tr style="border-bottom: 1px solid #eee;">
+                        <td style="padding: 8px;">${dateDisplay}</td>
+                        <td style="padding: 8px;"><b>${r.hora || '--:--'}</b></td>
+                        <td style="padding: 8px;">${r.espacio || ''}</td>
+                        <td style="padding: 8px;">${r.nombre || r.cliente || ''}</td>
+                        <td style="padding: 8px;">${r.pax || ''}</td>
+                        <td style="padding: 8px;">${r.telefono || ''}</td>
+                        <td style="padding: 8px; color:#666;">${r.notas || ''}</td>
+                        <td style="padding: 8px;">${r.estado || ''}</td>
+                    </tr>
+                `;
+                });
+
+                html += `   </tbody></table>
+                    <div style="margin-top: 20px; font-size: 10px; color: #999; border-top: 1px solid #ddd; padding-top: 5px;">
+                        Impreso el ${new Date().toLocaleString()}
+                    </div>
+                </div>`;
+
+                const printArea = document.getElementById("printArea");
+                if (printArea) {
+                    printArea.innerHTML = html;
+                    window.print();
+                }
+            };
+
+            // FORM LOGIC
+            window.openBooking = function (space, dateStr, turno, data) {
+                window.scrollTo({ top: 0, behavior: 'smooth' }); // Go top
+                const modal = document.getElementById("modalReserva");
+                document.getElementById("formReserva").reset();
+                document.getElementById("campoId").value = "";
+                modal.classList.remove("hidden");
+
+                if (data) {
+                    document.getElementById("campoId").value = data.id;
+                    document.getElementById("campoNombre").value = data.nombre || data.cliente || "";
+                    document.getElementById("campoTelefono").value = data.telefono || "";
+                    document.getElementById("campoHora").value = data.hora || "";
+                    document.getElementById("campoPrecio").value = data.precio || "";
+                    document.getElementById("campoPax").value = data.pax || "";
+                    document.getElementById("campoNotas").value = data.notas || "";
+                    if (data.espacio) document.getElementById("campoEspacio").value = data.espacio;
+                    if (data.turno) document.getElementById("campoTurno").value = data.turno;
+                    if (data.estado) document.getElementById("campoEstado").value = data.estado;
+                    let dVal = dateStr;
+                    if (!dVal && data.fecha) {
+                        if (data.fecha.toDate) dVal = utils.toIsoDate(data.fecha.toDate());
+                        else dVal = data.fecha;
+                    }
+                    document.getElementById("campoFecha").value = dVal;
+                } else {
+                    document.getElementById("campoEspacio").value = space || "Restaurante";
+                    document.getElementById("campoFecha").value = dateStr || utils.toIsoDate(new Date());
+                    if (turno) document.getElementById("campoTurno").value = turno;
+                }
+            };
+
+            window.closeModal = function () {
+                document.getElementById("modalReserva").classList.add("hidden");
+            };
+
+            window.saveReservation = async function (e) {
+                e.preventDefault();
+                const recordId = document.getElementById("campoId").value;
+                const payload = {
+                    hotel: localStorage.getItem(STORAGE_KEY) || "Guadiana",
+                    fecha: firebase.firestore.Timestamp.fromDate(new Date(document.getElementById("campoFecha").value)),
+                    espacio: document.getElementById("campoEspacio").value,
+                    nombre: document.getElementById("campoNombre").value,
+                    telefono: document.getElementById("campoTelefono").value,
+                    hora: document.getElementById("campoHora").value,
+                    pax: parseInt(document.getElementById("campoPax").value) || 0,
+                    precio: parseFloat(document.getElementById("campoPrecio").value) || 0,
+                    turno: document.getElementById("campoTurno").value,
+                    estado: document.getElementById("campoEstado").value,
+                    notas: document.getElementById("campoNotas").value,
+                    notaCliente: document.getElementById("campoNotaCliente").value || ""
+                };
+
+                try {
+                    if (recordId) {
+                        // Update existing
+                        await db.collection("reservas_restaurante").doc(recordId).update(payload);
+                    } else {
+                        // Create new
+                        payload.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+                        await db.collection("reservas_restaurante").add(payload);
+                    }
+                    closeModal();
+                } catch (err) {
+                    alert(err);
+                }
+            };
+
+            window.changeWeek = function (d) {
+                currentWeekStart.setDate(currentWeekStart.getDate() + (d * 7));
+                renderGridStructure();
+            }
+
+            ensureFirebase(startApp);
+        })();
+    </script>
 
     <script>
         if ('serviceWorker' in navigator) {

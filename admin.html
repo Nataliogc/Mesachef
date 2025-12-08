@@ -5,292 +5,466 @@
     <meta charset="UTF-8">
     <title>MesaChef Admin</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- Load Tailwind only for inner app -->
-    <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* CRITICAL INLINE STYLES FOR LOGIN */
-        body,
-        html {
+        /* LOGIN (CSS Dependencies Free) */
+        body {
             margin: 0;
             padding: 0;
-            font-family: sans-serif;
-            height: 100%;
+            font-family: 'Segoe UI', Tahoma, sans-serif;
+            background: #f3f4f6;
         }
 
-        #authOverlay {
+        #loginScreen {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
             background-color: #111827;
-            /* Gray-900 */
+            z-index: 9999;
             display: flex;
             align-items: center;
             justify-content: center;
-            z-index: 9999;
         }
 
         .login-card {
             background: white;
-            padding: 2rem;
-            border-radius: 12px;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-            width: 100%;
-            max-width: 350px;
+            padding: 40px;
+            border-radius: 16px;
+            width: 90%;
+            max-width: 380px;
             text-align: center;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
         }
 
-        .login-btn {
-            background: #10b981;
+        .inp {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 14px;
+            background: #2563eb;
             color: white;
             border: none;
-            padding: 12px;
-            width: 100%;
             border-radius: 8px;
-            font-size: 16px;
-            cursor: pointer;
             font-weight: bold;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        .btn:hover {
+            background: #1d4ed8;
+        }
+
+        .err {
+            color: red;
             margin-top: 10px;
+            display: none;
         }
 
-        .login-btn:hover {
-            background: #059669;
-        }
-
+        /* APP */
         .hidden {
             display: none !important;
         }
 
-        /* App Styles */
-        .tab-btn.active {
-            border-bottom: 2px solid #2563eb;
-            color: #2563eb;
-            font-weight: 600;
+        .card {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            margin-bottom: 20px;
+        }
+
+        .card h3 {
+            margin-top: 0;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+            color: #374151;
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        label {
+            display: block;
+            font-size: 12px;
+            font-weight: bold;
+            color: #6b7280;
+            margin-top: 8px;
+        }
+
+        input,
+        select,
+        textarea {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            box-sizing: border-box;
         }
     </style>
 </head>
 
-<body class="bg-gray-100 text-gray-800">
+<body>
 
-    <!-- LOGIN OVERLAY (Self-contained) -->
-    <div id="authOverlay">
+    <!-- LOGIN -->
+    <div id="loginScreen">
         <div class="login-card">
-            <div style="font-size: 3rem; margin-bottom: 1rem;">🔒</div>
-            <h2 style="margin: 0 0 0.5rem 0; font-size: 1.5rem; color:#1f2937;">Acceso Admin</h2>
-            <p style="color:#6b7280; margin-bottom: 1.5rem;">Contraseña maestra</p>
-
-            <form onsubmit="event.preventDefault(); checkPass();">
-                <input type="password" id="passInput"
-                    style="width: 100%; padding: 12px; border: 1px solid #d1d5db; border-radius: 8px; box-sizing: border-box; font-size: 16px;"
-                    placeholder="Contraseña..." autofocus>
-                <button type="button" onclick="checkPass()" class="login-btn">Entrar</button>
-            </form>
-            <p id="errorMsg" style="color: #ef4444; margin-top: 1rem; display: none;">Contraseña incorrecta</p>
+            <div style="font-size:3rem; margin-bottom:10px;">🔐</div>
+            <h2 style="margin:0 0 20px 0;">Acceso Admin</h2>
+            <input type="password" id="passInput" class="inp" placeholder="Contraseña..." autofocus>
+            <button onclick="checkPass()" id="btnLogin" class="btn">ENTRAR</button>
+            <p id="errorMsg" class="err">Contraseña incorrecta</p>
         </div>
     </div>
 
-    <!-- MAIN APP -->
-    <div id="appContainer" class="hidden max-w-6xl mx-auto p-4 md:p-8">
+    <!-- DASHBOARD -->
+    <div id="dashboard" class="hidden">
+        <script src="https://cdn.tailwindcss.com"></script>
 
-        <!-- HEADER -->
-        <div class="flex flex-col md:flex-row justify-between items-center mb-8 bg-white p-6 rounded-lg shadow-sm">
-            <div>
-                <h1 class="text-3xl font-bold text-gray-800">⚙️ MesaChef Enterprise</h1>
-                <p class="text-gray-500">Panel de Configuración</p>
-            </div>
-            <div class="mt-4 md:mt-0">
-                <a href="index.html" class="text-blue-500 hover:underline mr-4">Inicio</a>
-                <button onclick="location.reload()" class="text-red-500 font-medium">Salir</button>
-            </div>
-        </div>
-
-        <!-- TABS -->
-        <div class="bg-white rounded-t-lg shadow-sm border-b px-6 pt-4 flex gap-6 overflow-x-auto">
-            <button class="tab-btn active pb-4 px-2" onclick="setTab('Guadiana')">Sercotel Guadiana</button>
-            <button class="tab-btn pb-4 px-2" onclick="setTab('Cumbria')">Cumbria Spa&Hotel</button>
-            <button class="tab-btn pb-4 px-2" onclick="setTab('Montajes')">Montajes</button>
-        </div>
-
-        <!-- CONTENT -->
-        <div class="bg-white rounded-b-lg shadow-lg min-h-[400px] p-6">
-            <div id="loading" class="text-center py-20 text-gray-400">
-                <p class="text-2xl">📡</p>
-                <p>Cargando datos...</p>
+        <div class="min-h-screen bg-gray-100 pb-20 font-sans">
+            <!-- Header -->
+            <div class="bg-white shadow px-6 py-4 flex justify-between items-center sticky top-0 z-40">
+                <h1 class="font-bold text-xl text-gray-800">⚙️ Configuración Global</h1>
+                <div class="flex gap-4">
+                    <a href="index.html" class="text-blue-600 hover:underline">Ver Public</a>
+                    <button onclick="location.reload()" class="text-red-500 font-bold">Salir</button>
+                </div>
             </div>
 
-            <div id="editorArea" class="hidden">
-                <div class="flex justify-between items-center mb-6 pb-4 border-b">
-                    <h2 class="text-xl font-bold text-gray-700" id="sectionTitle">...</h2>
-                    <div id="hotelControls" class="hidden">
-                        <button onclick="addSalon()"
-                            class="bg-blue-50 text-blue-600 hover:bg-blue-100 px-4 py-2 rounded-lg font-medium flex items-center gap-2">
-                            + Añadir Sala
-                        </button>
-                    </div>
+            <main class="max-w-7xl mx-auto p-4">
+                <!-- Status -->
+                <div id="statusBox"
+                    class="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-6 flex items-center justify-between">
+                    <span id="statusText" class="text-yellow-700 font-bold">⏳ Conectando con Base de Datos...</span>
                 </div>
 
-                <!-- SALONES -->
-                <div id="tabSalones" class="hidden">
-                    <table class="w-full text-left border-collapse">
-                        <thead>
-                            <tr class="text-xs font-semibold tracking-wide text-gray-500 uppercase border-b bg-gray-50">
-                                <th class="px-4 py-3">Nombre</th>
-                                <th class="px-4 py-3 w-20">Pax</th>
-                                <th class="px-4 py-3 w-24">€ Media</th>
-                                <th class="px-4 py-3 w-24">€ Comp.</th>
-                                <th class="px-4 py-3 w-10"></th>
-                            </tr>
-                        </thead>
-                        <tbody id="tbodySalones"></tbody>
-                    </table>
-                    <div id="emptyState" class="hidden text-center py-8 text-gray-400">Sin datos</div>
+                <!-- Tabs -->
+                <div class="flex gap-2 mb-6 overflow-x-auto bg-white p-2 rounded shadow">
+                    <button onclick="setTab('General')" id="btnGeneral"
+                        class="flex-1 py-2 px-4 rounded font-bold text-gray-600 hover:bg-gray-50">🌍 General</button>
+                    <button onclick="setTab('Guadiana')" id="btnGuadiana"
+                        class="flex-1 py-2 px-4 rounded font-bold text-gray-600 hover:bg-gray-50">🏨 Guadiana</button>
+                    <button onclick="setTab('Cumbria')" id="btnCumbria"
+                        class="flex-1 py-2 px-4 rounded font-bold text-gray-600 hover:bg-gray-50">🏨 Cumbria</button>
+                    <button onclick="setTab('Montajes')" id="btnMontajes"
+                        class="flex-1 py-2 px-4 rounded font-bold text-gray-600 hover:bg-gray-50">🪑 Montajes</button>
                 </div>
 
-                <!-- MONTAJES -->
-                <div id="tabMontajes" class="hidden">
-                    <div class="flex gap-4 mb-8 bg-gray-50 p-4 rounded-lg items-center">
-                        <input id="newMontajeCtx" type="text" class="flex-1 border p-2 rounded"
-                            placeholder="Ej: Teatro...">
-                        <button onclick="addMontaje()" class="bg-blue-600 text-white px-6 py-2 rounded">Añadir</button>
-                    </div>
-                    <div id="listMontajes" class="flex flex-wrap gap-2"></div>
-                </div>
+                <!-- Config Area -->
+                <div id="editorContent"></div>
+            </main>
 
-                <div class="mt-8 pt-6 border-t flex justify-end">
-                    <button onclick="saveConfig()" id="btnSave"
-                        class="bg-indigo-600 hover:bg-indigo-700 text-white text-lg px-8 py-3 rounded-lg shadow font-bold">
-                        GUARDAR
-                    </button>
-                </div>
+            <!-- Save FAB -->
+            <div class="fixed bottom-8 right-8 z-50">
+                <button onclick="saveAll()" id="btnSave"
+                    class="bg-gray-900 text-white px-8 py-4 rounded-full shadow-2xl font-bold text-lg hover:bg-black transition transform hover:scale-105 flex items-center gap-2">
+                    <span>💾</span> GUARDAR CAMBIOS
+                </button>
             </div>
         </div>
     </div>
 
-    <!-- FIREBASE -->
-    <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-firestore-compat.js"></script>
-    <script src="js/firebase-init.js"></script>
-
+    <!-- LOGIC -->
     <script>
-        // Check Dependencies
-        if (typeof firebase === 'undefined') {
-            alert("Error: Firebase no se ha cargado. Revisa tu conexión.");
-        }
-
-        const db = firebase.firestore();
-        let currentTab = "Guadiana";
-        let fullConfig = { Guadiana: [], Cumbria: [], montajes: [] };
-
+        // --- 1. LOGIN ---
         function checkPass() {
-            try {
-                const inp = document.getElementById("passInput");
-                const err = document.getElementById("errorMsg");
-                const val = inp.value.trim().toLowerCase();
-
-                console.log("Checking:", val); // Debug
-
-                if (val === "mesachef2026") {
-                    document.getElementById("authOverlay").classList.add("hidden");
-                    document.getElementById("appContainer").classList.remove("hidden");
-                    loadData();
-                } else {
-                    err.style.display = "block";
-                    err.innerText = "Contraseña incorrecta: " + inp.value; // Explicit fail
-                    inp.value = "";
-                }
-            } catch (e) {
-                alert("Error script: " + e.message);
+            var val = document.getElementById("passInput").value.trim().toLowerCase();
+            if (val === "mesachef2026") {
+                document.getElementById("btnLogin").style.background = "#10b981";
+                document.getElementById("btnLogin").innerText = "ACCEDIENDO...";
+                setTimeout(() => {
+                    document.getElementById("loginScreen").classList.add("hidden");
+                    document.getElementById("dashboard").classList.remove("hidden");
+                    loadFirebase();
+                }, 500);
+            } else {
+                document.getElementById("errorMsg").style.display = "block";
             }
         }
 
-        async function loadData() {
+        // --- 2. FIREBASE & DATA ---
+        var db;
+        var fullConfig = { Guadiana: [], Cumbria: [], montajes: [], horarios: {}, aiOptions: {}, textoLegal: "", mantenimiento: false };
+        var currentTab = "General";
+
+        function loadFirebase() {
+            // Check if already loaded
+            if (window.firebase && window.firebase.apps && window.firebase.apps.length && window.firebase.auth) {
+                initApp();
+                return;
+            }
+
+            // Load Dynamically if not present
+            var s1 = document.createElement("script");
+            s1.src = "https://www.gstatic.com/firebasejs/9.6.7/firebase-app-compat.js";
+            s1.onload = function () {
+                var s2 = document.createElement("script");
+                s2.src = "https://www.gstatic.com/firebasejs/9.6.7/firebase-auth-compat.js";
+                s2.onload = function () {
+                    var s3 = document.createElement("script");
+                    s3.src = "https://www.gstatic.com/firebasejs/9.6.7/firebase-firestore-compat.js";
+                    s3.onload = initApp;
+                    s3.onerror = function () { alert("Error loading Firestore"); };
+                    document.head.appendChild(s3);
+                };
+                s2.onerror = function () { alert("Error loading Auth"); };
+                document.head.appendChild(s2);
+            };
+            s1.onerror = function () { alert("Error loading Firebase App"); };
+            document.head.appendChild(s1);
+        }
+
+        function initApp() {
             try {
-                const doc = await db.collection("master_data").doc("CONFIG_SALONES").get();
+                // ** CREDENTIALS (Mesa Chef Prod) **
+                const firebaseConfig = {
+                    apiKey: "AIzaSyAXv_wKD48EFDe8FBQ-6m0XGUNoxSRiTJY",
+                    authDomain: "mesa-chef-prod.firebaseapp.com",
+                    projectId: "mesa-chef-prod",
+                    storageBucket: "mesa-chef-prod.firebasestorage.app",
+                    messagingSenderId: "43170330072",
+                    appId: "1:43170330072:web:bcdd09e39930ad08bf2ead"
+                };
+
+                if (!firebase.apps.length) {
+                    firebase.initializeApp(firebaseConfig);
+                }
+
+                // AUTHENTICATE
+                firebase.auth().onAuthStateChanged((user) => {
+                    if (user) {
+                        startDB();
+                    } else {
+                        firebase.auth().signInAnonymously().then(() => {
+                            // Auth success, onAuthStateChanged will trigger again
+                        }).catch((error) => {
+                            document.getElementById("statusText").innerText = "Error Auth: " + error.message;
+                        });
+                    }
+                });
+
+            } catch (e) {
+                if (e.code === 'app/duplicate-app') {
+                    firebase.auth().onAuthStateChanged((user) => {
+                        if (user) startDB();
+                        else firebase.auth().signInAnonymously();
+                    });
+                } else {
+                    alert("Error Config: " + e.message);
+                }
+            }
+        }
+
+        function startDB() {
+            db = firebase.firestore();
+            loadData();
+        }
+
+        function loadData() {
+            document.getElementById("statusText").innerText = "⏳ Cargando configuración...";
+
+            db.collection("master_data").doc("CONFIG_SALONES").get().then(doc => {
                 if (doc.exists) {
-                    const d = doc.data();
-                    fullConfig.Guadiana = d.Guadiana || [];
-                    fullConfig.Cumbria = d.Cumbria || [];
-                    fullConfig.montajes = d.montajes || [];
-                } else {
-                    fullConfig.montajes = ["Escuela", "Teatro"];
+                    fullConfig = doc.data();
                 }
-                document.getElementById("loading").classList.add("hidden");
-                document.getElementById("editorArea").classList.remove("hidden");
-                render();
-            } catch (e) {
-                alert("Error cargando configuración: " + e.message);
-            }
+
+                // --- DEFAULT DATA SEEDING (If empty) ---
+                if (!fullConfig.horarios) fullConfig.horarios = {};
+                if (!fullConfig.aiOptions) fullConfig.aiOptions = {};
+                if (!fullConfig.Guadiana) fullConfig.Guadiana = [];
+                if (!fullConfig.Cumbria) fullConfig.Cumbria = [];
+                // Default Montajes
+                if (!fullConfig.montajes || fullConfig.montajes.length === 0) {
+                    fullConfig.montajes = ["Banquete", "Escuela", "Teatro", "Cóctel", "U", "Imperial"];
+                }
+
+                document.getElementById("statusText").innerText = "✅ Datos cargados correctamente";
+                document.getElementById("statusText").className = "text-green-700 font-bold";
+                document.getElementById("statusBox").className = "bg-green-50 border-l-4 border-green-500 p-4 mb-6 flex items-center justify-between";
+
+                // DETECT EMPTY DB for User Convenience
+                if (fullConfig.Guadiana.length === 0 && fullConfig.Cumbria.length === 0) {
+                    document.getElementById("statusBox").innerHTML = `
+                        <div class="flex items-center gap-2">
+                           <span class="text-xl">⚠️</span>
+                           <div>
+                              <span class="text-yellow-700 font-bold">Base de Datos sin Salones</span>
+                              <div class="text-xs text-yellow-600">No se encontraron salones. ¿Quieres cargar los de ejemplo?</div>
+                           </div>
+                        </div>
+                        <button onclick="restoreDefaults()" class="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded shadow">
+                            RESTAURAR DATOS
+                        </button>
+                     `;
+                }
+
+                setTab('General');
+            }).catch(e => {
+                // alert("Error DB: " + e.message);
+                document.getElementById("statusText").innerText = "Error: " + e.message;
+            });
         }
 
+        window.restoreDefaults = function () {
+            if (!confirm("⚠️ ¿Estás seguro? Se borrará la configuración actual y se pondrán los datos por defecto.")) return;
+
+            fullConfig.horarios = { almIni: "13:00", almFin: "16:00", cenaIni: "20:30", cenaFin: "23:00", corte: "18:00" };
+            fullConfig.montajes = ["Banquete", "Escuela", "Teatro", "Cóctel", "U", "Imperial"];
+            fullConfig.Guadiana = [
+                { name: "Salón Columnas", pax: 200, priceHalf: 350, priceFull: 600, active: true },
+                { name: "Salón Jardín", pax: 150, priceHalf: 300, priceFull: 500, active: true },
+                { name: "Salón Cristalera", pax: 80, priceHalf: 200, priceFull: 350, active: true }
+            ];
+            fullConfig.Cumbria = [
+                { name: "Sala Multiusos", pax: 100, priceHalf: 200, priceFull: 350, active: true },
+                { name: "Aula Formación", pax: 30, priceHalf: 100, priceFull: 180, active: true }
+            ];
+            fullConfig.aiOptions = { tone: "formal", prompt: "" };
+
+            // Re-render and Save
+            render();
+            markDirty();
+            saveAll();
+        };
+
+        // --- 3. UI RENDER ---
         function setTab(t) {
             currentTab = t;
-            document.querySelectorAll(".tab-btn").forEach(b => {
-                b.classList.toggle("active", b.innerText.includes(t) || (t === "Montajes" && b.innerText.includes("Montajes")));
-            });
+            // Tabs visual
+            document.querySelectorAll(".tab-btn").forEach(b => b.className = "flex-1 py-2 px-4 rounded font-bold text-gray-600 hover:bg-gray-50");
+            var btn = document.getElementById("btn" + t);
+            if (btn) btn.className = "flex-1 py-2 px-4 rounded font-bold text-blue-600 bg-blue-50 border border-blue-100";
+
             render();
         }
 
         function render() {
-            const ts = document.getElementById("tabSalones");
-            const tm = document.getElementById("tabMontajes");
-            const hc = document.getElementById("hotelControls");
-            const st = document.getElementById("sectionTitle");
-
-            if (currentTab === "Montajes") {
-                ts.classList.add("hidden"); tm.classList.remove("hidden"); hc.classList.add("hidden");
-                st.innerText = "Tipos de Montaje";
-                renderMontajes();
-            } else {
-                ts.classList.remove("hidden"); tm.classList.add("hidden"); hc.classList.remove("hidden");
-                st.innerText = "Salas: " + currentTab;
-                renderSalones(currentTab);
-            }
+            var c = document.getElementById("editorContent");
+            c.innerHTML = "";
+            if (currentTab === 'General') renderGeneral(c);
+            else if (currentTab === 'Montajes') renderMontajes(c);
+            else renderSalones(c, currentTab);
         }
 
-        function renderSalones(h) {
-            const tb = document.getElementById("tbodySalones");
-            tb.innerHTML = "";
-            const list = fullConfig[h];
-            if (!list.length) { document.getElementById("emptyState").classList.remove("hidden"); return; }
-            document.getElementById("emptyState").classList.add("hidden");
+        function renderGeneral(c) {
+            c.innerHTML = `
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="card">
+                        <h3>⏱️ Horarios</h3>
+                        <div class="grid-2">
+                           <div><label>Apertura Almuerzo</label><input type="time" value="${fullConfig.horarios.almIni || '13:00'}" onchange="updCfg('horarios','almIni',this.value)"></div>
+                           <div><label>Cierre Almuerzo</label><input type="time" value="${fullConfig.horarios.almFin || '16:00'}" onchange="updCfg('horarios','almFin',this.value)"></div>
+                        </div>
+                        <div class="grid-2">
+                           <div><label>Apertura Cena</label><input type="time" value="${fullConfig.horarios.cenaIni || '20:30'}" onchange="updCfg('horarios','cenaIni',this.value)"></div>
+                           <div><label>Cierre Cena</label><input type="time" value="${fullConfig.horarios.cenaFin || '23:00'}" onchange="updCfg('horarios','cenaFin',this.value)"></div>
+                        </div>
+                        <label>Corte Horario (Tarde)</label>
+                        <input type="time" value="${fullConfig.horarios.corte || '18:00'}" onchange="updCfg('horarios','corte',this.value)">
+                    </div>
+                    
+                    <div class="card">
+                        <h3>🤖 IA & Opciones</h3>
+                        <label>Tono</label>
+                        <select onchange="updCfg('aiOptions','tone',this.value)">
+                            <option value="formal" ${fullConfig.aiOptions.tone === 'formal' ? 'selected' : ''}>Formal</option>
+                            <option value="cercano" ${fullConfig.aiOptions.tone === 'cercano' ? 'selected' : ''}>Cercano</option>
+                            <option value="lujo" ${fullConfig.aiOptions.tone === 'lujo' ? 'selected' : ''}>Lujo</option>
+                        </select>
+                        <label>Prompt Extra</label>
+                        <textarea rows="3" onchange="updCfg('aiOptions','prompt',this.value)">${fullConfig.aiOptions.prompt || ''}</textarea>
+                    </div>
+
+                    <div class="card border border-red-200 bg-red-50">
+                        <h3 class="text-red-700">🔒 Mantenimiento</h3>
+                        <label class="flex items-center gap-2 mt-4 text-red-700 cursor-pointer">
+                            <input type="checkbox" ${fullConfig.mantenimiento ? 'checked' : ''} onchange="fullConfig.mantenimiento=this.checked; markDirty()" style="width:auto;">
+                            ACTIVAR MODO MANTENIMIENTO
+                        </label>
+                    </div>
+
+                    <div class="card md:col-span-2">
+                        <h3>📄 Texto Legal (Pie PDF)</h3>
+                        <textarea rows="4" onchange="fullConfig.textoLegal=this.value; markDirty()" class="font-mono text-sm">${fullConfig.textoLegal || ''}</textarea>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderSalones(c, hotel) {
+            var list = fullConfig[hotel] || [];
+            var html = `<div class="card">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="border-0 mb-0">Salones: ${hotel}</h3>
+                    <button onclick="addItem()" class="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700">+ Añadir</button>
+                </div>
+                <div class="overflow-x-auto"><table class="w-full text-left font-sm">
+                <thead class="bg-gray-50 text-gray-500 uppercase text-xs">
+                    <tr><th class="p-2">Nombre</th><th class="p-2 w-16">Pax</th><th class="p-2 w-20">€ 1/2</th><th class="p-2 w-20">€ Comp</th><th class="p-2 w-10 text-center">ON</th><th class="w-10"></th></tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100">`;
 
             list.forEach((s, i) => {
-                tb.innerHTML += `
-                    <tr class="border-b">
-                        <td class="p-2"><input class="border-none w-full" value="${s.name}" onchange="upd('${h}',${i},'name',this.value)"></td>
-                        <td class="p-2"><input type="number" class="border-none w-full text-center" value="${s.pax || 0}" onchange="upd('${h}',${i},'pax',this.value)"></td>
-                        <td class="p-2"><input type="number" class="border-none w-full text-right" value="${s.priceHalf || 0}" onchange="upd('${h}',${i},'priceHalf',this.value)"></td>
-                        <td class="p-2"><input type="number" class="border-none w-full text-right" value="${s.priceFull || 0}" onchange="upd('${h}',${i},'priceFull',this.value)"></td>
-                        <td class="p-2 text-center"><button class="text-red-500 font-bold" onclick="del('${h}',${i})">&times;</button></td>
-                    </tr>
-                 `;
+                html += `<tr class="hover:bg-blue-50">
+                    <td class="p-2"><input value="${s.name}" onchange="updS(${i},'name',this.value)" class="w-full bg-transparent outline-none"></td>
+                    <td class="p-2"><input type="number" value="${s.pax || 0}" onchange="updS(${i},'pax',this.value)" class="w-full bg-transparent outline-none text-center"></td>
+                    <td class="p-2"><input type="number" value="${s.priceHalf || 0}" onchange="updS(${i},'priceHalf',this.value)" class="w-full bg-transparent outline-none text-right"></td>
+                    <td class="p-2"><input type="number" value="${s.priceFull || 0}" onchange="updS(${i},'priceFull',this.value)" class="w-full bg-transparent outline-none text-right"></td>
+                    <td class="p-2 text-center"><input type="checkbox" ${s.active !== false ? 'checked' : ''} onchange="updS(${i},'active',this.checked)" style="width:auto;"></td>
+                    <td class="p-2"><button onclick="delItem(${i})" class="text-gray-400 hover:text-red-500 font-bold">&times;</button></td>
+                </tr>`;
             });
+            html += `</tbody></table></div></div>`;
+            c.innerHTML = html;
         }
 
-        function renderMontajes() {
-            const list = document.getElementById("listMontajes");
-            list.innerHTML = "";
-            fullConfig.montajes.forEach((m, i) => {
-                list.innerHTML += `<div class="bg-blue-100 px-3 py-1 rounded-full text-blue-800 flex gap-2"><span>${m}</span><button onclick="delM(${i})" class="font-bold text-red-500">&times;</button></div>`;
+        function renderMontajes(c) {
+            var html = `<div class="card"><div class="flex gap-4 mb-4"><input id="newM_val" placeholder="Nuevo..." class="flex-1"><button onclick="addItem()" class="bg-blue-600 text-white px-4 rounded font-bold">Añadir</button></div><div class="flex flex-wrap gap-2">`;
+            (fullConfig.montajes || []).forEach((m, i) => {
+                html += `<div class="bg-blue-50 text-blue-800 px-3 py-1 rounded-full flex gap-2 items-center border border-blue-100"><span contenteditable onblur="updM(${i},this.innerText)">${m}</span><button onclick="delItem(${i})" class="text-red-400 font-bold">&times;</button></div>`;
             });
+            html += `</div></div>`;
+            c.innerHTML = html;
         }
 
-        window.upd = (h, i, f, v) => { if (f !== 'name') v = parseFloat(v) || 0; fullConfig[h][i][f] = v; };
-        window.del = (h, i) => { if (confirm("¿Borrar?")) { fullConfig[h].splice(i, 1); render(); } };
-        window.addSalon = () => { fullConfig[currentTab].push({ name: "Nueva Sala", pax: 0, priceHalf: 0, priceFull: 0 }); render(); };
-        window.addMontaje = () => { const v = document.getElementById("newMontajeCtx").value; if (v) { fullConfig.montajes.push(v); render(); } };
-        window.delM = (i) => { fullConfig.montajes.splice(i, 1); render(); };
+        // --- UPDATERS ---
+        function updCfg(cat, k, v) { if (!fullConfig[cat]) fullConfig[cat] = {}; fullConfig[cat][k] = v; markDirty(); }
+        function updS(i, k, v) { if (k !== 'name' && k !== 'active') v = parseFloat(v); fullConfig[currentTab][i][k] = v; markDirty(); }
+        function updM(i, v) { fullConfig.montajes[i] = v; markDirty(); }
 
-        window.saveConfig = async () => {
-            document.getElementById("btnSave").innerText = "Guardando...";
+        window.addItem = () => {
+            if (currentTab === 'Montajes') { var v = document.getElementById("newM_val").value; if (v) { fullConfig.montajes.push(v); render(); markDirty(); } }
+            else if (currentTab !== 'General') { fullConfig[currentTab].push({ name: "Nuevo", pax: 0, priceHalf: 0, priceFull: 0, active: true }); render(); markDirty(); }
+        }
+        window.delItem = (i) => { if (confirm("¿Borrar?")) { if (currentTab === 'Montajes') fullConfig.montajes.splice(i, 1); else fullConfig[currentTab].splice(i, 1); render(); markDirty(); } }
+
+        function markDirty() {
+            var b = document.getElementById("btnSave");
+            b.innerText = "💾 GUARDAR*";
+            b.classList.replace("bg-gray-900", "bg-blue-600");
+        }
+
+        window.saveAll = async () => {
+            var b = document.getElementById("btnSave");
+            b.innerText = "GUARDANDO...";
             try {
                 await db.collection("master_data").doc("CONFIG_SALONES").set(fullConfig);
-                alert("Guardado correctamente");
-                document.getElementById("btnSave").innerText = "GUARDAR";
-            } catch (e) { alert("Error: " + e.message); }
-        };
-
+                b.innerText = "¡GUARDADO!";
+                b.classList.replace("bg-blue-600", "bg-green-500");
+                setTimeout(() => { b.innerText = "💾 GUARDAR CAMBIOS"; b.classList.replace("bg-green-500", "bg-gray-900"); }, 2000);
+            } catch (e) { alert(e.message); }
+        }
     </script>
 </body>
 
