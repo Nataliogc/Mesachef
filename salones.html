@@ -52,7 +52,8 @@
 
         input:focus {
             border-color: #2563eb;
-            ring: 2px solid #bfdbfe;
+            box-shadow: 0 0 0 2px #bfdbfe;
+            outline: none;
         }
 
         label {
@@ -127,141 +128,313 @@
     </nav>
 
     <!-- CONTENT -->
-    <div class="max-w-[1600px] mx-auto p-4 lg:p-6" id="app">
+    <div class="w-full px-4 lg:px-6 py-6" id="app">
+
         <!-- Toolbar -->
-        <div class="flex justify-between items-center mb-6">
-            <div class="flex items-center gap-2 bg-white p-1 rounded-lg border shadow-sm">
+        <div
+            class="flex flex-col xl:flex-row items-center justify-between gap-4 mb-4 bg-white p-1 rounded-2xl shadow-sm border border-slate-100">
+
+            <!-- LEFT: Print Buttons -->
+            <div class="flex items-center gap-4 w-full xl:w-auto justify-center xl:justify-start">
+                <div class="flex gap-2">
+                    <button onclick="printReport('semana')"
+                        class="flex items-center gap-2 h-8 px-3 bg-white border border-slate-200 text-slate-600 hover:text-slate-800 hover:border-slate-300 rounded-xl text-xs font-bold transition hover:shadow-sm"
+                        title="Imprimir Semana">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-slate-400" viewBox="0 0 24 24"
+                            fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                            stroke-linejoin="round">
+                            <polyline points="6 9 6 2 18 2 18 9" />
+                            <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
+                            <rect x="6" y="14" width="12" height="8" />
+                        </svg>
+                        <span class="hidden sm:inline">Semana</span>
+                    </button>
+                    <button onclick="printReport('dia')"
+                        class="flex items-center gap-2 h-8 px-3 bg-white border border-slate-200 text-slate-600 hover:text-slate-800 hover:border-slate-300 rounded-xl text-xs font-bold transition hover:shadow-sm"
+                        title="Imprimir Diario">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-slate-400" viewBox="0 0 24 24"
+                            fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                            stroke-linejoin="round">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                            <polyline points="14 2 14 8 20 8" />
+                            <line x1="16" y1="13" x2="8" y2="13" />
+                            <line x1="16" y1="17" x2="8" y2="17" />
+                            <polyline points="10 9 9 9 8 9" />
+                        </svg>
+                        <span class="hidden sm:inline">Diario</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- CENTER: Date Control (Split) -->
+            <div
+                class="flex flex-1 flex-row items-center justify-center gap-3 order-first xl:order-none w-full xl:w-auto">
                 <button onclick="changeWeek(-1)"
-                    class="p-2 hover:bg-slate-100 rounded text-slate-500 font-bold">⬅</button>
-                <div class="px-4 font-bold text-lg text-slate-800" id="currentWeekRange">Semana Actual</div>
+                    class="w-8 h-8 flex items-center justify-center bg-white border border-slate-200 rounded-lg text-slate-500 hover:text-blue-600 hover:border-blue-300 hover:shadow-sm transition"
+                    title="Semana Anterior">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="m15 18-6-6 6-6" />
+                    </svg>
+                </button>
+
+                <div class="relative group">
+                    <input type="date" id="datePicker" onchange="goToDate(this.value)"
+                        class="h-9 pl-3 pr-10 bg-white border border-slate-200 rounded-lg text-sm font-bold text-slate-700 focus:ring-2 focus:ring-blue-500/10 focus:border-blue-500 outline-none w-40 text-center shadow-sm cursor-pointer appearance-none hover:border-blue-300 transition uppercase tracking-wide">
+                    <div
+                        class="absolute inset-y-0 right-3 flex items-center pointer-events-none text-slate-400 group-hover:text-blue-500 transition">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                            <line x1="16" y1="2" x2="16" y2="6" />
+                            <line x1="8" y1="2" x2="8" y2="6" />
+                            <line x1="3" y1="10" x2="21" y2="10" />
+                            <path d="M8 14h.01" />
+                            <path d="M12 14h.01" />
+                            <path d="M16 14h.01" />
+                            <path d="M8 18h.01" />
+                            <path d="M12 18h.01" />
+                            <path d="M16 18h.01" />
+                        </svg>
+                    </div>
+                </div>
+
+                <div class="h-6 w-px bg-slate-200 mx-2 hidden sm:block"></div>
+
                 <button onclick="changeWeek(1)"
-                    class="p-2 hover:bg-slate-100 rounded text-slate-500 font-bold">➡</button>
-                <button onclick="resetToday()"
-                    class="text-xs text-blue-600 font-bold ml-2 uppercase tracking-wide">HOY</button>
+                    class="w-8 h-8 flex items-center justify-center bg-white border border-slate-200 rounded-lg text-slate-500 hover:text-blue-600 hover:border-blue-300 hover:shadow-sm transition"
+                    title="Semana Siguiente">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="m9 18 6-6-6-6" />
+                    </svg>
+                </button>
             </div>
-            <div class="border rounded-lg bg-white flex items-center px-4 py-2 gap-2 shadow-sm w-72">
-                <span class="text-slate-400">🔍</span>
-                <input type="text" placeholder="Buscar evento..." class="border-none p-0 text-sm focus:ring-0 w-full">
+
+            <!-- RIGHT: Filters + Search -->
+            <div class="flex items-center gap-3 w-full xl:w-auto justify-center xl:justify-end">
+                <!-- Status Filter -->
+                <div class="relative">
+                    <select id="filterStatus" onchange="renderGrid()"
+                        class="appearance-none h-8 pl-3 pr-8 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-600 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none cursor-pointer hover:bg-white transition shadow-sm w-36">
+                        <option value="activos">Activos (Conf + Prov)</option>
+                        <option value="todos">Todos los estados</option>
+                        <option value="confirmada">🟢 Confirmados</option>
+                        <option value="provisional">🟡 Provisionales</option>
+                        <option value="presupuesto">🟠 Presupuestos</option>
+                        <option value="cancelada">🔴 Cancelados</option>
+                    </select>
+                    <div class="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none text-slate-400">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="m6 9 6 6 6-6" />
+                        </svg>
+                    </div>
+                </div>
+
+                <!-- Search Input -->
+                <div class="relative">
+                    <input type="text" id="searchInput" onkeyup="handleSearch(this.value)" placeholder="Buscar..."
+                        class="h-8 pl-9 pr-3 w-40 xl:w-48 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-600 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition shadow-sm placeholder-slate-400">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 absolute left-3 top-2 text-slate-400"
+                        viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                    </svg>
+                    <!-- Search Results Dropdown -->
+                    <div id="searchResults"
+                        class="hidden absolute top-full right-0 mt-2 w-80 bg-white rounded-xl shadow-xl border border-slate-100 max-h-96 overflow-y-auto z-50 divide-y divide-slate-50">
+                    </div>
+                </div>
+
+                <!-- Print Area -->
+                <div id="printArea" class="hidden print:block fixed inset-0 bg-white z-[9999] p-8"></div>
+
             </div>
         </div>
 
-        <!-- Grid -->
-        <div id="calendarGrid"
-            class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden min-h-[400px]">
-            <div class="flex items-center justify-center h-full text-slate-400 gap-2 p-10">
-                <span class="animate-spin">⏳</span> Conectando con servidor...
+        <!-- Main Grid Container -->
+        <div id="calendarGrid" class="flex-1 overflow-auto">
+            <div class="flex flex-col items-center justify-center p-10 h-64 text-slate-400">
+                <span class="text-4xl mb-4 animate-bounce">⏳</span>
+                <span class="font-bold text-lg">Cargando aplicación...</span>
             </div>
         </div>
-    </div>
+        <div id="modal-evt" class="fixed inset-0 z-50 hidden" aria-labelledby="modal-title" role="dialog"
+            aria-modal="true">
+            <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity"></div>
+            <div class="fixed inset-0 z-10 overflow-y-auto">
+                <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
+                    <div
+                        class="relative transform overflow-hidden rounded-xl bg-white text-left shadow-2xl transition-all sm:my-8 sm:w-full sm:max-w-5xl modal-content">
 
-    <!-- MODAL -->
-    <div id="modal-evt" class="fixed inset-0 z-50 hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
-        <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity"></div>
-        <div class="fixed inset-0 z-10 overflow-y-auto">
-            <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
-                <div
-                    class="relative transform overflow-hidden rounded-xl bg-white text-left shadow-2xl transition-all sm:my-8 sm:w-full sm:max-w-5xl modal-content">
+                        <div class="bg-white px-4 py-2 border-b flex justify-between items-center bg-gray-50">
+                            <h3 class="text-lg font-bold text-slate-800">Evento</h3>
+                            <button onclick="closeModal()"
+                                class="text-slate-400 hover:text-slate-600 font-bold text-xl">&times;</button>
+                        </div>
 
-                    <div class="bg-white px-6 py-4 border-b flex justify-between items-center">
-                        <h3 class="text-xl font-bold text-slate-800">Nuevo Evento</h3>
-                        <button onclick="closeModal()"
-                            class="text-slate-400 hover:text-slate-600 font-bold text-2xl">&times;</button>
-                    </div>
+                        <div class="px-4 py-3 space-y-3 bg-white">
 
-                    <div class="px-6 py-6 space-y-6 bg-slate-50/50">
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <!-- FECHA -->
+                            <!-- ROW 1: LOGISTICS (Fecha, Hora, Salón, Estado) -->
+                            <div class="grid grid-cols-12 gap-3">
+                                <div class="col-span-2">
+                                    <label class="text-[10px] uppercase font-bold text-gray-500">Fecha</label>
+                                    <input type="date" id="evt-fecha"
+                                        class="w-full text-sm font-bold bg-gray-50 border-gray-200 rounded h-9">
+                                </div>
+                                <div class="col-span-2">
+                                    <label class="text-[10px] uppercase font-bold text-gray-500">Hora</label>
+                                    <input type="time" id="evt-hora" class="w-full text-xs border-gray-200 rounded h-9">
+                                </div>
+                                <div class="col-span-5">
+                                    <label class="text-[10px] uppercase font-bold text-gray-500">Salón</label>
+                                    <select id="evt-salon" onchange="updateRentalPrice()"
+                                        class="w-full text-sm font-bold bg-gray-50 border-gray-200 rounded h-9">
+                                    </select>
+                                </div>
+                                <div class="col-span-3">
+                                    <label class="text-[10px] uppercase font-bold text-gray-500">Estado</label>
+                                    <select id="evt-estado"
+                                        class="w-full text-xs font-bold border-gray-200 rounded h-9">
+                                        <option value="presupuesto">🟠 Presupuesto</option>
+                                        <option value="provisional">🟡 Provisional</option>
+                                        <option value="confirmada" selected>🟢 Confirmada</option>
+                                        <option value="cancelada">🔴 Cancelada</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <!-- ROW 2: CLIENT (Nombre, Tel, Email) -->
+                            <div
+                                class="grid grid-cols-12 gap-3 bg-blue-50/50 p-2 rounded -mx-2 border border-blue-50/50">
+                                <div class="col-span-6">
+                                    <label class="text-[10px] uppercase font-bold text-blue-400">Cliente /
+                                        Evento</label>
+                                    <input type="text" id="evt-nombre" placeholder="Nombre del cliente o evento..."
+                                        class="w-full text-sm font-bold border-gray-200 rounded h-9">
+                                </div>
+                                <div class="col-span-3">
+                                    <label class="text-[10px] uppercase font-bold text-blue-400">Teléfono</label>
+                                    <input type="tel" id="evt-telefono" placeholder="Tel..."
+                                        class="w-full text-xs border-gray-200 rounded h-9">
+                                </div>
+                                <div class="col-span-3">
+                                    <label class="text-[10px] uppercase font-bold text-blue-400">Email</label>
+                                    <input type="email" id="evt-email" placeholder="@"
+                                        class="w-full text-xs border-gray-200 rounded h-9">
+                                </div>
+                            </div>
+
+                            <!-- ROW 3: OPERATIONS (Jornada, Montaje, Pax) -->
+                            <div class="grid grid-cols-12 gap-3">
+                                <div class="col-span-3">
+                                    <label class="text-[10px] uppercase font-bold text-gray-500">Jornada</label>
+                                    <select id="evt-jornada" onchange="updateRentalPrice()"
+                                        class="w-full text-xs border-gray-200 rounded h-9">
+                                        <option value="todo">Todo el día</option>
+                                        <option value="mañana">Mañana</option>
+                                        <option value="tarde">Tarde</option>
+                                    </select>
+                                </div>
+                                <div class="col-span-5">
+                                    <label class="text-[10px] uppercase font-bold text-gray-500">Montaje</label>
+                                    <select id="evt-montaje"
+                                        class="w-full text-xs border-gray-200 rounded h-9"></select>
+                                </div>
+                                <div class="col-span-2">
+                                    <label class="text-[10px] uppercase font-bold text-gray-500">Pax Adultos</label>
+                                    <input type="number" id="evt-pax-a" placeholder="0"
+                                        class="w-full text-xs border-gray-200 rounded h-9 text-center">
+                                </div>
+                                <div class="col-span-2">
+                                    <label class="text-[10px] uppercase font-bold text-gray-500">Pax Niños</label>
+                                    <input type="number" id="evt-pax-n" placeholder="0"
+                                        class="w-full text-xs border-gray-200 rounded h-9 text-center">
+                                </div>
+                            </div>
+
+                            <hr class="border-gray-100 my-1">
+
+                            <!-- SERVICES -->
                             <div>
-                                <label>FECHA (Día/Mes/Año)</label>
-                                <input type="date" id="evt-fecha"
-                                    class="text-lg font-bold bg-white text-slate-900 shadow-sm border-slate-300">
+                                <div class="flex justify-between items-center mb-1">
+                                    <label class="text-[10px] uppercase font-bold text-gray-500">Servicios</label>
+                                    <div class="text-right font-bold text-sm">Total: <span id="evt-total"
+                                            class="text-blue-600">0.00 €</span></div>
+                                </div>
+                                <div class="bg-gray-50 border rounded shadow-inner max-h-40 overflow-y-auto">
+                                    <table class="w-full text-xs">
+                                        <thead class="bg-gray-100 sticky top-0">
+                                            <tr>
+                                                <th class="p-1 w-24">Fecha</th>
+                                                <th class="p-1 text-left">Concepto</th>
+                                                <th class="p-1 w-12 text-center">Uds</th>
+                                                <th class="p-1 w-16 text-right">Pre</th>
+                                                <th class="p-1 w-16 text-right">Tot</th>
+                                                <th class="p-1 w-6"></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="services-list" class="divide-y divide-gray-200"></tbody>
+                                    </table>
+                                </div>
+                                <div class="flex justify-between mt-1">
+                                    <button onclick="addServiceRow()"
+                                        class="text-blue-600 font-bold text-xs hover:underline">+ Añadir Item</button>
+                                    <button
+                                        class="bg-purple-100 text-purple-700 text-[10px] px-2 py-0.5 rounded font-bold hover:bg-purple-200">✨
+                                        AI Menu</button>
+                                </div>
                             </div>
 
-                            <!-- SALON -->
-                            <div>
-                                <label>SALÓN SELECCIONADO</label>
-                                <select id="evt-salon"
-                                    class="text-lg font-bold bg-white text-slate-900 shadow-sm border-slate-300">
-                                    <option>Cargando salones...</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        <div class="grid grid-cols-1 md:grid-cols-12 gap-4">
-                            <div class="md:col-span-6"><label>Cliente / Empresa / Evento</label><input type="text"
-                                    id="evt-nombre" placeholder="Nombre..." class="font-bold"></div>
-                            <div class="md:col-span-3"><label>Teléfono</label><input type="tel" id="evt-telefono"
-                                    placeholder="600..."></div>
-                            <div class="md:col-span-3"><label>Email</label><input type="email" id="evt-email"
-                                    placeholder="@"></div>
-                        </div>
-
-                        <div class="grid grid-cols-2 md:grid-cols-6 gap-4">
-                            <div><label>Estado</label><select id="evt-estado"
-                                    class="text-amber-600 font-bold bg-amber-50">
-                                    <option value="pendiente">⏳ Pendiente</option>
-                                    <option value="confirmada">✅ Confirmada</option>
-                                    <option value="pagada">💰 Pagada</option>
-                                </select></div>
-                            <div><label>Jornada</label><select id="evt-jornada">
-                                    <option value="todo">Todo el día</option>
-                                    <option value="mañana">Mañana</option>
-                                    <option value="tarde">Tarde</option>
-                                </select></div>
-                            <div><label>Montaje</label><select id="evt-montaje">
-                                    <option>Banquete</option>
-                                </select></div>
-                            <div><label>Hora</label><input type="time" id="evt-hora"></div>
-                            <div><label>Pax A</label><input type="number" id="evt-pax-a"></div>
-                            <div><label>Pax N</label><input type="number" id="evt-pax-n"></div>
-                        </div>
-
-                        <hr>
-                        <div>
-                            <div class="flex justify-between mb-2"><label>Servicios</label><button
-                                    class="bg-purple-600 text-white text-xs px-2 py-1 rounded font-bold">✨ AI
-                                    Menu</button></div>
-                            <div class="bg-white border rounded shadow-sm">
-                                <table class="w-full text-sm">
-                                    <thead class="bg-slate-50">
-                                        <tr>
-                                            <th class="p-2">Fecha</th>
-                                            <th class="p-2">Concepto</th>
-                                            <th class="p-2 text-center">Uds</th>
-                                            <th class="p-2 text-right">Pre</th>
-                                            <th class="p-2 text-right">Tot</th>
-                                            <th></th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="services-list"></tbody>
-                                </table><button onclick="addServiceRow()"
-                                    class="w-full text-center text-blue-600 font-bold py-2 border-t text-xs hover:bg-blue-50">+
-                                    Añadir Servicio</button>
-                            </div>
-                            <div class="text-right font-bold text-lg mt-2">Total: <span id="evt-total">0.00 €</span>
+                            <!-- NOTES & CHECK -->
+                            <div class="grid grid-cols-12 gap-3 mt-2">
+                                <div class="col-span-12">
+                                    <div class="flex items-center space-x-2 mb-1 pl-1">
+                                        <input type="checkbox" id="evt-revisado"
+                                            class="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500">
+                                        <label for="evt-revisado"
+                                            class="text-xs font-bold text-slate-700 select-none cursor-pointer">Evento
+                                            Revisado</label>
+                                    </div>
+                                </div>
+                                <div class="col-span-6">
+                                    <label class="text-[10px] uppercase font-bold text-gray-500">Nota Interna</label>
+                                    <textarea id="evt-nota-interna" rows="1"
+                                        class="w-full text-xs border-gray-200 rounded resize-none focus:h-16 transition-all"
+                                        placeholder="Sólo visible para nosotros..."></textarea>
+                                </div>
+                                <div class="col-span-6">
+                                    <label class="text-[10px] uppercase font-bold text-gray-500">Nota Cliente</label>
+                                    <textarea id="evt-nota-cliente" rows="1"
+                                        class="w-full text-xs border-gray-200 rounded resize-none focus:h-16 transition-all"
+                                        placeholder="Visible para cliente..."></textarea>
+                                </div>
                             </div>
                         </div>
 
-                        <div class="grid grid-cols-2 gap-4">
-                            <div><label>Nota Interna</label><textarea id="evt-nota-interna" rows="2"
-                                    class="text-sm"></textarea></div>
-                            <div><label>Nota Cliente</label><textarea id="evt-nota-cliente" rows="2"
-                                    class="text-sm"></textarea></div>
+                        <div class="bg-gray-50 px-4 py-2 flex justify-between items-center border-t">
+                            <button class="text-red-400 hover:text-red-600 text-xs font-bold"
+                                onclick="if(confirm('¿Eliminar?')) alert('Función pendiente')">🗑️ Eliminar</button>
+                            <div class="flex gap-2">
+                                <button
+                                    class="bg-white text-gray-700 font-bold py-1 px-3 border rounded text-xs hover:bg-gray-50"
+                                    onclick="closeModal()">Cancelar</button>
+                                <button
+                                    class="bg-slate-800 text-white font-bold py-1 px-4 rounded text-xs hover:bg-black shadow"
+                                    onclick="saveBooking()">GUARDAR</button>
+                            </div>
                         </div>
-                    </div>
-
-                    <div class="bg-gray-50 px-6 py-4 flex flex-row-reverse border-t gap-2">
-                        <button class="bg-gray-900 text-white font-bold py-2 px-6 rounded hover:bg-black shadow-lg"
-                            onclick="saveBooking()">GUARDAR EVENTO</button>
-                        <button class="bg-white text-gray-700 font-bold py-2 px-4 border rounded hover:bg-gray-50"
-                            onclick="closeModal()">Cancelar</button>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
 
-    <script src="js/salones.js"></script>
+        <!-- Datalist for Concepts -->
+        <datalist id="charge-options"></datalist>
+
+        <script src="js/salones.js"></script>
 </body>
 
 </html>

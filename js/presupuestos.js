@@ -342,6 +342,82 @@
         });
     }
 
+    // --- GLOBAL SEARCH LOGIC (Presupuestos) ---
+    let searchDebounce = null;
+
+    window.handleSearch = function (query) {
+        clearTimeout(searchDebounce);
+        const container = document.getElementById("searchResults");
+
+        if (!query || query.trim().length < 2) {
+            if (container) container.classList.add("hidden");
+            return;
+        }
+
+        searchDebounce = setTimeout(() => {
+            doSearch(query);
+        }, 300);
+    };
+
+    function doSearch(query) {
+        const q = query.toLowerCase();
+        const container = document.getElementById("searchResults");
+        if (!container) return;
+
+        // Use state.presupuestos directly
+        const results = state.presupuestos.filter(r => {
+            const combined = `${r.cliente || ''} ${r.referencia || ''} ${r.tipoEvento || ''} ${r.notas || ''} ${r.estado || ''}`.toLowerCase();
+            return combined.includes(q);
+        });
+
+        renderSearchResults(results);
+    }
+
+    function renderSearchResults(results) {
+        const container = document.getElementById("searchResults");
+        if (!container) return;
+        container.innerHTML = "";
+
+        if (results.length === 0) {
+            container.innerHTML = '<div class="p-4 text-center text-slate-400 text-xs">No se encontraron resultados</div>';
+        } else {
+            // Priority: Active first, then by date desc
+            results.sort((a, b) => {
+                const aActive = (a.estado === 'confirmada' || a.estado === 'pendiente') ? 1 : 0;
+                const bActive = (b.estado === 'confirmada' || b.estado === 'pendiente') ? 1 : 0;
+                if (aActive !== bActive) return bActive - aActive;
+                // Date desc
+                return (b._createdAtJS || 0) - (a._createdAtJS || 0);
+            });
+
+            results.slice(0, 50).forEach(r => {
+                const datePretty = r.fechaEvento ? formatDateES(new Date(r.fechaEvento)) : "-";
+                // Color items based on status
+                let badgeClass = "bg-gray-100 text-gray-600";
+                if (r.estado === "confirmada" || r.estado === "aceptada") badgeClass = "bg-green-100 text-green-700";
+                if (r.estado === "anulada" || r.estado === "rechazada") badgeClass = "bg-red-100 text-red-700";
+                if (r.estado === "pendiente") badgeClass = "bg-orange-100 text-orange-700";
+
+                const item = document.createElement("div");
+                item.className = "p-3 hover:bg-indigo-50 cursor-pointer flex justify-between items-center transition border-b border-slate-50 last:border-0";
+                item.innerHTML = `
+                     <div class="flex flex-col">
+                        <span class="font-bold text-slate-800 text-sm leading-tight">${r.cliente || "Sin Cliente"}</span>
+                        <span class="text-[10px] text-slate-500 uppercase mt-0.5">Reference: ${r.referencia || "?"} &bull; ${datePretty}</span>
+                    </div>
+                    <span class="text-[10px] font-bold px-2 py-0.5 rounded-full ${badgeClass} uppercase">${r.estado}</span>
+                `;
+                item.onclick = (e) => {
+                    e.stopPropagation(); // Prevent bubbling issues
+                    document.getElementById("searchResults").classList.add("hidden");
+                    abrirModal(r.id);
+                };
+                container.appendChild(item);
+            });
+        }
+        container.classList.remove("hidden");
+    }
+
     // Run
     escucharPresupuestos();
 

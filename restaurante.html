@@ -100,8 +100,19 @@
                 <span id="estadoConexion" class="estado-conexion">Conectando...</span>
             </div>
             <div class="topbar-right">
-                <div class="search-box">
-                    <input type="text" id="txtBuscar" placeholder="Buscar reserva..." />
+                <div class="search-box relative group">
+                    <input type="text" id="txtBuscar" onkeyup="handleSearch(this.value)" placeholder="Buscar reserva..."
+                        class="pl-10 pr-4 py-2 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500/20 outline-none w-64 transition shadow-sm" />
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 absolute left-3 top-3 text-slate-400"
+                        viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                    </svg>
+                    <!-- Results Dropdown -->
+                    <div id="searchResults"
+                        class="hidden absolute top-full right-0 mt-2 w-80 bg-white rounded-xl shadow-xl border border-slate-100 max-h-96 overflow-y-auto z-50 divide-y divide-slate-50 text-left">
+                    </div>
                 </div>
                 <button id="btnNuevaReserva" class="btn-primary">+ Nueva Reserva</button>
             </div>
@@ -245,6 +256,8 @@
     </div>
 
     <!-- Scripts -->
+    <!-- Scripts -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-firestore-compat.js"></script>
     <script src="js/app-common.js"></script>
@@ -741,13 +754,118 @@
                 renderGridStructure();
             }
 
+            // --- GLOBAL SEARCH LOGIC (Restaurante) ---
+            let searchDebounce = null;
+
+            window.handleSearch = function (query) {
+                clearTimeout(searchDebounce);
+                const container = document.getElementById("searchResults");
+
+                if (!query || query.trim().length < 2) {
+                    if (container) container.classList.add("hidden");
+                    // Optional: Restore full grid view? No, we don't filter the grid anymore, we use the dropdown.
+                    return;
+                }
+
+                searchDebounce = setTimeout(() => {
+                    doSearch(query);
+                }, 300); // Fast 300ms debounce since data is local
+            };
+
+            function doSearch(query) {
+                const q = query.toLowerCase();
+                const container = document.getElementById("searchResults");
+                if (!container) return;
+
+                // Use loadedReservations directly as it contains ALL data in this module
+                const results = loadedReservations.filter(r => {
+                    const combined = `${r.nombre || ''} ${r.cliente || ''} ${r.telefono || ''} ${r.email || ''} ${r.id || ''} ${r.espacio || ''}`.toLowerCase();
+                    const dateStr = r.fecha && r.fecha.toDate ? utils.toIsoDate(r.fecha.toDate()) : (r.fecha || "");
+                    return combined.includes(q) || dateStr.includes(q);
+                });
+
+                renderSearchResults(results);
+            }
+
+            function renderSearchResults(results) {
+                const container = document.getElementById("searchResults");
+                if (!container) return;
+                container.innerHTML = "";
+
+                if (results.length === 0) {
+                    container.innerHTML = '<div class="p-4 text-center text-slate-400 text-xs">No se encontraron resultados</div>';
+                } else {
+                    // Sort by Date Desc
+                    results.sort((a, b) => {
+                        const da = a.fecha && a.fecha.toDate ? a.fecha.toDate() : new Date(a.fecha);
+                        const db = b.fecha && b.fecha.toDate ? b.fecha.toDate() : new Date(b.fecha);
+                        return db - da;
+                    });
+
+                    results.slice(0, 50).forEach(r => {
+                        const rDate = r.fecha && r.fecha.toDate ? r.fecha.toDate() : new Date(r.fecha);
+                        const datePretty = utils.formatDateShort(rDate);
+                        const name = r.nombre || r.cliente || "Sin Nombre";
+
+                        const item = document.createElement("div");
+                        item.className = "p-3 hover:bg-blue-50 cursor-pointer flex justify-between items-center transition";
+                        item.innerHTML = `
+                             <div class="flex flex-col">
+                                <span class="font-bold text-slate-800 text-sm">${name}</span>
+                                <span class="text-[10px] text-slate-500 uppercase">📅 ${datePretty} &bull; ${r.espacio || 'Restaurante'} &bull; ${r.turno}</span>
+                            </div>
+                            <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">${r.estado || 'pendiente'}</span>
+                        `;
+                        item.onclick = () => selectSearchResult(r);
+                        container.appendChild(item);
+                    });
+                }
+                container.classList.remove("hidden");
+            }
+
+            window.selectSearchResult = function (r) {
+                document.getElementById("searchResults").classList.add("hidden");
+                // Navigate
+                const rDate = r.fecha && r.fecha.toDate ? r.fecha.toDate() : new Date(r.fecha);
+                goToDate(rDate);
+
+                // Optional: Open the booking immediately?
+                // openBooking(r.espacio, utils.toIsoDate(rDate), r.turno, r);
+            };
+
+            window.goToDate = function (dateObj) {
+                // Calculate difference in weeks to jump correctly?
+                // Actually, current implementation of changeWeek just adds days.
+                // We should just set currentWeekStart to the target date (or Monday of that week)
+
+                // Logic to find Monday of the target date
+                const d = new Date(dateObj);
+                const day = d.getDay();
+                const diff = d.getDate() - day + (day === 0 ? -6 : 1); // Adjust to Monday
+                d.setDate(diff);
+
+                currentWeekStart = d;
+                renderGridStructure();
+
+                // Update input
+                const inpSemana = document.getElementById("inputSemana");
+                if (inpSemana) inpSemana.value = utils.toIsoDate(currentWeekStart);
+            };
+
+            // Remove old listener which repainted grid on input. 
+            // Since we replaced the HTML element, the old listener attached in startApp via getElementById might not attach if startApp runs AFTER this replacement?
+            // Actually, startApp runs on load. This script runs on load.
+            // I need to modify startApp to NOT attach the 'input' listener to 'txtBuscar', 
+            // OR I can just override it.
+            // But wait, startApp is defined ABOVE. I should modify startApp in the file directly.
+
             ensureFirebase(startApp);
         })();
     </script>
 
     <script>
         if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('sw.js');
+            navigator.serviceWorker.register('sw.js').catch(err => console.log('SW Registration skipped:', err));
         }
     </script>
 </body>

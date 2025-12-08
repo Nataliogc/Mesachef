@@ -162,7 +162,19 @@
         <option value="anulados">Anulados/Rech.</option>
         <option value="todos">Ver todos</option>
       </select>
-      <input id="txtBuscar" type="search" placeholder="Buscar..." class="input-buscar" />
+      <div class="search-box relative group">
+        <input id="txtBuscar" type="text" onkeyup="handleSearch(this.value)" placeholder="Buscar..."
+          class="h-9 pl-9 pr-3 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500/20 outline-none w-48 transition shadow-sm" />
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 absolute left-3 top-2.5 text-slate-400"
+          viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+          stroke-linejoin="round">
+          <circle cx="11" cy="11" r="8"></circle>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+        <div id="searchResults"
+          class="hidden absolute top-full right-0 mt-2 w-80 bg-white rounded-xl shadow-xl border border-slate-100 max-h-96 overflow-y-auto z-50 divide-y divide-slate-50 text-left">
+        </div>
+      </div>
       <button id="btnNuevo" class="btn-primary">+ Nuevo Ppto</button>
     </div>
   </header>
