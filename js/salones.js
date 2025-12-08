@@ -1,4 +1,4 @@
-// js/salones.js - v9 (Restored & Fixed)
+// js/salones.js - v10 (Full Rewrite)
 
 (function () {
     // --- ROBUST FIREBASE INIT ---
@@ -114,10 +114,16 @@
         });
     }
 
+    let loadedReservations = [];
+    let unsubscribe = null;
+
     function renderGrid() {
         const hotel = localStorage.getItem(STORAGE_KEY) || "Guadiana";
         const container = document.getElementById("calendarGrid");
         if (!container) return;
+
+        // Ensure reservations are loaded
+        loadReservations();
 
         const salons = (globalConfig[hotel] || []).filter(s => s.active !== false);
         const dates = utils.getWeekDates(currentWeekStart);
@@ -179,10 +185,10 @@
                                     <span class="text-[10px] text-red-600 font-bold uppercase mt-1 text-center leading-tight">${blockReason}</span>
                                </div>`;
                     } else {
-                        html += `<div id="cell_${hotel}_${salon.name.replace(/\s/g, '_')}_${dateStr}" 
+                        html += `<div id="cell_${hotel.replace(/\s/g, '_')}_${salon.name.replace(/\s/g, '_')}_${dateStr}" 
                                        class="bg-white hover:bg-slate-50 cursor-pointer min-h-[90px] border-r border-slate-100 last:border-r-0 transition p-1 relative flex flex-col items-center justify-center group"
                                        onclick="openBooking('${safeName}', '${dateStr}')">
-                                        <button class="opacity-0 group-hover:opacity-100 bg-blue-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-lg font-bold shadow-md transform transition scale-90 hover:scale-105">+</button>
+                                        <div class="booking-placeholder opacity-0 group-hover:opacity-100 bg-blue-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-lg font-bold shadow-md transform transition scale-90 hover:scale-105">+</div>
                                   </div>`;
                     }
                 });
@@ -192,10 +198,74 @@
 
         html += `</div>`;
         container.innerHTML = html;
+        paintReservations(hotel);
+    }
+
+    function loadReservations() {
+        if (unsubscribe) unsubscribe();
+
+        const hotel = localStorage.getItem(STORAGE_KEY) || "Guadiana";
+        const dates = utils.getWeekDates(currentWeekStart);
+        const start = utils.toIsoDate(dates[0]);
+        const end = utils.toIsoDate(dates[6]);
+
+        console.log(`Loading reservations for ${hotel} from ${start} to ${end}`);
+
+        unsubscribe = db.collection("reservas_salones")
+            .where("fecha", ">=", start)
+            .where("fecha", "<=", end)
+            .onSnapshot(snapshot => {
+                loadedReservations = [];
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    if (data.hotel === hotel) {
+                        loadedReservations.push({ id: doc.id, ...data });
+                    }
+                });
+                paintReservations(hotel);
+            }, error => {
+                console.error("Error loading reservations:", error);
+            });
+    }
+
+    function paintReservations(hotel) {
+        // Clear previous paintings
+        document.querySelectorAll(".booking-card").forEach(el => el.remove());
+        document.querySelectorAll(".booking-placeholder").forEach(el => el.style.display = 'flex');
+
+        loadedReservations.forEach(res => {
+            const cellId = `cell_${hotel.replace(/\s/g, '_')}_${res.salon.replace(/\s/g, '_')}_${res.fecha}`;
+            const cell = document.getElementById(cellId);
+
+            if (cell) {
+                const placeholder = cell.querySelector(".booking-placeholder");
+                if (placeholder) placeholder.style.display = 'none';
+
+                const colorClass = res.estado === 'confirmada' ? 'bg-green-100 border-green-500 text-green-800' :
+                    res.estado === 'pagada' ? 'bg-emerald-100 border-emerald-500 text-emerald-800' :
+                        res.estado === 'borrador' ? 'bg-gray-100 border-gray-400 text-gray-600' :
+                            'bg-blue-100 border-blue-500 text-blue-800';
+
+                const card = document.createElement("div");
+                card.className = `booking-card w-[95%] h-[90%] rounded border-l-4 ${colorClass} shadow-sm p-1 text-xs flex flex-col justify-between overflow-hidden relative`;
+                card.onclick = (e) => { e.stopPropagation(); openBooking(res.salon, res.fecha, res); };
+
+                card.innerHTML = `
+                    <div class="font-bold truncate" title="${res.cliente}">${res.cliente}</div>
+                    <div class="flex justify-between items-end mt-1">
+                        <span class="font-mono opacity-75">${res.detalles?.montaje || '?'}</span>
+                        ${res.notas?.interna ? '<span title="Nota Interna">✎</span>' : ''}
+                    </div>
+                `;
+                cell.appendChild(card);
+            }
+        });
     }
 
     // --- FORM LOGIC ---
-    window.openBooking = function (salonName, dateStr) {
+    let currentBookingId = null;
+
+    window.openBooking = function (salonName, dateStr, existing = null) {
         const sSel = document.getElementById("evt-salon");
         const mSel = document.getElementById("evt-montaje");
 
@@ -221,14 +291,63 @@
             });
         }
 
+        // RESET
+        currentBookingId = null;
         document.getElementById("evt-nombre").value = "";
         document.getElementById("evt-telefono").value = "";
         document.getElementById("evt-email").value = "";
         document.getElementById("services-list").innerHTML = "";
         document.getElementById("evt-total").innerText = "0.00 €";
+        document.getElementById("evt-nota-interna").value = "";
+        document.getElementById("evt-nota-cliente").value = "";
+        document.getElementById("evt-pax-a").value = "";
+        document.getElementById("evt-pax-n").value = "";
+        document.getElementById("evt-hora").value = "";
 
-        document.getElementById("evt-fecha").value = dateStr || new Date().toISOString().split('T')[0];
-        if (salonName) sSel.value = salonName;
+        // POPULATE
+        if (existing) {
+            currentBookingId = existing.id;
+            document.getElementById("evt-fecha").value = existing.fecha;
+            sSel.value = existing.salon;
+            document.getElementById("evt-nombre").value = existing.cliente;
+            if (existing.contact) {
+                document.getElementById("evt-telefono").value = existing.contact.tel || "";
+                document.getElementById("evt-email").value = existing.contact.email || "";
+            }
+            document.getElementById("evt-estado").value = existing.estado || "pendiente";
+
+            if (existing.detalles) {
+                document.getElementById("evt-jornada").value = existing.detalles.jornada || "todo";
+                mSel.value = existing.detalles.montaje || "";
+                document.getElementById("evt-hora").value = existing.detalles.hora || "";
+                document.getElementById("evt-pax-a").value = existing.detalles.pax_adultos || "";
+                document.getElementById("evt-pax-n").value = existing.detalles.pax_ninos || "";
+            }
+
+            if (existing.notas) {
+                document.getElementById("evt-nota-interna").value = existing.notas.interna || "";
+                document.getElementById("evt-nota-cliente").value = existing.notas.cliente || "";
+            }
+
+            if (existing.servicios) {
+                existing.servicios.forEach(s => {
+                    const row = document.createElement("tr");
+                    row.innerHTML = `
+                        <td class="p-2 border-b"><input type="date" value="${s.fecha}" class="text-xs bg-gray-50 w-full rounded border-gray-200"></td>
+                        <td class="p-2 border-b"><input type="text" value="${s.concepto}" class="text-xs font-bold w-full rounded border-gray-200"></td>
+                        <td class="p-2 border-b"><input type="number" onchange="calcTotal()" value="${s.uds}" class="text-xs text-center row-uds w-full rounded border-gray-200"></td>
+                        <td class="p-2 border-b"><input type="number" onchange="calcTotal()" value="${s.precio}" class="text-xs text-right row-price w-full rounded border-gray-200"></td>
+                        <td class="p-2 border-b text-right font-bold text-xs row-total text-slate-600">${s.total.toFixed(2)} €</td>
+                        <td class="p-2 border-b text-center"><button onclick="this.closest('tr').remove(); calcTotal()" class="text-red-400 hover:text-red-600 font-bold">&times;</button></td>
+                    `;
+                    document.getElementById("services-list").appendChild(row);
+                });
+                calcTotal();
+            }
+        } else {
+            document.getElementById("evt-fecha").value = dateStr || new Date().toISOString().split('T')[0];
+            if (salonName) sSel.value = salonName;
+        }
 
         document.getElementById("modal-evt").classList.remove("hidden");
     };
@@ -308,9 +427,15 @@
         console.log("Saving Event:", payload);
 
         try {
-            await db.collection("reservas_salones").add(payload);
+            if (currentBookingId) {
+                // Update existing
+                await db.collection("reservas_salones").doc(currentBookingId).set(payload, { merge: true });
+            } else {
+                // Create new
+                await db.collection("reservas_salones").add(payload);
+            }
             closeModal();
-            alert("Evento creado exitosamente.");
+            // alert("Evento guardado exitosamente."); // Removed to be less intrusive, UI updates automatically via snapshot
         } catch (e) {
             alert("Error: " + e.message);
         } finally {
