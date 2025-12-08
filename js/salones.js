@@ -1,36 +1,69 @@
-// js/salones.js - v7 (Fix Key Mismatch)
+// js/salones.js - v9 (Restored & Fixed)
 
 (function () {
+    // --- ROBUST FIREBASE INIT ---
+    let appStarted = false;
+
     function ensureFirebase(callback) {
-        if (window.firebase && window.firebase.apps.length) { callback(); return; }
-        const s1 = document.createElement("script");
-        s1.src = "https://www.gstatic.com/firebasejs/9.6.7/firebase-app-compat.js";
-        s1.onload = function () {
-            const s2 = document.createElement("script");
-            s2.src = "https://www.gstatic.com/firebasejs/9.6.7/firebase-firestore-compat.js";
-            s2.onload = function () { initFirebase(callback); };
-            document.head.appendChild(s2);
-        };
-        document.head.appendChild(s1);
+        if (!document.querySelector('script[src*="firebase-app-compat"]')) {
+            const s1 = document.createElement("script");
+            s1.src = "https://www.gstatic.com/firebasejs/9.6.7/firebase-app-compat.js";
+            s1.onload = function () {
+                const s2 = document.createElement("script");
+                s2.src = "https://www.gstatic.com/firebasejs/9.6.7/firebase-auth-compat.js";
+                s2.onload = function () {
+                    const s3 = document.createElement("script");
+                    s3.src = "https://www.gstatic.com/firebasejs/9.6.7/firebase-firestore-compat.js";
+                    s3.onload = function () { initFirebase(callback); };
+                    document.head.appendChild(s3);
+                };
+                document.head.appendChild(s2);
+            };
+            document.head.appendChild(s1);
+        } else {
+            const checkInterval = setInterval(() => {
+                if (window.firebase && window.firebase.auth && window.firebase.firestore) {
+                    clearInterval(checkInterval);
+                    initFirebase(callback);
+                }
+            }, 100);
+        }
     }
 
     function initFirebase(callback) {
-        const firebaseConfig = {
-            apiKey: "AIzaSyBAK0sGUYpV8KHy1KwIdNRLtHlq5LT3Vwg",
-            authDomain: "gestionsalones-bba4b.firebaseapp.com",
-            projectId: "gestionsalones-bba4b",
-            storageBucket: "gestionsalones-bba4b.firebasestorage.app",
-            messagingSenderId: "860164285474",
-            appId: "1:860164285474:web:ff995e88093e5aa5eb167b"
-        };
-        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-        callback();
+        try {
+            const firebaseConfig = {
+                apiKey: "AIzaSyAXv_wKD48EFDe8FBQ-6m0XGUNoxSRiTJY",
+                authDomain: "mesa-chef-prod.firebaseapp.com",
+                projectId: "mesa-chef-prod",
+                storageBucket: "mesa-chef-prod.firebasestorage.app",
+                messagingSenderId: "43170330072",
+                appId: "1:43170330072:web:bcdd09e39930ad08bf2ead"
+            };
+
+            if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+
+            // AUTH LISTENER
+            firebase.auth().onAuthStateChanged((user) => {
+                if (user && !appStarted) {
+                    console.log("Salones: Auth Ready", user.uid);
+                    appStarted = true;
+                    callback();
+                }
+            });
+
+            // TRIGGER SIGN IN
+            if (!firebase.auth().currentUser) {
+                firebase.auth().signInAnonymously().catch((error) => {
+                    console.error("Auth Error", error);
+                });
+            }
+        } catch (e) { console.error("Firebase Init Error:", e); }
     }
 
     let db;
     let globalConfig = null;
     let currentWeekStart = new Date();
-
     // Key used by index.html
     const STORAGE_KEY = "mesaChef_hotel";
 
@@ -56,26 +89,15 @@
         console.log("Salones: Iniciando aplicación...");
         db = firebase.firestore();
 
-        // 1. HOTEL IDENTITY CHECK
-        // Align with index.html key
-        let currentHotel = localStorage.getItem(STORAGE_KEY);
-        console.log("Salones: Hotel detectado (" + STORAGE_KEY + "): ", currentHotel);
-
+        // 1. HOTEL IDENTITY & LOGO
+        const currentHotel = localStorage.getItem(STORAGE_KEY) || "Guadiana";
         const headerName = document.getElementById("headerHotelName");
-        let displayName = "Seleccione Hotel en Inicio";
 
-        if (currentHotel === "Guadiana") displayName = "Sercotel Guadiana";
-        else if (currentHotel === "Cumbria") displayName = "Cumbria Spa & Hotel";
-        else {
-            // Fallback
-            if (!currentHotel) {
-                currentHotel = "Guadiana";
-                // Do not write back to avoid interfering with Dashboard logic unless needed
-                displayName = "Sercotel Guadiana (Default)";
-            }
+        if (headerName) {
+            const logoSrc = currentHotel === "Guadiana" ? "Img/logo-guadiana.svg" : "Img/logo-cumbria.svg";
+            const displayName = currentHotel === "Guadiana" ? "Sercotel Guadiana" : "Cumbria Spa & Hotel";
+            headerName.innerHTML = `<div class="flex items-center"><img src="${logoSrc}" class="h-8 mr-2"> ${displayName}</div>`;
         }
-
-        if (headerName) headerName.innerText = displayName;
 
         // 2. LOAD CONFIG
         db.collection("master_data").doc("CONFIG_SALONES").get().then(doc => {
@@ -93,7 +115,6 @@
     }
 
     function renderGrid() {
-        // Read consistently
         const hotel = localStorage.getItem(STORAGE_KEY) || "Guadiana";
         const container = document.getElementById("calendarGrid");
         if (!container) return;
@@ -104,34 +125,71 @@
         const rangeEl = document.getElementById("currentWeekRange");
         if (rangeEl) rangeEl.innerText = `${dates[0].toLocaleDateString()} - ${dates[6].toLocaleDateString()}`;
 
+        // TABLE LAYOUT
         let html = `
-        <div style="display:grid; grid-template-columns: 150px repeat(7, 1fr); gap:1px; background:#e5e7eb; border-radius:8px; overflow:hidden;">
-            <div class="bg-gray-50 p-3 font-bold text-gray-600 border-b flex items-center justify-center text-sm">SALA</div>
-            ${dates.map(d => `<div class="bg-gray-50 p-2 font-bold text-center border-b text-sm uppercase text-slate-500">${utils.formatDateES(d)}</div>`).join('')}
+        <div style="display: flex; flex-direction: column; background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">
+            <div style="display: grid; grid-template-columns: 200px repeat(7, 1fr); background: #f8fafc; border-bottom: 2px solid #e2e8f0;">
+                <div class="p-4 font-bold text-slate-700 text-sm tracking-wide uppercase flex items-center justify-center border-r border-slate-200">SALA</div>
+                ${dates.map(d => `
+                    <div class="p-3 font-bold text-center text-xs uppercase text-slate-500 border-r border-slate-100 last:border-r-0 flex flex-col justify-center">
+                        <span class="text-slate-800 text-sm">${d.toLocaleDateString('es-ES', { weekday: 'short' }).toUpperCase()}</span>
+                        <span class="text-slate-400 font-normal">${d.getDate()} ${d.toLocaleDateString('es-ES', { month: 'short' }).toUpperCase()}</span>
+                    </div>
+                `).join('')}
+            </div>
         `;
 
         if (salons.length === 0) {
-            html += `<div style="grid-column: 1/-1; padding:30px; text-align:center; background:white;">
-                        <span class="text-2xl block mb-2">🏨</span>
-                        <b>No hay salones activos para ${hotel}.</b><br>
-                     </div>`;
+            html += `
+            <div class="p-10 text-center text-slate-400">
+                <span class="text-4xl block mb-2">🏨</span>
+                <span class="font-bold">No hay salones activos para ${hotel}.</span>
+            </div>`;
         } else {
-            salons.forEach(salon => {
-                html += `<div class="bg-white p-3 border-r font-bold text-slate-700 flex flex-col justify-center border-b">
-                            <span class="text-sm">${salon.name}</span>
-                            <span class="text-xs text-slate-400 font-normal">Max: ${salon.pax}</span>
-                          </div>`;
+            const bloqueos = globalConfig.bloqueos || [];
+
+            salons.forEach((salon, index) => {
+                const isLast = index === salons.length - 1;
+                html += `<div style="display: grid; grid-template-columns: 200px repeat(7, 1fr); ${isLast ? '' : 'border-bottom: 1px solid #f1f5f9;'}">
+                            <div class="bg-white p-4 font-bold text-slate-700 flex flex-col justify-center border-r border-slate-100 relative group">
+                                <span class="text-sm text-slate-800">${salon.name}</span>
+                                <span class="text-[10px] text-slate-400 font-normal mt-1 uppercase tracking-wider">Capacidad: ${salon.pax}</span>
+                                <div class="absolute left-0 top-0 bottom-0 w-1 bg-blue-500 opacity-0 group-hover:opacity-100 transition"></div>
+                            </div>`;
+
                 dates.forEach(d => {
                     const dateStr = utils.toIsoDate(d);
                     const safeName = salon.name.replace(/'/g, "\\'");
-                    html += `<div id="cell_${hotel}_${salon.name.replace(/\s/g, '_')}_${dateStr}" 
-                                   class="bg-white hover:bg-blue-50 cursor-pointer min-h-[80px] border-b border-r transition p-1 relative group flex flex-col items-center justify-center"
-                                   onclick="openBooking('${safeName}', '${dateStr}')">
-                                    <button class="hidden group-hover:flex bg-blue-100 text-blue-600 rounded-full w-8 h-8 items-center justify-center text-lg font-bold shadow-sm">+</button>
-                              </div>`;
+
+                    // Check Block
+                    let isBlocked = false;
+                    let blockReason = "";
+                    bloqueos.forEach(b => {
+                        if (b.salon === "TODOS" || b.salon === salon.name) {
+                            if (dateStr >= b.start && dateStr <= b.end) {
+                                isBlocked = true;
+                                blockReason = b.note || "Bloqueado";
+                            }
+                        }
+                    });
+
+                    if (isBlocked) {
+                        html += `<div class="bg-red-50 hover:bg-red-100 border-r border-slate-100 last:border-r-0 transition p-1 relative flex flex-col items-center justify-center group cursor-not-allowed" title="${blockReason}">
+                                    <span class="text-2xl">🔒</span>
+                                    <span class="text-[10px] text-red-600 font-bold uppercase mt-1 text-center leading-tight">${blockReason}</span>
+                               </div>`;
+                    } else {
+                        html += `<div id="cell_${hotel}_${salon.name.replace(/\s/g, '_')}_${dateStr}" 
+                                       class="bg-white hover:bg-slate-50 cursor-pointer min-h-[90px] border-r border-slate-100 last:border-r-0 transition p-1 relative flex flex-col items-center justify-center group"
+                                       onclick="openBooking('${safeName}', '${dateStr}')">
+                                        <button class="opacity-0 group-hover:opacity-100 bg-blue-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-lg font-bold shadow-md transform transition scale-90 hover:scale-105">+</button>
+                                  </div>`;
+                    }
                 });
+                html += `</div>`;
             });
         }
+
         html += `</div>`;
         container.innerHTML = html;
     }
@@ -169,8 +227,8 @@
         document.getElementById("services-list").innerHTML = "";
         document.getElementById("evt-total").innerText = "0.00 €";
 
-        document.getElementById("evt-fecha").value = dateStr;
-        sSel.value = salonName;
+        document.getElementById("evt-fecha").value = dateStr || new Date().toISOString().split('T')[0];
+        if (salonName) sSel.value = salonName;
 
         document.getElementById("modal-evt").classList.remove("hidden");
     };
@@ -198,6 +256,7 @@
             const uds = parseFloat(row.querySelector(".row-uds").value) || 0;
             const price = parseFloat(row.querySelector(".row-price").value) || 0;
             const sub = uds * price;
+            // Update row total
             row.querySelector(".row-total").innerText = sub.toFixed(2) + " €";
             total += sub;
         });
@@ -269,5 +328,6 @@
         renderGrid();
     }
 
+    // START
     ensureFirebase(startApp);
 })();

@@ -159,6 +159,12 @@
                         class="flex-1 py-2 px-4 rounded font-bold text-gray-600 hover:bg-gray-50">🏨 Cumbria</button>
                     <button onclick="setTab('Montajes')" id="btnMontajes"
                         class="flex-1 py-2 px-4 rounded font-bold text-gray-600 hover:bg-gray-50">🪑 Montajes</button>
+                    <button onclick="setTab('Extras')" id="btnExtras"
+                        class="flex-1 py-2 px-4 rounded font-bold text-gray-600 hover:bg-gray-50">📽️ Extras</button>
+                    <button onclick="setTab('Festivos')" id="btnFestivos"
+                        class="flex-1 py-2 px-4 rounded font-bold text-gray-600 hover:bg-gray-50">📅 Festivos</button>
+                    <button onclick="setTab('Bloqueos')" id="btnBloqueos"
+                        class="flex-1 py-2 px-4 rounded font-bold text-gray-600 hover:bg-gray-50">🚫 Bloqueos</button>
                 </div>
 
                 <!-- Config Area -->
@@ -279,11 +285,40 @@
                     fullConfig = doc.data();
                 }
 
-                // --- DEFAULT DATA SEEDING (If empty) ---
-                if (!fullConfig.horarios) fullConfig.horarios = {};
-                if (!fullConfig.aiOptions) fullConfig.aiOptions = {};
-                if (!fullConfig.Guadiana) fullConfig.Guadiana = [];
-                if (!fullConfig.Cumbria) fullConfig.Cumbria = [];
+                // --- ROBUST DEFAULT SEEDING ---
+                // If either Hotel is missing/empty, we should provider our reference data
+                const needsSeeding = !fullConfig.Guadiana || fullConfig.Guadiana.length === 0 || !fullConfig.Cumbria || fullConfig.Cumbria.length === 0;
+
+                if (needsSeeding) {
+                    console.log("Seeding Default Salon Data...");
+                    fullConfig.Guadiana = [
+                        { name: "Puerta de Alarcos", pax: 800, m2: 570, priceHalf: 0, priceFull: 0, active: true, capacities: { banquete: 600, escuela: 500, coctel: 800, teatro: 800 } },
+                        { name: "Puerta de Calatrava", pax: 135, m2: 125, priceHalf: 0, priceFull: 0, active: true, capacities: { banquete: 100, escuela: 100, imperial: 40, coctel: 130, teatro: 135, forma_u: 50 } },
+                        { name: "Puerta del Carmen", pax: 120, m2: 110, priceHalf: 0, priceFull: 0, active: true, capacities: { banquete: 90, escuela: 90, imperial: 40, coctel: 100, teatro: 120, forma_u: 50 } },
+                        { name: "Puerta de Ciruela", pax: 20, m2: 25, priceHalf: 0, priceFull: 0, active: true, capacities: { imperial: 10, teatro: 20 } },
+                        { name: "Puerta de Granada", pax: 135, m2: 120, priceHalf: 0, priceFull: 0, active: true, capacities: { banquete: 100, escuela: 100, imperial: 40, coctel: 130, teatro: 135, forma_u: 50 } },
+                        { name: "Puerta de Santa María", pax: 80, m2: 70, priceHalf: 0, priceFull: 0, active: true, capacities: { escuela: 60, imperial: 30, coctel: 60, teatro: 80, forma_u: 30 } },
+                        { name: "Puerta de Toledo", pax: 160, m2: 150, priceHalf: 0, priceFull: 0, active: true, capacities: { banquete: 120, escuela: 130, imperial: 50, coctel: 150, teatro: 160, forma_u: 60 } }
+                    ];
+                    fullConfig.Cumbria = [
+                        { name: "Salón Mercurio", pax: 90, m2: 77, priceHalf: 0, priceFull: 0, active: true, capacities: { banquete: 70, teatro: 90, imperial: 32, escuela: 40, coctel: 70, forma_u: 30 } },
+                        { name: "Salón Venus", pax: 90, m2: 77, priceHalf: 0, priceFull: 0, active: true, capacities: { banquete: 70, teatro: 90, imperial: 32, escuela: 40, coctel: 70, forma_u: 30 } },
+                        { name: "Salón La Tierra", pax: 70, m2: 68, priceHalf: 0, priceFull: 0, active: true, capacities: { banquete: 50, teatro: 70, imperial: 26, escuela: 30, coctel: 60, forma_u: 24 } },
+                        { name: "Salón Marte", pax: 90, m2: 77, priceHalf: 0, priceFull: 0, active: true, capacities: { banquete: 70, teatro: 90, imperial: 32, escuela: 40, coctel: 70, forma_u: 30 } },
+                        { name: "Salón Júpiter", pax: 70, m2: 68, priceHalf: 0, priceFull: 0, active: true, capacities: { banquete: 50, teatro: 70, imperial: 26, escuela: 30, coctel: 60, forma_u: 24 } }
+                    ];
+                    // Also seed options if missing
+                    if (!fullConfig.horarios) fullConfig.horarios = { almIni: "13:00", almFin: "16:00", cenaIni: "20:30", cenaFin: "23:00", corte: "18:00" };
+                    if (!fullConfig.aiOptions) fullConfig.aiOptions = { tone: "formal", prompt: "" };
+
+                    // Trigger Save
+                    saveAll();
+                }
+
+                // Default Montajes (Always Ensure)
+                if (!fullConfig.montajes || fullConfig.montajes.length === 0) {
+                    fullConfig.montajes = ["Banquete", "Escuela", "Teatro", "Cóctel", "U", "Imperial"];
+                }
                 // Default Montajes
                 if (!fullConfig.montajes || fullConfig.montajes.length === 0) {
                     fullConfig.montajes = ["Banquete", "Escuela", "Teatro", "Cóctel", "U", "Imperial"];
@@ -321,14 +356,26 @@
 
             fullConfig.horarios = { almIni: "13:00", almFin: "16:00", cenaIni: "20:30", cenaFin: "23:00", corte: "18:00" };
             fullConfig.montajes = ["Banquete", "Escuela", "Teatro", "Cóctel", "U", "Imperial"];
+            fullConfig.extras = [];
+            fullConfig.festivos = [];
+            fullConfig.bloqueos = [];
+
             fullConfig.Guadiana = [
-                { name: "Salón Columnas", pax: 200, priceHalf: 350, priceFull: 600, active: true },
-                { name: "Salón Jardín", pax: 150, priceHalf: 300, priceFull: 500, active: true },
-                { name: "Salón Cristalera", pax: 80, priceHalf: 200, priceFull: 350, active: true }
+                { name: "Puerta de Alarcos", pax: 800, m2: 570, priceHalf: 0, priceFull: 0, active: true, capacities: { banquete: 600, escuela: 500, coctel: 800, teatro: 800 } },
+                { name: "Puerta de Calatrava", pax: 135, m2: 125, priceHalf: 0, priceFull: 0, active: true, capacities: { banquete: 100, escuela: 100, imperial: 40, coctel: 130, teatro: 135, forma_u: 50 } },
+                { name: "Puerta del Carmen", pax: 120, m2: 110, priceHalf: 0, priceFull: 0, active: true, capacities: { banquete: 90, escuela: 90, imperial: 40, coctel: 100, teatro: 120, forma_u: 50 } },
+                { name: "Puerta de Ciruela", pax: 20, m2: 25, priceHalf: 0, priceFull: 0, active: true, capacities: { imperial: 10, teatro: 20 } },
+                { name: "Puerta de Granada", pax: 135, m2: 120, priceHalf: 0, priceFull: 0, active: true, capacities: { banquete: 100, escuela: 100, imperial: 40, coctel: 130, teatro: 135, forma_u: 50 } },
+                { name: "Puerta de Santa María", pax: 80, m2: 70, priceHalf: 0, priceFull: 0, active: true, capacities: { escuela: 60, imperial: 30, coctel: 60, teatro: 80, forma_u: 30 } },
+                { name: "Puerta de Toledo", pax: 160, m2: 150, priceHalf: 0, priceFull: 0, active: true, capacities: { banquete: 120, escuela: 130, imperial: 50, coctel: 150, teatro: 160, forma_u: 60 } }
             ];
+
             fullConfig.Cumbria = [
-                { name: "Sala Multiusos", pax: 100, priceHalf: 200, priceFull: 350, active: true },
-                { name: "Aula Formación", pax: 30, priceHalf: 100, priceFull: 180, active: true }
+                { name: "Salón Mercurio", pax: 90, m2: 77, priceHalf: 0, priceFull: 0, active: true, capacities: { banquete: 70, teatro: 90, imperial: 32, escuela: 40, coctel: 70, forma_u: 30 } },
+                { name: "Salón Venus", pax: 90, m2: 77, priceHalf: 0, priceFull: 0, active: true, capacities: { banquete: 70, teatro: 90, imperial: 32, escuela: 40, coctel: 70, forma_u: 30 } },
+                { name: "Salón La Tierra", pax: 70, m2: 68, priceHalf: 0, priceFull: 0, active: true, capacities: { banquete: 50, teatro: 70, imperial: 26, escuela: 30, coctel: 60, forma_u: 24 } },
+                { name: "Salón Marte", pax: 90, m2: 77, priceHalf: 0, priceFull: 0, active: true, capacities: { banquete: 70, teatro: 90, imperial: 32, escuela: 40, coctel: 70, forma_u: 30 } },
+                { name: "Salón Júpiter", pax: 70, m2: 68, priceHalf: 0, priceFull: 0, active: true, capacities: { banquete: 50, teatro: 70, imperial: 26, escuela: 30, coctel: 60, forma_u: 24 } }
             ];
             fullConfig.aiOptions = { tone: "formal", prompt: "" };
 
@@ -354,6 +401,9 @@
             c.innerHTML = "";
             if (currentTab === 'General') renderGeneral(c);
             else if (currentTab === 'Montajes') renderMontajes(c);
+            else if (currentTab === 'Extras') renderExtras(c);
+            else if (currentTab === 'Festivos') renderFestivos(c);
+            else if (currentTab === 'Bloqueos') renderBloqueos(c);
             else renderSalones(c, currentTab);
         }
 
@@ -411,17 +461,28 @@
                 </div>
                 <div class="overflow-x-auto"><table class="w-full text-left font-sm">
                 <thead class="bg-gray-50 text-gray-500 uppercase text-xs">
-                    <tr><th class="p-2">Nombre</th><th class="p-2 w-16">Pax</th><th class="p-2 w-20">€ 1/2</th><th class="p-2 w-20">€ Comp</th><th class="p-2 w-10 text-center">ON</th><th class="w-10"></th></tr>
+                    <tr>
+                        <th class="p-2">Nombre</th>
+                        <th class="p-2 w-20">Pax</th>
+                        <th class="p-2 w-20">M2</th>
+                        <th class="p-2 w-20">€ 1/2</th>
+                        <th class="p-2 w-20">€ Comp</th>
+                        <th class="p-2 w-10 text-center">ON</th>
+                        <th class="w-10"></th>
+                        <th class="w-10"></th>
+                    </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-100">`;
 
             list.forEach((s, i) => {
                 html += `<tr class="hover:bg-blue-50">
-                    <td class="p-2"><input value="${s.name}" onchange="updS(${i},'name',this.value)" class="w-full bg-transparent outline-none"></td>
+                    <td class="p-2"><input value="${s.name}" onchange="updS(${i},'name',this.value)" class="w-full bg-transparent outline-none font-bold text-slate-700"></td>
                     <td class="p-2"><input type="number" value="${s.pax || 0}" onchange="updS(${i},'pax',this.value)" class="w-full bg-transparent outline-none text-center"></td>
+                    <td class="p-2"><input type="number" value="${s.m2 || 0}" onchange="updS(${i},'m2',this.value)" class="w-full bg-transparent outline-none text-center"></td>
                     <td class="p-2"><input type="number" value="${s.priceHalf || 0}" onchange="updS(${i},'priceHalf',this.value)" class="w-full bg-transparent outline-none text-right"></td>
                     <td class="p-2"><input type="number" value="${s.priceFull || 0}" onchange="updS(${i},'priceFull',this.value)" class="w-full bg-transparent outline-none text-right"></td>
                     <td class="p-2 text-center"><input type="checkbox" ${s.active !== false ? 'checked' : ''} onchange="updS(${i},'active',this.checked)" style="width:auto;"></td>
+                    <td class="p-2 text-center"><button onclick="openCapacities(${i},'${hotel}')" class="text-blue-500 hover:text-blue-700" title="Configurar Capacidades">⚙️</button></td>
                     <td class="p-2"><button onclick="delItem(${i})" class="text-gray-400 hover:text-red-500 font-bold">&times;</button></td>
                 </tr>`;
             });
@@ -438,16 +499,86 @@
             c.innerHTML = html;
         }
 
+        function renderExtras(c) {
+            var list = fullConfig.extras || [];
+            var html = `<div class="card"><div class="flex justify-between items-center mb-4"><h3>📽️ Extras y Servicios</h3><button onclick="addItem()" class="bg-blue-600 text-white px-3 py-1 rounded text-sm">+ Añadir</button></div>
+            <div class="overflow-x-auto"><table class="w-full text-left font-sm"><thead class="bg-gray-50 text-gray-500 uppercase text-xs"><tr><th class="p-2">Concepto</th><th class="p-2 w-24">Precio (€)</th><th class="p-2 w-32">Categoría</th><th class="w-10"></th></tr></thead><tbody class="divide-y divide-gray-100">`;
+            list.forEach((e, i) => {
+                html += `<tr>
+                    <td class="p-2"><input value="${e.name}" onchange="updArr('extras',${i},'name',this.value)" class="w-full bg-transparent outline-none font-bold"></td>
+                    <td class="p-2"><input type="number" value="${e.price || 0}" onchange="updArr('extras',${i},'price',this.value)" class="w-full bg-transparent outline-none"></td>
+                    <td class="p-2"><input value="${e.type || ''}" placeholder="Ej: AV" onchange="updArr('extras',${i},'type',this.value)" class="w-full bg-transparent outline-none text-gray-400"></td>
+                    <td class="p-2"><button onclick="delItem(${i})" class="text-red-400 font-bold">&times;</button></td></tr>`;
+            });
+            html += `</tbody></table></div></div>`;
+            c.innerHTML = html;
+        }
+
+        function renderFestivos(c) {
+            var list = fullConfig.festivos || [];
+            var html = `<div class="card"><div class="flex justify-between items-center mb-4"><h3>📅 Días Bloqueados (Festivos)</h3><button onclick="addItem()" class="bg-blue-600 text-white px-3 py-1 rounded text-sm">+ Añadir</button></div>
+            <div class="overflow-x-auto"><table class="w-full text-left font-sm"><thead class="bg-gray-50 text-gray-500 uppercase text-xs"><tr><th class="p-2 w-40">Fecha</th><th class="p-2">Motivo</th><th class="w-10"></th></tr></thead><tbody class="divide-y divide-gray-100">`;
+            list.forEach((f, i) => {
+                html += `<tr>
+                    <td class="p-2"><input type="date" value="${f.date}" onchange="updArr('festivos',${i},'date',this.value)" class="w-full bg-transparent outline-none"></td>
+                    <td class="p-2"><input value="${f.name || ''}" placeholder="Ej: Navidad" onchange="updArr('festivos',${i},'name',this.value)" class="w-full bg-transparent outline-none"></td>
+                    <td class="p-2"><button onclick="delItem(${i})" class="text-red-400 font-bold">&times;</button></td></tr>`;
+            });
+            html += `</tbody></table></div></div>`;
+            c.innerHTML = html;
+        }
+
+        function renderBloqueos(c) {
+            var list = fullConfig.bloqueos || [];
+
+            // Build Salon List for Select
+            var salonOptions = `<option value="TODOS">TODOS LOS SALONES</option>`;
+            (fullConfig.Guadiana || []).forEach(s => salonOptions += `<option value="${s.name}">${s.name} (G)</option>`);
+            (fullConfig.Cumbria || []).forEach(s => salonOptions += `<option value="${s.name}">${s.name} (C)</option>`);
+
+            var html = `<div class="card"><div class="flex justify-between items-center mb-4"><h3>🚫 Bloqueos de Fecha</h3><button onclick="addItem()" class="bg-blue-600 text-white px-3 py-1 rounded text-sm">+ Añadir</button></div>
+            <div class="overflow-x-auto"><table class="w-full text-left font-sm"><thead class="bg-gray-50 text-gray-500 uppercase text-xs"><tr><th class="p-2 w-48">Salón</th><th class="p-2 w-32">Desde</th><th class="p-2 w-32">Hasta</th><th class="p-2">Motivo</th><th class="w-10"></th></tr></thead><tbody class="divide-y divide-gray-100">`;
+
+            list.forEach((b, i) => {
+                html += `<tr>
+                    <td class="p-2">
+                        <select onchange="updArr('bloqueos',${i},'salon',this.value)" class="w-full bg-transparent outline-none border border-gray-200 rounded p-1 text-sm">
+                            ${salonOptions.replace(`value="${b.salon}"`, `value="${b.salon}" selected`)}
+                        </select>
+                    </td>
+                    <td class="p-2"><input type="date" value="${b.start}" onchange="updArr('bloqueos',${i},'start',this.value)" class="w-full bg-transparent outline-none"></td>
+                    <td class="p-2"><input type="date" value="${b.end}" onchange="updArr('bloqueos',${i},'end',this.value)" class="w-full bg-transparent outline-none"></td>
+                    <td class="p-2"><input value="${b.note || ''}" placeholder="Ej: Mantenimiento" onchange="updArr('bloqueos',${i},'note',this.value)" class="w-full bg-transparent outline-none"></td>
+                    <td class="p-2"><button onclick="delItem(${i})" class="text-red-400 font-bold">&times;</button></td>
+                </tr>`;
+            });
+            html += `</tbody></table></div></div>`;
+            c.innerHTML = html;
+        }
+
         // --- UPDATERS ---
         function updCfg(cat, k, v) { if (!fullConfig[cat]) fullConfig[cat] = {}; fullConfig[cat][k] = v; markDirty(); }
         function updS(i, k, v) { if (k !== 'name' && k !== 'active') v = parseFloat(v); fullConfig[currentTab][i][k] = v; markDirty(); }
         function updM(i, v) { fullConfig.montajes[i] = v; markDirty(); }
+        function updArr(listName, i, k, v) { fullConfig[listName][i][k] = v; markDirty(); }
 
         window.addItem = () => {
             if (currentTab === 'Montajes') { var v = document.getElementById("newM_val").value; if (v) { fullConfig.montajes.push(v); render(); markDirty(); } }
-            else if (currentTab !== 'General') { fullConfig[currentTab].push({ name: "Nuevo", pax: 0, priceHalf: 0, priceFull: 0, active: true }); render(); markDirty(); }
+            else if (currentTab === 'Extras') { if (!fullConfig.extras) fullConfig.extras = []; fullConfig.extras.push({ name: "Nuevo Extra", price: 0, type: "General" }); render(); markDirty(); }
+            else if (currentTab === 'Festivos') { if (!fullConfig.festivos) fullConfig.festivos = []; fullConfig.festivos.push({ date: new Date().toISOString().split('T')[0], name: "Festivo" }); render(); markDirty(); }
+            else if (currentTab === 'Bloqueos') { if (!fullConfig.bloqueos) fullConfig.bloqueos = []; var today = new Date().toISOString().split('T')[0]; fullConfig.bloqueos.push({ salon: "TODOS", start: today, end: today, note: "Nuevo Bloqueo" }); render(); markDirty(); }
+            else if (currentTab !== 'General') { fullConfig[currentTab].push({ name: "Nuevo", pax: 0, m2: 0, active: true, capacities: {} }); render(); markDirty(); }
         }
-        window.delItem = (i) => { if (confirm("¿Borrar?")) { if (currentTab === 'Montajes') fullConfig.montajes.splice(i, 1); else fullConfig[currentTab].splice(i, 1); render(); markDirty(); } }
+        window.delItem = (i) => {
+            if (confirm("¿Borrar?")) {
+                if (currentTab === 'Montajes') fullConfig.montajes.splice(i, 1);
+                else if (currentTab === 'Extras') fullConfig.extras.splice(i, 1);
+                else if (currentTab === 'Festivos') fullConfig.festivos.splice(i, 1);
+                else if (currentTab === 'Bloqueos') fullConfig.bloqueos.splice(i, 1);
+                else fullConfig[currentTab].splice(i, 1);
+                render(); markDirty();
+            }
+        }
 
         function markDirty() {
             var b = document.getElementById("btnSave");
@@ -465,7 +596,73 @@
                 setTimeout(() => { b.innerText = "💾 GUARDAR CAMBIOS"; b.classList.replace("bg-green-500", "bg-gray-900"); }, 2000);
             } catch (e) { alert(e.message); }
         }
+        // --- MODAL CAPACITIES ---
+        let currentCapIndex = -1;
+        let currentCapHotel = "";
+
+        window.openCapacities = (i, hotel) => {
+            currentCapIndex = i;
+            currentCapHotel = hotel;
+            var s = fullConfig[hotel][i];
+            var caps = s.capacities || {};
+
+            document.getElementById("capTitle").innerText = "Capacidades: " + s.name;
+            document.getElementById("capBanquete").value = caps.banquete || 0;
+            document.getElementById("capEscuela").value = caps.escuela || 0;
+            document.getElementById("capTeatro").value = caps.teatro || 0;
+            document.getElementById("capCoctel").value = caps.coctel || 0;
+            document.getElementById("capImperial").value = caps.imperial || 0;
+            document.getElementById("capU").value = caps.forma_u || 0;
+
+            document.getElementById("capModal").classList.remove("hidden");
+        }
+
+        window.closeCapacities = () => {
+            document.getElementById("capModal").classList.add("hidden");
+        }
+
+        window.saveCapacities = () => {
+            var caps = {
+                banquete: parseInt(document.getElementById("capBanquete").value) || 0,
+                escuela: parseInt(document.getElementById("capEscuela").value) || 0,
+                teatro: parseInt(document.getElementById("capTeatro").value) || 0,
+                coctel: parseInt(document.getElementById("capCoctel").value) || 0,
+                imperial: parseInt(document.getElementById("capImperial").value) || 0,
+                forma_u: parseInt(document.getElementById("capU").value) || 0
+            };
+            fullConfig[currentCapHotel][currentCapIndex].capacities = caps;
+            markDirty();
+            closeCapacities();
+        }
+
     </script>
+
+    <!-- MODAL -->
+    <div id="capModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
+        <div class="bg-white rounded-lg shadow-xl w-96 p-6">
+            <h3 id="capTitle" class="text-xl font-bold mb-4">Capacidades</h3>
+            <div class="grid grid-cols-2 gap-4">
+                <div><label class="text-xs font-bold text-gray-500">Banquete</label><input id="capBanquete"
+                        type="number" class="w-full border rounded p-1"></div>
+                <div><label class="text-xs font-bold text-gray-500">Escuela</label><input id="capEscuela" type="number"
+                        class="w-full border rounded p-1"></div>
+                <div><label class="text-xs font-bold text-gray-500">Teatro</label><input id="capTeatro" type="number"
+                        class="w-full border rounded p-1"></div>
+                <div><label class="text-xs font-bold text-gray-500">Cóctel</label><input id="capCoctel" type="number"
+                        class="w-full border rounded p-1"></div>
+                <div><label class="text-xs font-bold text-gray-500">Imperial</label><input id="capImperial"
+                        type="number" class="w-full border rounded p-1"></div>
+                <div><label class="text-xs font-bold text-gray-500">Forma U</label><input id="capU" type="number"
+                        class="w-full border rounded p-1"></div>
+            </div>
+            <div class="flex justify-end gap-2 mt-6">
+                <button onclick="closeCapacities()"
+                    class="px-4 py-2 text-gray-500 font-bold hover:bg-gray-100 rounded">Cancelar</button>
+                <button onclick="saveCapacities()"
+                    class="px-4 py-2 bg-blue-600 text-white font-bold rounded hover:bg-blue-700">Guardar</button>
+            </div>
+        </div>
+    </div>
 </body>
 
 </html>
