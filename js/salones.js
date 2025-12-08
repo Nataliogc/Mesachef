@@ -1,4 +1,5 @@
-// js/salones.js - v10 (Full Rewrite)
+// js/salones.js - v11 (Restored & Fixed)
+
 
 (function () {
     // --- ROBUST FIREBASE INIT ---
@@ -148,44 +149,22 @@
 
     window.updateRowPrice = function (input) {
         const val = input.value.trim();
-        const row = input.closest("tr");
-        const priceInput = row.querySelector(".row-price");
-        const hotel = localStorage.getItem(STORAGE_KEY) || "Guadiana";
+        if (!val || !globalConfig) return;
 
-        console.log("updateRowPrice Check:", { val, hotel, hasGlobal: !!globalConfig });
-
-        if (!val || !priceInput) return;
-
-        // A. Check Extras
+        // Check Extras
         if (globalConfig.extras) {
-            const extra = globalConfig.extras.find(e => e.name === val);
-            if (extra) {
-                console.log("Match Extra:", extra);
-                priceInput.value = extra.price;
-                calcTotal();
+            const ext = globalConfig.extras.find(e => e.name === val);
+            if (ext) {
+                // Find row price input
+                const row = input.closest("tr");
+                if (row) {
+                    row.querySelector(".row-price").value = ext.price;
+                    calcTotal();
+                }
                 return;
             }
         }
-
-        // B. Check Salon Rental Pattern
-        if (globalConfig[hotel]) {
-            const salon = globalConfig[hotel].find(s => val.startsWith(`Alquiler Salón ${s.name}`));
-            if (salon) {
-                let price = 0;
-                if (val.endsWith(" - todo")) price = salon.priceFull;
-                else if (val.endsWith(" - mañana") || val.endsWith(" - tarde")) price = salon.priceHalf;
-
-                console.log("Match Rental:", { salon: salon.name, price });
-                if (price > 0) {
-                    priceInput.value = price;
-                    calcTotal();
-                }
-            }
-        }
     };
-
-    let loadedReservations = [];
-    let unsubscribe = null;
 
     window.renderGrid = function () {
         const hotel = localStorage.getItem(STORAGE_KEY) || "Guadiana";
@@ -201,17 +180,31 @@
         const rangeEl = document.getElementById("currentWeekRange");
         if (rangeEl) rangeEl.innerText = `${dates[0].toLocaleDateString()} - ${dates[6].toLocaleDateString()}`;
 
+        // Update Custom Date Label (Toolbar)
+        const dateLabel = document.getElementById("currentDateLabel");
+        const datePicker = document.getElementById("currentDate");
+        if (dateLabel && datePicker && datePicker.value) {
+            const d = new Date(datePicker.value);
+            const dayName = d.toLocaleDateString("es-ES", { weekday: "short" }).replace(".", "");
+            const dayNum = d.getDate();
+            const monthName = d.toLocaleDateString("es-ES", { month: "short" }).replace(".", "");
+            dateLabel.innerText = `${dayName} ${dayNum} ${monthName}`;
+        }
+
         // TABLE LAYOUT
         let html = `
         <div style="display: flex; flex-direction: column; background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">
             <div style="display: grid; grid-template-columns: 200px repeat(7, 1fr); background: #f8fafc; border-bottom: 2px solid #e2e8f0;">
-                <div class="p-4 font-bold text-slate-700 text-sm tracking-wide uppercase flex items-center justify-center border-r border-slate-200">SALA</div>
-                ${dates.map(d => `
-                    <div class="p-3 font-bold text-center text-xs uppercase text-slate-500 border-r border-slate-100 last:border-r-0 flex flex-col justify-center">
-                        <span class="text-slate-800 text-sm">${d.toLocaleDateString('es-ES', { weekday: 'short' }).toUpperCase()}</span>
-                        <span class="text-slate-400 font-normal">${d.getDate().toString().padStart(2, '0')}/${(d.getMonth() + 1).toString().padStart(2, '0')}</span>
+                <div class="py-2 px-2 font-bold text-slate-500 text-xs tracking-wide uppercase flex items-center justify-center border-r border-slate-200">SALA</div>
+                ${dates.map(d => {
+            const dayName = d.toLocaleDateString('es-ES', { weekday: 'short' }).replace('.', '').toUpperCase();
+            const dayNum = d.getDate().toString().padStart(2, '0');
+            const monthName = d.toLocaleDateString('es-ES', { month: 'short' }).replace('.', '').charAt(0).toUpperCase() + d.toLocaleDateString('es-ES', { month: 'short' }).replace('.', '').slice(1);
+            return `
+                    <div class="py-1 px-1 font-bold text-center text-xs text-slate-500 border-r border-slate-100 last:border-r-0 flex items-center justify-center bg-[#f8fafc]">
+                        ${dayName} ${dayNum} ${monthName}
                     </div>
-                `).join('')}
+                `}).join('')}
             </div>
         `;
 
@@ -227,11 +220,11 @@
             salons.forEach((salon, index) => {
                 const isLast = index === salons.length - 1;
                 html += `<div style="display: grid; grid-template-columns: 200px repeat(7, 1fr); ${isLast ? '' : 'border-bottom: 1px solid #f1f5f9;'}">
-                            <div class="bg-white p-4 font-bold text-slate-700 flex flex-col justify-center border-r border-slate-100 relative group">
-                                <span class="text-sm text-slate-800">${salon.name}</span>
-                                <span class="text-[10px] text-slate-400 font-normal mt-1 uppercase tracking-wider">Capacidad: ${salon.pax}</span>
-                                <div class="absolute left-0 top-0 bottom-0 w-1 bg-blue-500 opacity-0 group-hover:opacity-100 transition"></div>
-                            </div>`;
+                    <div class="bg-white p-2 font-bold text-slate-700 flex flex-col justify-center border-r border-slate-100 relative group">
+                        <span class="text-xs text-slate-800">${salon.name}</span>
+                        <span class="text-slate-400 font-normal mt-0.5 uppercase tracking-wider text-[9px]">Cap: ${salon.pax}</span>
+                        <div class="absolute left-0 top-0 bottom-0 w-1 bg-blue-500 opacity-0 group-hover:opacity-100 transition"></div>
+                    </div>`;
 
                 dates.forEach(d => {
                     const dateStr = utils.toIsoDate(d);
@@ -250,26 +243,30 @@
                     });
 
                     if (isBlocked) {
-                        html += `<div id="cell_${hotel.replace(/\s/g, '_')}_${salon.name.replace(/\s/g, '_')}_${dateStr}" 
+                        html += `<div id="cell_${hotel.replace(/\s/g, '_')}_${salon.name.replace(/\s/g, '_')}_${dateStr}"
                                     class="bg-red-50 hover:bg-red-100 border-r border-slate-100 last:border-r-0 transition p-1 relative flex flex-col items-center justify-center group cursor-not-allowed" title="${blockReason}">
-                                    <span class="text-2xl">🔒</span>
-                                    <span class="text-[10px] text-red-600 font-bold uppercase mt-1 text-center leading-tight">${blockReason}</span>
+                                    <span class="text-lg">🔒</span>
+                                    <span class="text-[9px] text-red-600 font-bold uppercase mt-1 text-center leading-tight">${blockReason}</span>
                                </div>`;
                     } else {
                         // VISUAL SPLIT: Morning / Afternoon click zones
-                        html += `<div id="cell_${hotel.replace(/\s/g, '_')}_${salon.name.replace(/\s/g, '_')}_${dateStr}" 
-                                       class="bg-white min-h-[90px] border-r border-slate-100 last:border-r-0 relative flex flex-col group">
+                        // Layout: Grid with 2 rows (Morning/Afternoon). Explicit rows allow cards to be placed in specific slots.
+                        html += `<div id="cell_${hotel.replace(/\s/g, '_')}_${salon.name.replace(/\s/g, '_')}_${dateStr}"
+                                    style="display: grid; grid-template-rows: minmax(50px, 1fr) minmax(50px, 1fr);"
+                                    class="bg-white min-h-[100px] border-r border-slate-100 last:border-r-0 relative group">
                                         
                                         <!-- Morning Zone -->
                                         <div onclick="window.openBooking('${safeName}', '${dateStr}', null, 'mañana')" 
-                                            class="flex-1 border-b border-dashed border-slate-200 hover:bg-blue-50 cursor-pointer flex items-center justify-center group/morning transition">
-                                            <span class="opacity-0 group-hover/morning:opacity-100 text-[10px] font-bold text-blue-400">MAÑANA</span>
+                                            style="grid-row: 1;"
+                                            class="border-b border-dashed border-slate-200 hover:bg-blue-50 cursor-pointer flex items-center justify-center group/morning transition">
+                                            <span class="opacity-0 group-hover/morning:opacity-100 text-[9px] font-bold text-blue-400">MAÑANA</span>
                                         </div>
 
                                         <!-- Afternoon Zone -->
-                                        <div onclick="window.openBooking('${safeName}', '${dateStr}', null, 'tarde')" 
-                                            class="flex-1 hover:bg-blue-50 cursor-pointer flex items-center justify-center group/afternoon transition">
-                                            <span class="opacity-0 group-hover/afternoon:opacity-100 text-[10px] font-bold text-blue-400">TARDE</span>
+                                        <div onclick="window.openBooking('${safeName}', '${dateStr}', null, 'tarde')"
+                                            style="grid-row: 2;"
+                                            class="hover:bg-blue-50 cursor-pointer flex items-center justify-center group/afternoon transition">
+                                            <span class="opacity-0 group-hover/afternoon:opacity-100 text-[9px] font-bold text-blue-400">TARDE</span>
                                         </div>
                                   </div>`;
                     }
@@ -282,6 +279,10 @@
         container.innerHTML = html;
         paintReservations(hotel);
     };
+
+    // --- LOGIC: FETCHING ---
+    let unsubscribe = null;
+    let loadedReservations = [];
 
     function loadReservations() {
         if (unsubscribe) unsubscribe();
@@ -321,17 +322,39 @@
         console.log("Painting Reservations. Hotel:", hotel, "Filter:", filterVal, "Total Loaded:", loadedReservations.length);
 
         // Group by cell
+        // 1. Map canonical salon names (from Config) to normalized keys
+        const salonMap = {}; // "puertadealarcos": "Puerta de Alarcos"
+        if (globalConfig[hotel]) {
+            globalConfig[hotel].forEach(s => {
+                salonMap[s.name.replace(/\s/g, '').toLowerCase()] = s.name;
+            });
+        }
+
         const cellGroups = {};
         loadedReservations.forEach(res => {
-            // Filter logic
-            if (filterVal !== "todos") {
-                if (filterVal === "activos") {
-                    // User definition: "activos: confirmados y provisionales"
-                    if (res.estado !== 'confirmada' && res.estado !== 'provisional') return;
-                } else {
-                    // Specific status (confirmada, provisional, presupuesto, cancelada)
-                    if (res.estado !== filterVal) return;
-                }
+            // console.log("Processing:", res.cliente, res.estado, "Filter:", filterVal);
+
+            const st = (res.estado || "").toLowerCase();
+
+            // Normalize Status
+            const isConfirmed = st === 'confirmada' || st === 'confirmed';
+            const isPending = st === 'provisional' || st === 'pendiente' || st === 'pending' || st === 'presupuesto';
+            const isCancelled = st === 'cancelada' || st === 'cancelled' || st === 'anulada';
+
+            if (filterVal === 'todos') {
+                // Show everything
+            } else if (filterVal === 'activos') {
+                // Show Confirmed + Pending
+                if (!isConfirmed && !isPending) return;
+            } else if (filterVal === 'confirmada') {
+                if (!isConfirmed) return;
+            } else if (filterVal === 'provisional') {
+                if (!isPending) return;
+            } else if (filterVal === 'cancelada') {
+                if (!isCancelled) return;
+            } else {
+                // Specific
+                if (st !== filterVal.toLowerCase()) return;
             }
 
             // Group by cell (Multi-day support)
@@ -342,8 +365,17 @@
             }
             if (relevantDates.size === 0) relevantDates.add(res.fecha);
 
+            // Find Canonical Salon Name
+            const rawName = (res.salon || "").replace(/\s/g, '').toLowerCase();
+            const canonicalName = salonMap[rawName];
+
+            if (!canonicalName) {
+                console.warn("Reservation salon not found in config:", res.salon);
+                return;
+            }
+
             relevantDates.forEach(date => {
-                const key = `${res.hotel}_${res.salon}_${date}`;
+                const key = `${res.hotel}_${canonicalName}_${date}`;
                 if (!cellGroups[key]) cellGroups[key] = [];
 
                 // Derive Jornada for THIS date
@@ -363,7 +395,7 @@
                     }
                 }
 
-                cellGroups[key].push({ ...res, fecha: date, _displayJornada: dailyJornada });
+                cellGroups[key].push({ ...res, fecha: date, _displayJornada: dailyJornada, _canonicalSalon: canonicalName });
             });
         });
 
@@ -371,15 +403,16 @@
             const group = cellGroups[key];
             if (group.length === 0) return;
 
-            const sample = group[0]; // All have same hotel/salon/date because of key
-            const cellId = `cell_${hotel.replace(/\s/g, '_')}_${sample.salon.replace(/\s/g, '_')}_${sample.fecha}`;
+            const sample = group[0];
+            // construct ID using CANONICAL salon name from sample._canonicalSalon
+            const cellId = `cell_${hotel.replace(/\s/g, '_')}_${sample._canonicalSalon.replace(/\s/g, '_')}_${sample.fecha}`;
             const cell = document.getElementById(cellId);
 
             if (!cell) {
                 // Only warn if the date is within the current view week
                 const dates = utils.getWeekDates(currentWeekStart).map(d => utils.toIsoDate(d));
                 if (dates.includes(sample.fecha)) {
-                    console.warn("Cell not found for:", cellId, "Data:", sample);
+                    console.warn("Cell not found for:", cellId, "Canonical:", sample._canonicalSalon);
                 }
                 return;
             }
@@ -390,7 +423,7 @@
 
             group.forEach(res => {
                 const jornada = res._displayJornada || res.detalles?.jornada || "todo";
-                // console.log(`[Render] ${res.cliente} (${res.fecha}) -> Jornada: '${jornada}'`);
+                // console.log(`[Render] ${ res.cliente } (${ res.fecha }) -> Jornada: '${jornada}'`);
 
                 // Colors
                 let colorClass = 'bg-blue-100 border-blue-500 text-blue-800'; // Default
@@ -401,34 +434,28 @@
                 else if (res.estado === 'cancelada') colorClass = 'bg-red-100 border-red-500 text-red-800 opacity-60'; // Dimmed
 
                 const card = document.createElement("div");
+                // DEBUG LOG
+                // console.log(`Painting ${res.cliente} at ${cellId} (Jornada: ${jornada})`);
 
-                // Base classes (Visuals only, removed positioning classes)
-                let classes = `booking-card w-[95%] rounded border-l-4 ${colorClass} shadow-sm px-1 py-0.5 text-[10px] flex flex-col justify-between overflow-hidden relative box-border hover:z-10 hover:shadow-md transition`;
+
+                // Base classes (Auto Height for expansion)
+                let classes = `booking-card w-[96%] mx-auto rounded border-l-4 ${colorClass} shadow-sm px-1 py-1 text-[10px] flex flex-col justify-between relative box-border hover:z-20 hover:shadow-md transition h-auto min-h-full`;
                 card.className = classes;
 
-                // FORCE POSITIONING (Inline Styles)
-                card.style.position = "absolute";
+                // GRID PLACEMENT (No absolute)
+                card.style.zIndex = "10";
 
                 if (jornada === "todo") {
-                    card.style.height = "94%";
-                    card.style.top = "3%";
-                    card.style.left = "2.5%";
-                    card.style.zIndex = "10";
+                    card.style.gridRow = "1 / span 2";
                 } else if (jornada === "mañana") {
-                    card.style.height = "46%";
-                    card.style.top = "2%";
-                    card.style.left = "2.5%";
-                    card.style.zIndex = "10";
+                    card.style.gridRow = "1";
                 } else if (jornada === "tarde") {
-                    card.style.height = "46%";
-                    card.style.bottom = "2%";
-                    card.style.left = "2.5%";
-                    card.style.zIndex = "10";
+                    card.style.gridRow = "2";
                 }
 
                 card.onclick = (e) => { e.stopPropagation(); openBooking(res.salon, res.fecha, res); };
 
-                const timeStr = res.detalles?.hora ? `<span class="opacity-75">${res.detalles.hora}</span>` : '';
+                const timeStr = res.detalles?.hora ? `<span class="opacity-75"> ${res.detalles.hora}</span>` : '';
                 const paxTotal = (res.detalles?.pax_adultos || 0) + (res.detalles?.pax_ninos || 0);
                 const paxStr = paxTotal > 0 ? `<span class="text-[9px] bg-white/50 px-1 rounded ml-1">👤${paxTotal}</span>` : '';
 
@@ -459,7 +486,6 @@
                 cell.appendChild(card);
             });
         });
-
     }
 
     // --- GLOBAL SEARCH LOGIC ---
@@ -514,7 +540,7 @@
                 console.error("Search Error", err);
                 hasLoadedAll = false;
                 fetchPromise = null;
-                if (container) container.innerHTML = `< div class="p-2 text-red-500 text-xs text-center" > Error al cargar: ${err.message}</div > `;
+                if (container) container.innerHTML = `<div class="p-2 text-red-500 text-xs text-center">Error al cargar: ${err.message}</div>`;
                 throw err;
             });
 
@@ -542,7 +568,7 @@
         } catch (e) {
             console.error("Filtering Error", e);
             const container = document.getElementById("searchResults");
-            if (container) container.innerHTML = `< div class="p-2 text-red-500 text-xs text-center" > Error de filtrado: ${e.message}</div > `;
+            if (container) container.innerHTML = `<div class="p-2 text-red-500 text-xs text-center">Error de filtrado: ${e.message}</div>`;
         }
     }
 
@@ -573,10 +599,10 @@
                             'bg-yellow-100 text-yellow-700 border border-yellow-200';
 
                 item.innerHTML = `
-                    < div class="flex flex-col" >
+                    <div class="flex flex-col">
                         <span class="font-bold text-slate-800 text-sm leading-tight">${r.cliente}</span>
                         <span class="text-[10px] text-slate-500 uppercase tracking-wide mt-1">📅 ${datePretty} &bull; ${r.salon}</span>
-                    </div >
+                    </div>
                     <span class="text-[10px] font-bold px-2 py-0.5 rounded-full ${statusColor} uppercase shadow-sm">${r.estado}</span>
                 `;
                 container.appendChild(item);
@@ -587,9 +613,6 @@
 
     window.selectSearchResult = function (r) {
         document.getElementById("searchResults").classList.add("hidden");
-        // Optional: Keep search text or clear?
-        // document.getElementById("searchInput").value = ""; 
-
         // Navigate
         window.goToDate(r.fecha);
     };
@@ -868,10 +891,10 @@
 
                     if (myJornada === "todo" || otherJornada === "todo") {
                         conflict = true;
-                        conflictReason = `El salón ya está ocupado(Jornada Completa) por: ${other.cliente} `;
+                        conflictReason = `El salón ya está ocupado(Jornada Completa) por: ${other.cliente}`;
                     } else if (myJornada === otherJornada) {
                         conflict = true;
-                        conflictReason = `Ya existe un evento en la franja ${myJornada} de: ${other.cliente} `;
+                        conflictReason = `Ya existe un evento en la franja ${myJornada} de: ${other.cliente}`;
                     }
                 });
             }
@@ -910,9 +933,6 @@
         let filterFn;
 
         if (mode === 'dia') {
-            // Assume today or first day of current week view if passed? 
-            // Better behavior: Default to today, but if today is not in week view, maybe first day of view?
-            // Use Today for simplicity as per common use case
             const todayStr = utils.toIsoDate(new Date());
             const startStr = utils.toIsoDate(dates[0]);
             const endStr = utils.toIsoDate(dates[6]);
@@ -921,7 +941,7 @@
             if (todayStr < startStr || todayStr > endStr) targetDateStr = startStr;
 
             const prettyDate = new Date(targetDateStr).toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
-            title = `Informe Diario - ${prettyDate} `;
+            title = `Informe Diario - ${prettyDate}`;
             filterFn = (r) => r.fecha === targetDateStr && r.estado !== 'cancelada';
         } else {
             const d1 = dates[0].toLocaleDateString('es-ES', { day: 'numeric', month: 'short' });
@@ -933,65 +953,105 @@
             filterFn = (r) => r.fecha >= s && r.fecha <= e && r.estado !== 'cancelada';
         }
 
+        const logoUrl = (hotel === "Guadiana") ? "Img/logo-guadiana.svg" : "Img/logo-cumbria.svg";
+
         let html = `
         <div style="font-family: sans-serif; padding: 20px;">
-            <h1 style="font-size: 24px; font-weight: bold; margin-bottom: 5px; display: flex; align-items: center;">
-                🏨 ${hotel}
-            </h1>
-            <h2 style="font-size: 18px; color: #555; margin-bottom: 20px;">${title}</h2>
-            <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
-                <thead>
-                    <tr style="background: #f3f3f3; border-bottom: 2px solid #ccc;">
-                        <th style="padding: 8px; text-align: left;">Fecha</th>
-                        <th style="padding: 8px; text-align: left;">Hora</th>
-                        <th style="padding: 8px; text-align: left;">Salón</th>
-                        <th style="padding: 8px; text-align: left;">Cliente</th>
-                        <th style="padding: 8px; text-align: left;">Montaje</th>
-                        <th style="padding: 8px; text-align: left;">Pax</th>
-                        <th style="padding: 8px; text-align: left;">Teléfono</th>
-                        <th style="padding: 8px; text-align: left;">Notas</th>
-                        <th style="padding: 8px; text-align: left;">Estado</th>
-                    </tr>
-                </thead>
-                <tbody>
+            <div style="display:flex; align-items:center; gap:20px; margin-bottom:20px; border-bottom:2px solid #eee; padding-bottom:15px;">
+                <img src="${logoUrl}" style="height:60px; width:auto;">
+                <div>
+                   <h1 style="font-size: 24px; font-weight: bold; margin:0; color:#333;">${hotel}</h1>
+                   <h2 style="font-size: 16px; color: #666; margin:5px 0 0 0;">${title}</h2>
+               </div>
+            </div>
         `;
 
+        // 0. Collect Rows
         let rows = [];
         loadedReservations.forEach(r => {
-            if (filterFn(r)) {
-                rows.push(r);
+            if (filterFn(r) && ['pendiente', 'confirmada', 'pending', 'confirmed'].includes(r.estado)) {
+                rows.push({ ...r, ts: new Date(r.fecha + 'T' + (r.detalles?.hora || '00:00')) });
             }
         });
+        rows.sort((a, b) => a.ts - b.ts);
 
-        // Sort by Date then Time
-        rows.sort((a, b) => {
-            if (a.fecha !== b.fecha) return a.fecha.localeCompare(b.fecha);
-            return (a.detalles?.hora || "00:00").localeCompare(b.detalles?.hora || "00:00");
-        });
-
+        // 1. Group records by Date
+        const groups = {};
         rows.forEach(r => {
-            const dateDisplay = new Date(r.fecha).toLocaleDateString('es-ES', { weekday: 'short', day: 'numeric' });
-            const pax = (r.detalles?.pax_adultos || 0) + (r.detalles?.pax_ninos || 0);
-            html += `
-            <tr style="border-bottom: 1px solid #eee;">
-                <td style="padding: 8px;">${dateDisplay}</td>
-                <td style="padding: 8px;"><b>${r.detalles?.hora || '--:--'}</b></td>
-                <td style="padding: 8px;">${r.salon || ''}</td>
-                <td style="padding: 8px;">${r.cliente || ''}</td>
-                <td style="padding: 8px;">${r.detalles?.montaje || ''}</td>
-                <td style="padding: 8px;">${pax || ''}</td>
-                <td style="padding: 8px;">${r.contact?.tel || ''}</td>
-                <td style="padding: 8px; color:#666;">${r.notas?.interna || ''}</td>
-                <td style="padding: 8px;">${r.estado || ''}</td>
-            </tr>
-            `;
+            if (!groups[r.fecha]) groups[r.fecha] = [];
+            groups[r.fecha].push(r);
         });
 
-        html += `   </tbody></table>
+        const sortedDates = Object.keys(groups).sort();
+
+        // 2. Build HTML per Date
+        sortedDates.forEach(dateStr => {
+            const dateObj = new Date(dateStr);
+            const dayName = dateObj.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' });
+            const dayNameCap = dayName.charAt(0).toUpperCase() + dayName.slice(1);
+
+            html += `< h3 style = "font-size: 16px; font-weight: bold; margin-top: 20px; margin-bottom: 5px; color: #2c3e50; border-bottom: 2px solid #ddd; padding-bottom: 5px;" >📅 ${dayNameCap}</h3> `;
+
+            // Table Header
+            html += `< table style = "width: 100%; border-collapse: collapse; font-size: 11px; margin-bottom: 20px;" >
+                        <thead>
+                            <tr style="background: #f1f5f9; color: #475569; text-align: left;">
+                                <th style="padding: 6px; width: 45px; border-bottom: 2px solid #ddd;">Hora</th>
+                                <th style="padding: 6px; width: 90px; border-bottom: 2px solid #ddd;">Salón</th>
+                                <th style="padding: 6px; width: 130px; border-bottom: 2px solid #ddd;">Cliente</th>
+                                <th style="padding: 6px; width: 80px; border-bottom: 2px solid #ddd;">Montaje</th>
+                                <th style="padding: 6px; width: 30px; border-bottom: 2px solid #ddd; text-align:center;">Pax</th>
+                                <th style="padding: 6px; border-bottom: 2px solid #ddd;">Notas / Observaciones</th>
+                                <th style="padding: 6px; width: 40px; border-bottom: 2px solid #ddd;">Est.</th>
+                            </tr>
+                        </thead>
+                        <tbody>`;
+
+            let dailyPax = 0;
+            // Counters for breakdown? Salones has many montajes. Maybe just list them?
+            // Or simple count of events.
+            let eventCount = 0;
+
+            groups[dateStr].forEach(r => {
+                const pax = (parseInt(r.detalles?.pax_adultos) || 0) + (parseInt(r.detalles?.pax_ninos) || 0);
+                dailyPax += pax;
+                eventCount++;
+
+                const time = r.detalles?.hora || "--:--";
+                const space = r.salon || "Salon";
+                const spaceAbbr = space.substring(0, 15) + (space.length > 15 ? '.' : ''); // Slightly longer for Salon names
+                const clientName = r.cliente || "Sin Nombre";
+                const montaje = r.detalles?.montaje || "-";
+
+                let statusFull = r.estado || "";
+                let statusAbbr = (statusFull === 'confirmada' || statusFull === 'confirmed') ? 'Conf' : 'Pend';
+
+                let notesText = r.notas?.interna || "";
+
+                // Row
+                html += `<tr style="border-bottom: 1px solid #eee;">
+                            <td style="padding: 6px; font-weight:bold;">${time}</td>
+                            <td style="padding: 6px; color:#555;">${spaceAbbr}</td>
+                            <td style="padding: 6px; font-weight:600; color:#333;">${clientName.substring(0, 20)}</td>
+                            <td style="padding: 6px;">${montaje.substring(0, 10)}</td>
+                            <td style="padding: 6px; text-align:center;">${pax}</td>
+                            <td style="padding: 6px; font-style:italic; color:#444;">${notesText}</td>
+                            <td style="padding: 6px;">${statusAbbr}</td>
+                        </tr>`;
+            });
+
+            html += `</tbody></table > `;
+
+            html += `<div style="font-size: 13px; font-weight: bold; color: #333; margin-bottom: 30px; background: #fafafa; padding: 10px; border-left: 4px solid #666;">
+                Resumen día ${dateObj.getDate()}: Total ${dailyPax} personas (${eventCount} eventos)
+            </div>`;
+        });
+
+        html += `
             <div style="margin-top: 20px; font-size: 10px; color: #999; border-top: 1px solid #ddd; padding-top: 5px;">
                 Impreso el ${new Date().toLocaleString()}
             </div>
-        </div > `;
+        </div>`;
 
         const printArea = document.getElementById("printArea");
         if (printArea) {
@@ -1000,39 +1060,6 @@
         }
     };
 
-    window.goToDate = function (val) {
-        if (!val) return;
-        currentWeekStart = new Date(val);
-        // Ensure we are viewing that week? Or just that day? 
-        // The current app logic is Week-Based. So if I pick a date, I should go to the week containing that date.
-        // We need to adjust currentWeekStart to the *start* of that week?
-        // Or if the logic uses currentWeekStart as the anchor, we just set it.
-        // renderGrid uses utils.getWeekDates(currentWeekStart).
-        // If I pick a Wednesday, I want to see that Wednesday.
-        // utils.getWeekDates calculates forward from 'd'. 
-        // If currentWeekStart is arbitrary, it will show 7 days starting from that date. Is that desired?
-        // Currently 'changeWeek' adds +/- 7 days. 'resetToday' sets to new Date().
-        // If we want "Monday Start" behavior, we might need normalization.
-        // Restaurant module normalizes. Salones module... let's check utils.getWeekDates implementation.
-        // Look at line 357 in viewed file (Step 158 for Restaurant... wait, looking at Salones JS).
-        // Let's assume standard behavior: Set date, render 7 days starting from there (or normalize to Monday).
-        // Improving logic: Normalize to Monday if user wants "Weeks".
-        // But for now, let's just set the date.
-        renderGrid();
-    }
-
-    // Update Date Picker in renderGrid
-    // We need to inject this logic into renderGrid. Since I can't easily inject into the middle of a function without multi-replace or bigger context,
-    // I will append a helper that renderGrid calls? No, renderGrid is internal.
-    // I will hook into 'changeWeek', 'resetToday' and 'goToDate' to update the input manually if needed.
-    // Better: Update the input value at the end of renderGrid.
-    // But renderGrid is inside the closure. 
-    // I need to redefine renderGrid or find where to patch it.
-    // The previous view of salones.js (Step 175) shows renderGrid is NOT exported.
-    // I must look at where renderGrid is defined.
-    // Be careful. I'll stick to updating the input when 'changeWeek' or 'resetToday' is called.
-
-    // Re-wrapping the window functions to also update the UI
     window.changeWeek = function (delta) {
         currentWeekStart.setDate(currentWeekStart.getDate() + (delta * 7));
         renderGrid();
@@ -1054,7 +1081,7 @@
 
     // Helper to update the input
     function updateDatePicker() {
-        const picker = document.getElementById("datePicker");
+        const picker = document.getElementById("currentDate");
         if (picker && currentWeekStart) {
             picker.value = utils.toIsoDate(currentWeekStart);
         }

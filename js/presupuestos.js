@@ -66,7 +66,21 @@
     }
 
     // --- INIT UI ---
-    if (tituloHotel) tituloHotel.textContent = `Presupuestos · ${nombreHotelCompleto(hotelId)}`;
+    // if (tituloHotel) tituloHotel.textContent = `Presupuestos · ${nombreHotelCompleto(hotelId)}`;
+    const headerHotelName = document.getElementById("headerHotelName");
+    if (headerHotelName) {
+        if (hotelId === "Guadiana") {
+            headerHotelName.innerHTML = `
+                <img src="Img/logo-guadiana.svg" class="h-8 w-auto object-contain mr-3" alt="Sercotel Guadiana">
+                <span class="text-slate-700 font-bold tracking-tight">Sercotel Guadiana</span>
+            `;
+        } else {
+            headerHotelName.innerHTML = `
+                <img src="Img/logo-cumbria.svg" class="h-8 w-auto object-contain mr-3" alt="Cumbria Spa">
+                <span class="text-slate-700 font-bold tracking-tight">Cumbria Spa&Hotel</span>
+            `;
+        }
+    }
 
     // --- FIRESTORE ---
     const colPresupuestos = db.collection("presupuestos");

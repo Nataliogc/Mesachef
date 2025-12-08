@@ -85,59 +85,193 @@
             background: #f9fafb;
             border-color: #d1d5db;
         }
+
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+
+            #printArea,
+            #printArea * {
+                visibility: visible;
+            }
+
+            #printArea {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+                z-index: 9999;
+                background: white;
+            }
+
+            /* Hide the main app shell explicitly */
+            .mc-shell,
+            nav,
+            .planning-controls-bar,
+            #app {
+                display: none !important;
+            }
+        }
     </style>
 </head>
 
 <body class="app-body">
     <div class="mc-shell">
         <!-- Topbar -->
-        <header class="topbar">
-            <div class="topbar-left">
-                <span class="breadcrumb"><a href="index.html"
-                        style="text-decoration:none; color:inherit;">Inicio</a></span>
-                <span class="crumb-sep"> &middot; </span>
-                <span id="tituloHotel" class="breadcrumb strong">Restaurante</span>
-                <span id="estadoConexion" class="estado-conexion">Conectando...</span>
-            </div>
-            <div class="topbar-right">
-                <div class="search-box relative group">
-                    <input type="text" id="txtBuscar" onkeyup="handleSearch(this.value)" placeholder="Buscar reserva..."
-                        class="pl-10 pr-4 py-2 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500/20 outline-none w-64 transition shadow-sm" />
-                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 absolute left-3 top-3 text-slate-400"
-                        viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                        stroke-linejoin="round">
-                        <circle cx="11" cy="11" r="8"></circle>
-                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-                    </svg>
-                    <!-- Results Dropdown -->
-                    <div id="searchResults"
-                        class="hidden absolute top-full right-0 mt-2 w-80 bg-white rounded-xl shadow-xl border border-slate-100 max-h-96 overflow-y-auto z-50 divide-y divide-slate-50 text-left">
+        <!-- NAV -->
+        <nav class="bg-white shadow-sm sticky top-0 z-30 border-b border-gray-200 h-14">
+            <div class="max-w-[98%] mx-auto px-4 h-full">
+                <div class="flex justify-between items-center h-full">
+
+                    <!-- LEFT: SYSTEM IDENTITY -->
+                    <div class="flex items-center gap-4">
+                        <!-- Brand -->
+                        <div class="flex items-center gap-3">
+                            <img src="Img/logo_mesa_chef.png" class="h-8 w-auto object-contain drop-shadow-sm"
+                                alt="MesaChef">
+                            <div class="flex flex-col leading-none">
+                                <h1 class="text-slate-800 font-bold text-lg tracking-tight">MesaChef</h1>
+                                <span
+                                    class="text-[10px] text-blue-600 font-bold uppercase tracking-widest -mt-0.5">Enterprise</span>
+                            </div>
+                        </div>
+
+                        <!-- Divider -->
+                        <div class="h-6 w-px bg-slate-200"></div>
+
+                        <!-- Module Indicator -->
+                        <span class="text-slate-500 font-semibold text-sm tracking-wide uppercase">Restaurante</span>
+                    </div>
+
+                    <!-- CENTER: STATUS & HOTEL -->
+                    <div class="flex items-center gap-6">
+                        <!-- Connection Status -->
+                        <div class="flex items-center gap-2 px-3 py-0.5 bg-green-50 rounded-full border border-green-100"
+                            id="connStatus">
+                            <div
+                                class="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse shadow-[0_0_6px_rgba(34,197,94,0.6)]">
+                            </div>
+                            <span class="text-[10px] font-bold text-green-700 uppercase tracking-wide">Online</span>
+                        </div>
+
+                        <!-- Hotel Name (Injected) -->
+                        <div id="headerHotelName" class="text-sm font-semibold text-slate-700 flex items-center">
+                            <!-- Default to Guadiana (JS will update if needed) -->
+                            <img src="Img/logo-guadiana.svg" class="h-8 w-auto object-contain mr-3"
+                                alt="Sercotel Guadiana">
+                            <span class="text-slate-700 font-bold tracking-tight">Sercotel Guadiana</span>
+                        </div>
+                    </div>
+
+                    <!-- RIGHT: ACTIONS -->
+                    <div class="flex items-center gap-3">
+                        <a href="index.html"
+                            class="group flex items-center gap-1.5 text-slate-500 hover:text-slate-800 transition px-3 py-1.5 rounded-md hover:bg-slate-50">
+                            <svg class="w-4 h-4 text-slate-400 group-hover:text-slate-600" fill="none"
+                                stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                            </svg>
+                            <span class="text-xs font-semibold">Volver al Inicio</span>
+                        </a>
+                        <div class="h-6 w-px bg-slate-200 mx-1"></div>
+                        <button id="btnNuevaReserva"
+                            class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold py-2 px-4 rounded shadow-sm hover:shadow flex items-center gap-2 transition transform active:scale-95">
+                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3"
+                                    d="M12 4v16m8-8H4"></path>
+                            </svg>
+                            NUEVA RESERVA
+                        </button>
                     </div>
                 </div>
-                <button id="btnNuevaReserva" class="btn-primary">+ Nueva Reserva</button>
             </div>
-        </header>
+        </nav>
 
-        <!-- Controls & Filter line -->
-        <div class="planning-controls-bar">
-            <div class="planning-nav">
-                <!-- Arrows with HTML entities -->
-                <button id="btnPrev" class="btn-icon" title="Semana anterior">&larr;</button>
-                <input type="date" id="inputSemana" class="input-date" />
-                <button id="btnNext" class="btn-icon" title="Semana siguiente">&rarr;</button>
+        <!-- Controls & Filter line (Unified Design) -->
+        <div
+            class="bg-white border-b border-gray-200 px-4 py-3 flex flex-col md:flex-row justify-between items-center gap-4 shadow-sm relative z-20">
+            <!-- LEFT: Date & Actions -->
+            <div class="flex items-center gap-3">
+                <!-- Navigation -->
+                <div class="flex items-center gap-1">
+                    <button id="btnPrev"
+                        class="w-8 h-8 flex items-center justify-center bg-white border border-slate-300 rounded-md text-slate-600 hover:bg-slate-50 hover:text-blue-600 transition shadow-sm active:scale-95">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7">
+                            </path>
+                        </svg>
+                    </button>
+                    <div class="relative group">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <svg class="w-4 h-4 text-slate-400 group-hover:text-blue-500 transition" fill="none"
+                                stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z">
+                                </path>
+                            </svg>
+                        </div>
+                        <input type="date" id="inputSemana"
+                            class="pl-10 pr-3 py-1.5 border border-slate-300 rounded-md text-sm text-slate-700 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none w-40 transition shadow-sm h-8 font-medium cursor-pointer hover:border-blue-400" />
+                    </div>
+                    <button id="btnNext"
+                        class="w-8 h-8 flex items-center justify-center bg-white border border-slate-300 rounded-md text-slate-600 hover:bg-slate-50 hover:text-blue-600 transition shadow-sm active:scale-95">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7">
+                            </path>
+                        </svg>
+                    </button>
+                </div>
 
-                <!-- Report Buttons -->
-                <button id="btnReporteSemana" class="btn-report" title="Imprimir semana actual">
-                    <span>&#x1F5A8;</span> <span>Semana</span>
-                </button>
-                <button id="btnReporteDia" class="btn-report" title="Imprimir día seleccionado">
-                    <span>&#x1F4D1;</span> <span>Diario</span>
-                </button>
+                <!-- Separator -->
+                <div class="h-6 w-px bg-slate-200 mx-1"></div>
+
+                <!-- Print/View Buttons -->
+                <div class="flex items-center gap-2">
+                    <button id="btnPrintWeek"
+                        class="flex items-center gap-2 px-3 py-1.5 bg-white border border-slate-300 rounded-md text-xs font-bold text-slate-700 hover:bg-slate-50 hover:text-blue-600 transition shadow-sm h-8 active:scale-95">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M4 6h16M4 10h16M4 14h16M4 18h16"></path>
+                        </svg>
+                        Semana
+                    </button>
+                    <button id="btnPrintDay"
+                        class="flex items-center gap-2 px-3 py-1.5 bg-white border border-slate-300 rounded-md text-xs font-bold text-slate-700 hover:bg-slate-50 hover:text-blue-600 transition shadow-sm h-8 active:scale-95">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2">
+                            </path>
+                        </svg>
+                        Diario
+                    </button>
+                </div>
             </div>
 
-            <div class="planning-filters">
-                <select id="filtroEstado" class="select-filter">
-                    <option value="activos">Activos (Sin anuladas)</option>
+            <!-- RIGHT: Search & Filter -->
+            <div class="flex items-center gap-3 w-full md:w-auto">
+                <!-- Search -->
+                <div class="relative group flex-1 md:flex-none">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <svg class="w-4 h-4 text-slate-400 group-focus-within:text-blue-500 transition" fill="none"
+                            stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                        </svg>
+                    </div>
+                    <input type="text" id="txtBuscar" onkeyup="handleSearch(this.value)" placeholder="Buscar..."
+                        class="w-full md:w-64 pl-10 pr-4 py-1.5 border border-slate-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition shadow-sm h-9" />
+                    <!-- Dropdown -->
+                    <div id="searchResults"
+                        class="hidden absolute top-full left-0 mt-1 w-full md:w-80 bg-white rounded-xl shadow-xl border border-slate-100 max-h-96 overflow-y-auto z-50 divide-y divide-slate-50 text-left">
+                    </div>
+                </div>
+
+                <!-- Filter -->
+                <select id="filtroEstado"
+                    class="pl-3 pr-8 py-1.5 border border-slate-300 rounded-md text-sm text-slate-700 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition shadow-sm h-9 bg-white cursor-pointer hover:border-slate-400">
+                    <option value="activos" selected>Activos</option>
                     <option value="todas">Todas</option>
                     <option value="confirmada">Confirmadas</option>
                     <option value="pendiente">Pendientes</option>
@@ -263,605 +397,11 @@
     <script src="js/app-common.js"></script>
 
     <!-- INLINE RESTAURANTE JS v14 (Fixed & Clean) -->
-    <script>
-        (function () {
-            // UTIL: Log to the UI header so user sees connection status
-            function logUI(msg) {
-                const el = document.getElementById("estadoConexion");
-                if (el) {
-                    el.innerText = msg;
-                    // visual cue
-                    el.style.color = msg.includes("Error") ? "red" : (msg.includes("Conectado") ? "green" : "#64748b");
-                }
-                console.log("[MesaChef]", msg);
-            }
-
-            logUI("Iniciando...");
-
-            // --- FIREBASE INIT ---
-            function ensureFirebase(callback) {
-                if (window.firebase && window.firebase.apps && window.firebase.apps.length && window.firebase.auth) {
-                    callback();
-                    return;
-                }
-
-                // Check if scripts are already in DOM to avoid duplicates
-                const existingScript = document.querySelector('script[src*="firebase-app-compat.js"]');
-                if (existingScript) {
-                    // Wait a bit for it to load if it's there but firebase isn't ready
-                    const interval = setInterval(() => {
-                        if (window.firebase && window.firebase.firestore && window.firebase.auth) {
-                            clearInterval(interval);
-                            initFirebase(callback);
-                        }
-                    }, 100);
-                    return;
-                }
-
-                // Load dynamically if not present
-                const s1 = document.createElement("script");
-                s1.src = "https://www.gstatic.com/firebasejs/9.6.7/firebase-app-compat.js";
-                s1.onload = function () {
-                    const s2 = document.createElement("script");
-                    s2.src = "https://www.gstatic.com/firebasejs/9.6.7/firebase-auth-compat.js";
-                    s2.onload = function () {
-                        const s3 = document.createElement("script");
-                        s3.src = "https://www.gstatic.com/firebasejs/9.6.7/firebase-firestore-compat.js";
-                        s3.onload = function () { initFirebase(callback); };
-                        s3.onerror = function () { logUI("Error: Firestore script failed"); };
-                        document.head.appendChild(s3);
-                    };
-                    s2.onerror = function () { logUI("Error: Auth script failed"); };
-                    document.head.appendChild(s2);
-                };
-                s1.onerror = function () { logUI("Error: Firebase script failed"); };
-                document.head.appendChild(s1);
-            }
-
-            function initFirebase(callback) {
-                try {
-                    const firebaseConfig = {
-                        apiKey: "AIzaSyAXv_wKD48EFDe8FBQ-6m0XGUNoxSRiTJY",
-                        authDomain: "mesa-chef-prod.firebaseapp.com",
-                        projectId: "mesa-chef-prod",
-                        storageBucket: "mesa-chef-prod.firebasestorage.app",
-                        messagingSenderId: "43170330072",
-                        appId: "1:43170330072:web:bcdd09e39930ad08bf2ead"
-                    };
-                    if (!firebase.apps.length) {
-                        firebase.initializeApp(firebaseConfig);
-                    }
-
-                    // AUTHENTICATE
-                    logUI("Autenticando...");
-                    firebase.auth().onAuthStateChanged((user) => {
-                        if (user) {
-                            callback();
-                        } else {
-                            firebase.auth().signInAnonymously().catch((error) => {
-                                logUI("Error Auth: " + error.message);
-                            });
-                        }
-                    });
-
-                } catch (e) {
-                    if (e.code === 'app/duplicate-app') {
-                        // If app exists, just hook into auth
-                        firebase.auth().onAuthStateChanged((user) => {
-                            if (user) callback();
-                            else firebase.auth().signInAnonymously();
-                        });
-                    } else {
-                        logUI("Error Config: " + e.message);
-                    }
-                }
-            }
-
-            let db;
-            let currentWeekStart = new Date();
-            const cleanDay = currentWeekStart.getDay();
-            const diff = currentWeekStart.getDate() - cleanDay + (cleanDay === 0 ? -6 : 1);
-            currentWeekStart.setDate(diff);
-
-            let loadedReservations = [];
-            const STORAGE_KEY = "mesaChef_hotel";
-            const SPACES = ["Restaurante", "Cafeteria"];
-
-            const utils = {
-                getWeekDates: (d) => {
-                    const start = new Date(d);
-                    const dates = [];
-                    for (let i = 0; i < 7; i++) {
-                        let temp = new Date(start);
-                        temp.setDate(temp.getDate() + i);
-                        dates.push(temp);
-                    }
-                    return dates;
-                },
-                toIsoDate: (d) => d.toISOString().split('T')[0],
-                formatDateES: (d) => d.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }),
-                formatDateShort: (d) => d.toLocaleDateString('es-ES', { weekday: 'short', day: 'numeric' })
-            };
-
-            function startApp() {
-                logUI("Conectando DB...");
-                try {
-                    db = firebase.firestore();
-                } catch (e) {
-                    logUI("Error DB: " + e.message);
-                    return;
-                }
-
-                // 1. HOTEL
-                let currentHotel = localStorage.getItem(STORAGE_KEY);
-                if (!currentHotel) currentHotel = "Guadiana";
-
-                const titleHotel = document.getElementById("tituloHotel");
-                if (titleHotel) {
-                    const logoSrc = currentHotel === "Guadiana" ? "Img/logo-guadiana.svg" : "Img/logo-cumbria.svg";
-                    titleHotel.innerHTML = `<img src="${logoSrc}" class="h-8 mr-2 inline-block"> Restaurante · ${currentHotel === "Guadiana" ? "Sercotel Guadiana" : "Cumbria Spa"}`;
-                }
-
-                // 2. LISTENERS
-                safeAddListener("btnNuevaReserva", "click", () => openBooking());
-                safeAddListener("btnCerrarModal", "click", closeModal);
-                safeAddListener("btnCancelarReserva", "click", closeModal);
-                safeAddListener("formReserva", "submit", saveReservation);
-                safeAddListener("btnPrev", "click", () => changeWeek(-1));
-                safeAddListener("btnNext", "click", () => changeWeek(1));
-
-                // PRINT
-                safeAddListener("btnReporteSemana", "click", () => printReport('semana'));
-                safeAddListener("btnReporteDia", "click", () => printReport('dia'));
-
-                // FILTERS
-                safeAddListener("filtroEstado", "change", () => paintReservations(loadedReservations));
-                safeAddListener("txtBuscar", "input", () => paintReservations(loadedReservations));
-
-                loadReservations();
-            }
-
-            function safeAddListener(id, event, handler) {
-                const el = document.getElementById(id);
-                if (el) el.addEventListener(event, handler);
-                else console.warn("Element not found:", id);
-            }
-
-            function renderGridStructure() {
-                const grid = document.getElementById("gridRestaurante");
-                if (!grid) return;
-
-                const dates = utils.getWeekDates(currentWeekStart);
-                const inpSemana = document.getElementById("inputSemana");
-                if (inpSemana) inpSemana.value = utils.toIsoDate(dates[0]);
-
-                let html = ``;
-                html += `<div class="grid-header-cell">ESPACIO</div>`;
-                dates.forEach(d => {
-                    html += `<div class="grid-header-cell">${utils.formatDateShort(d)}</div>`;
-                });
-
-                SPACES.forEach(space => {
-                    html += `<div class="space-label pl-4">${space}</div>`;
-                    dates.forEach(d => {
-                        const dateStr = utils.toIsoDate(d);
-                        html += `
-                     <div class="day-column">
-                        <!-- ALMUERZO -->
-                        <div class="turn-cell group">
-                             <div class="flex justify-between items-center mb-1">
-                                <span class="text-xs text-amber-500 font-bold flex items-center">
-                                    ☀️ <span id="pax_${space}_${dateStr}_almuerzo" class="ml-1 text-gray-600">0 pax</span>
-                                </span>
-                                <button onclick="openBooking('${space}', '${dateStr}', 'almuerzo')" class="opacity-0 group-hover:opacity-100 text-blue-600 font-bold bg-blue-50 px-1.5 rounded text-[10px] transition">+</button>
-                             </div>
-                             <div id="zone_${space}_${dateStr}_almuerzo" class="flex flex-col gap-1"></div>
-                        </div>
-                        <!-- CENA -->
-                        <div class="turn-cell group">
-                             <div class="flex justify-between items-center mb-1">
-                                <span class="text-xs text-slate-400 font-bold flex items-center">
-                                    🌙 <span id="pax_${space}_${dateStr}_cena" class="ml-1 text-gray-600">0 pax</span>
-                                </span>
-                                <button onclick="openBooking('${space}', '${dateStr}', 'cena')" class="opacity-0 group-hover:opacity-100 text-blue-600 font-bold bg-blue-50 px-1.5 rounded text-[10px] transition">+</button>
-                             </div>
-                             <div id="zone_${space}_${dateStr}_cena" class="flex flex-col gap-1"></div>
-                        </div>
-                     </div>`;
-                    });
-                });
-
-                grid.innerHTML = html;
-                if (loadedReservations.length > 0) paintReservations(loadedReservations);
-            }
-
-            function loadReservations() {
-                // logUI("Cargando..."); 
-                try {
-                    db.collection("reservas_restaurante")
-                        .onSnapshot(snapshot => {
-                            logUI("Conectado");
-                            loadedReservations = [];
-                            snapshot.forEach(doc => {
-                                const r = doc.data();
-                                r.id = doc.id;
-                                loadedReservations.push(r);
-                            });
-                            renderGridStructure();
-                        }, err => {
-                            logUI("Error: " + err.message);
-                        });
-                } catch (e) {
-                    logUI("Fatal: " + e.message);
-                }
-            }
-
-            function paintReservations(reservations) {
-                const dates = utils.getWeekDates(currentWeekStart);
-                const startStr = utils.toIsoDate(dates[0]);
-                const endStr = utils.toIsoDate(dates[6]);
-                const hotel = localStorage.getItem(STORAGE_KEY) || "Guadiana";
-
-                const filterEl = document.getElementById("filtroEstado");
-                const filterStatus = filterEl ? filterEl.value : "activos";
-
-                const searchEl = document.getElementById("txtBuscar");
-                const searchText = (searchEl ? searchEl.value : "").toLowerCase();
-
-                const zones = document.querySelectorAll("[id^='zone_']");
-                zones.forEach(z => z.innerHTML = '');
-
-                // Reset Totals buckets
-                const totals = {}; // key: zoneId, val: pax
-
-                reservations.forEach(r => {
-                    if (r.hotel && r.hotel !== hotel) return;
-
-                    let rDateStr = "";
-                    if (r.fecha && r.fecha.toDate) rDateStr = utils.toIsoDate(r.fecha.toDate());
-                    else if (typeof r.fecha === 'string') rDateStr = r.fecha;
-
-                    if (rDateStr < startStr || rDateStr > endStr) return;
-
-                    const rStatus = (r.estado || "pendiente").toLowerCase();
-                    if (filterStatus === 'activos') {
-                        if (rStatus === 'anulada') return;
-                    } else if (filterStatus !== 'todas') {
-                        if (rStatus !== filterStatus) return;
-                    }
-
-                    if (searchText) {
-                        const combined = `${r.nombre || ''} ${r.telefono || ''} ${r.id || ''}`.toLowerCase();
-                        if (!combined.includes(searchText)) return;
-                    }
-
-                    const space = r.espacio || "Restaurante";
-                    const turno = r.turno || "almuerzo";
-                    const time = r.hora || "--:--";
-                    const name = r.nombre || r.cliente || "Sin nombre";
-                    const pax = parseInt(r.pax) || 0;
-                    const precio = r.precio || "";
-
-                    const zoneId = `zone_${space}_${rDateStr}_${turno}`;
-                    const zone = document.getElementById(zoneId);
-
-                    // Accumulate Totals
-                    const paxKey = `pax_${space}_${rDateStr}_${turno}`;
-                    if (!totals[paxKey]) totals[paxKey] = 0;
-                    // Only count active reservations for totals
-                    if (rStatus !== 'anulada') {
-                        totals[paxKey] += pax;
-                    }
-
-                    if (zone) {
-                        const div = document.createElement("div");
-                        // Style matching reference: Rounded, Border-Left, White, Shadow
-                        // State colors for border
-                        let borderClass = 'border-amber-400'; // Pendiente (Yellow/Orange)
-                        if (rStatus === 'confirmada') borderClass = 'border-emerald-500'; // Confirmada (Green)
-                        if (rStatus === 'anulada') borderClass = 'border-red-400 opacity-60'; // Anulada (Red)
-
-                        // Notes Indicator
-                        const hasNotes = r.notas && r.notas.trim().length > 0;
-                        const notesIcon = hasNotes ? `<span class="text-[10px] text-amber-500 ml-1" title="Notas">📝</span>` : '';
-
-                        div.className = `bg-white border-l-[4px] ${borderClass} rounded-r-md shadow-sm p-1.5 cursor-pointer hover:shadow-md transition mb-1 relative border-t border-b border-r border-gray-100`;
-
-                        div.innerHTML = `
-                        <div class="flex justify-between items-center leading-none mb-1">
-                            <span class="font-bold text-gray-800 text-[13px]">${time}</span>
-                            <span class="text-[12px] text-gray-600 font-medium truncate max-w-[90px] text-right">${name}</span>
-                        </div>
-                        <div class="flex justify-between items-end leading-none">
-                             <div class="text-[11px] text-gray-400 flex items-center gap-1">
-                                <span>${pax} pax</span>
-                                ${notesIcon}
-                             </div>
-                             <span class="text-[11px] font-mono text-gray-400">${precio ? Math.round(precio) + ' €' : ''}</span>
-                        </div>
-                    `;
-                        div.onclick = (e) => { e.stopPropagation(); openBooking(space, rDateStr, turno, r); };
-                        zone.appendChild(div);
-                    }
-                });
-
-                // Update Header Totals
-                for (const [key, val] of Object.entries(totals)) {
-                    const el = document.getElementById(key);
-                    if (el) el.innerText = val + " pax";
-                }
-            }
-
-            window.printReport = function (mode) {
-                const hotel = localStorage.getItem(STORAGE_KEY) || "Guadiana";
-                const dates = utils.getWeekDates(currentWeekStart);
-                let title = "";
-                let filterFn;
-
-                if (mode === 'dia') {
-                    const todayStr = utils.toIsoDate(new Date());
-                    const startStr = utils.toIsoDate(dates[0]);
-                    const endStr = utils.toIsoDate(dates[6]);
-                    let targetDateStr = todayStr;
-                    if (todayStr < startStr || todayStr > endStr) targetDateStr = startStr;
-                    const prettyDate = utils.formatDateES(new Date(targetDateStr));
-                    title = `Informe Diario - ${prettyDate}`;
-                    filterFn = (r, dateStr) => dateStr === targetDateStr && (r.estado || 'pendiente').toLowerCase() !== 'anulada';
-                } else {
-                    const d1 = utils.formatDateES(dates[0]);
-                    const d2 = utils.formatDateES(dates[6]);
-                    title = `Informe Semanal (${d1} - ${d2})`;
-                    filterFn = (r, dateStr) => dateStr >= utils.toIsoDate(dates[0]) && dateStr <= utils.toIsoDate(dates[6]) && (r.estado || 'pendiente').toLowerCase() !== 'anulada';
-                }
-
-                let html = `
-                <div style="font-family: sans-serif; padding: 20px;">
-                    <h1 style="font-size: 24px; font-weight: bold; margin-bottom: 5px; display: flex; align-items: center;">
-                        <img src="${hotel === "Guadiana" ? "Img/logo-guadiana.svg" : "Img/logo-cumbria.svg"}" style="height: 40px; margin-right: 15px;">
-                        ${hotel === "Guadiana" ? "Sercotel Guadiana" : "Cumbria Spa"}
-                    </h1>
-                    <h2 style="font-size: 18px; color: #555; margin-bottom: 20px;">${title}</h2>
-                    <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
-                        <thead>
-                            <tr style="background: #f3f3f3; border-bottom: 2px solid #ccc;">
-                                <th style="padding: 8px; text-align: left;">Fecha</th>
-                                <th style="padding: 8px; text-align: left;">Hora</th>
-                                <th style="padding: 8px; text-align: left;">Espacio</th>
-                                <th style="padding: 8px; text-align: left;">Cliente</th>
-                                <th style="padding: 8px; text-align: left;">Pax</th>
-                                <th style="padding: 8px; text-align: left;">Teléfono</th>
-                                <th style="padding: 8px; text-align: left;">Notas</th>
-                                <th style="padding: 8px; text-align: left;">Estado</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-            `;
-
-                let rows = [];
-                loadedReservations.forEach(r => {
-                    if (r.hotel && r.hotel !== hotel) return;
-                    let rDateStr = "";
-                    if (r.fecha && r.fecha.toDate) rDateStr = utils.toIsoDate(r.fecha.toDate());
-                    else if (typeof r.fecha === 'string') rDateStr = r.fecha;
-
-                    if (filterFn(r, rDateStr)) {
-                        rows.push({ ...r, dateStr: rDateStr, ts: new Date(rDateStr + 'T' + (r.hora || '00:00')) });
-                    }
-                });
-
-                rows.sort((a, b) => a.ts - b.ts);
-
-                rows.forEach(r => {
-                    const dateDisplay = new Date(r.dateStr).toLocaleDateString('es-ES', { weekday: 'short', day: 'numeric' });
-                    html += `
-                    <tr style="border-bottom: 1px solid #eee;">
-                        <td style="padding: 8px;">${dateDisplay}</td>
-                        <td style="padding: 8px;"><b>${r.hora || '--:--'}</b></td>
-                        <td style="padding: 8px;">${r.espacio || ''}</td>
-                        <td style="padding: 8px;">${r.nombre || r.cliente || ''}</td>
-                        <td style="padding: 8px;">${r.pax || ''}</td>
-                        <td style="padding: 8px;">${r.telefono || ''}</td>
-                        <td style="padding: 8px; color:#666;">${r.notas || ''}</td>
-                        <td style="padding: 8px;">${r.estado || ''}</td>
-                    </tr>
-                `;
-                });
-
-                html += `   </tbody></table>
-                    <div style="margin-top: 20px; font-size: 10px; color: #999; border-top: 1px solid #ddd; padding-top: 5px;">
-                        Impreso el ${new Date().toLocaleString()}
-                    </div>
-                </div>`;
-
-                const printArea = document.getElementById("printArea");
-                if (printArea) {
-                    printArea.innerHTML = html;
-                    window.print();
-                }
-            };
-
-            // FORM LOGIC
-            window.openBooking = function (space, dateStr, turno, data) {
-                window.scrollTo({ top: 0, behavior: 'smooth' }); // Go top
-                const modal = document.getElementById("modalReserva");
-                document.getElementById("formReserva").reset();
-                document.getElementById("campoId").value = "";
-                modal.classList.remove("hidden");
-
-                if (data) {
-                    document.getElementById("campoId").value = data.id;
-                    document.getElementById("campoNombre").value = data.nombre || data.cliente || "";
-                    document.getElementById("campoTelefono").value = data.telefono || "";
-                    document.getElementById("campoHora").value = data.hora || "";
-                    document.getElementById("campoPrecio").value = data.precio || "";
-                    document.getElementById("campoPax").value = data.pax || "";
-                    document.getElementById("campoNotas").value = data.notas || "";
-                    if (data.espacio) document.getElementById("campoEspacio").value = data.espacio;
-                    if (data.turno) document.getElementById("campoTurno").value = data.turno;
-                    if (data.estado) document.getElementById("campoEstado").value = data.estado;
-                    let dVal = dateStr;
-                    if (!dVal && data.fecha) {
-                        if (data.fecha.toDate) dVal = utils.toIsoDate(data.fecha.toDate());
-                        else dVal = data.fecha;
-                    }
-                    document.getElementById("campoFecha").value = dVal;
-                } else {
-                    document.getElementById("campoEspacio").value = space || "Restaurante";
-                    document.getElementById("campoFecha").value = dateStr || utils.toIsoDate(new Date());
-                    if (turno) document.getElementById("campoTurno").value = turno;
-                }
-            };
-
-            window.closeModal = function () {
-                document.getElementById("modalReserva").classList.add("hidden");
-            };
-
-            window.saveReservation = async function (e) {
-                e.preventDefault();
-                const recordId = document.getElementById("campoId").value;
-                const payload = {
-                    hotel: localStorage.getItem(STORAGE_KEY) || "Guadiana",
-                    fecha: firebase.firestore.Timestamp.fromDate(new Date(document.getElementById("campoFecha").value)),
-                    espacio: document.getElementById("campoEspacio").value,
-                    nombre: document.getElementById("campoNombre").value,
-                    telefono: document.getElementById("campoTelefono").value,
-                    hora: document.getElementById("campoHora").value,
-                    pax: parseInt(document.getElementById("campoPax").value) || 0,
-                    precio: parseFloat(document.getElementById("campoPrecio").value) || 0,
-                    turno: document.getElementById("campoTurno").value,
-                    estado: document.getElementById("campoEstado").value,
-                    notas: document.getElementById("campoNotas").value,
-                    notaCliente: document.getElementById("campoNotaCliente").value || ""
-                };
-
-                try {
-                    if (recordId) {
-                        // Update existing
-                        await db.collection("reservas_restaurante").doc(recordId).update(payload);
-                    } else {
-                        // Create new
-                        payload.createdAt = firebase.firestore.FieldValue.serverTimestamp();
-                        await db.collection("reservas_restaurante").add(payload);
-                    }
-                    closeModal();
-                } catch (err) {
-                    alert(err);
-                }
-            };
-
-            window.changeWeek = function (d) {
-                currentWeekStart.setDate(currentWeekStart.getDate() + (d * 7));
-                renderGridStructure();
-            }
-
-            // --- GLOBAL SEARCH LOGIC (Restaurante) ---
-            let searchDebounce = null;
-
-            window.handleSearch = function (query) {
-                clearTimeout(searchDebounce);
-                const container = document.getElementById("searchResults");
-
-                if (!query || query.trim().length < 2) {
-                    if (container) container.classList.add("hidden");
-                    // Optional: Restore full grid view? No, we don't filter the grid anymore, we use the dropdown.
-                    return;
-                }
-
-                searchDebounce = setTimeout(() => {
-                    doSearch(query);
-                }, 300); // Fast 300ms debounce since data is local
-            };
-
-            function doSearch(query) {
-                const q = query.toLowerCase();
-                const container = document.getElementById("searchResults");
-                if (!container) return;
-
-                // Use loadedReservations directly as it contains ALL data in this module
-                const results = loadedReservations.filter(r => {
-                    const combined = `${r.nombre || ''} ${r.cliente || ''} ${r.telefono || ''} ${r.email || ''} ${r.id || ''} ${r.espacio || ''}`.toLowerCase();
-                    const dateStr = r.fecha && r.fecha.toDate ? utils.toIsoDate(r.fecha.toDate()) : (r.fecha || "");
-                    return combined.includes(q) || dateStr.includes(q);
-                });
-
-                renderSearchResults(results);
-            }
-
-            function renderSearchResults(results) {
-                const container = document.getElementById("searchResults");
-                if (!container) return;
-                container.innerHTML = "";
-
-                if (results.length === 0) {
-                    container.innerHTML = '<div class="p-4 text-center text-slate-400 text-xs">No se encontraron resultados</div>';
-                } else {
-                    // Sort by Date Desc
-                    results.sort((a, b) => {
-                        const da = a.fecha && a.fecha.toDate ? a.fecha.toDate() : new Date(a.fecha);
-                        const db = b.fecha && b.fecha.toDate ? b.fecha.toDate() : new Date(b.fecha);
-                        return db - da;
-                    });
-
-                    results.slice(0, 50).forEach(r => {
-                        const rDate = r.fecha && r.fecha.toDate ? r.fecha.toDate() : new Date(r.fecha);
-                        const datePretty = utils.formatDateShort(rDate);
-                        const name = r.nombre || r.cliente || "Sin Nombre";
-
-                        const item = document.createElement("div");
-                        item.className = "p-3 hover:bg-blue-50 cursor-pointer flex justify-between items-center transition";
-                        item.innerHTML = `
-                             <div class="flex flex-col">
-                                <span class="font-bold text-slate-800 text-sm">${name}</span>
-                                <span class="text-[10px] text-slate-500 uppercase">📅 ${datePretty} &bull; ${r.espacio || 'Restaurante'} &bull; ${r.turno}</span>
-                            </div>
-                            <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">${r.estado || 'pendiente'}</span>
-                        `;
-                        item.onclick = () => selectSearchResult(r);
-                        container.appendChild(item);
-                    });
-                }
-                container.classList.remove("hidden");
-            }
-
-            window.selectSearchResult = function (r) {
-                document.getElementById("searchResults").classList.add("hidden");
-                // Navigate
-                const rDate = r.fecha && r.fecha.toDate ? r.fecha.toDate() : new Date(r.fecha);
-                goToDate(rDate);
-
-                // Optional: Open the booking immediately?
-                // openBooking(r.espacio, utils.toIsoDate(rDate), r.turno, r);
-            };
-
-            window.goToDate = function (dateObj) {
-                // Calculate difference in weeks to jump correctly?
-                // Actually, current implementation of changeWeek just adds days.
-                // We should just set currentWeekStart to the target date (or Monday of that week)
-
-                // Logic to find Monday of the target date
-                const d = new Date(dateObj);
-                const day = d.getDay();
-                const diff = d.getDate() - day + (day === 0 ? -6 : 1); // Adjust to Monday
-                d.setDate(diff);
-
-                currentWeekStart = d;
-                renderGridStructure();
-
-                // Update input
-                const inpSemana = document.getElementById("inputSemana");
-                if (inpSemana) inpSemana.value = utils.toIsoDate(currentWeekStart);
-            };
-
-            // Remove old listener which repainted grid on input. 
-            // Since we replaced the HTML element, the old listener attached in startApp via getElementById might not attach if startApp runs AFTER this replacement?
-            // Actually, startApp runs on load. This script runs on load.
-            // I need to modify startApp to NOT attach the 'input' listener to 'txtBuscar', 
-            // OR I can just override it.
-            // But wait, startApp is defined ABOVE. I should modify startApp in the file directly.
-
-            ensureFirebase(startApp);
-        })();
-    </script>
+    <!-- External Logic (v15) -->
+    <script src="js/restaurante.js?v=7"></script>
+
+    <!-- Old Inline Script Removed --> </script>
+    -->
 
     <script>
         if ('serviceWorker' in navigator) {
