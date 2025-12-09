@@ -256,24 +256,29 @@
                                     <span class="text-[9px] text-red-600 font-bold uppercase mt-1 text-center leading-tight">${blockReason}</span>
                                </div>`;
                     } else {
-                        // VISUAL: Single Flex Cell with Hover Add
+                        // DATA ATTRIBUTES for easy reset
                         html += `<div id="${getCellId(hotel, salon.name, dateStr)}"
-                                    class="bg-white min-h-[100px] border-r border-slate-100 last:border-r-0 relative group flex flex-col p-1 gap-1">
-                                        
-                                        <!-- Hover Placeholders / Add Button -->
-                                        <div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 pointer-events-none z-0">
-                                            <span class="text-4xl text-slate-100 font-bold">+</span>
-                                        </div>
-                                        
-                                        <!-- Floating Add Button (Top Right) -->
-                                        <button onclick="window.openBooking('${safeName}', '${dateStr}')" 
-                                            class="absolute top-1 right-1 w-6 h-6 flex items-center justify-center bg-blue-50 text-blue-600 rounded-full shadow-sm opacity-0 group-hover:opacity-100 transition z-30 hover:bg-blue-600 hover:text-white font-bold pb-0.5"
-                                            title="Añadir evento">
-                                            +
-                                        </button>
+                                    data-salon="${safeName}" data-date="${dateStr}"
+                                    class="bg-white min-h-[120px] border-r border-slate-100 last:border-r-0 relative group grid grid-rows-2 gap-[1px]">
+                                    
+                                    <!-- Slot Mañana -->
+                                    <div onclick="window.openBooking('${safeName}', '${dateStr}', null, 'mañana')" 
+                                         class="relative flex items-center justify-center text-[10px] text-slate-200 hover:text-slate-400 font-bold uppercase tracking-widest cursor-pointer hover:bg-slate-50 transition border-b border-transparent hover:border-slate-100">
+                                         LIBRE
+                                    </div>
 
-                                        <!-- Invisible Click Area for Empty Cells -->
-                                        <div onclick="window.openBooking('${safeName}', '${dateStr}')" class="absolute inset-0 z-0 cursor-pointer"></div>
+                                    <!-- Slot Tarde -->
+                                    <div onclick="window.openBooking('${safeName}', '${dateStr}', null, 'tarde')" 
+                                         class="relative flex items-center justify-center text-[10px] text-slate-200 hover:text-slate-400 font-bold uppercase tracking-widest cursor-pointer hover:bg-slate-50 transition">
+                                         LIBRE
+                                    </div>
+                                    
+                                    <!-- Floating Add Button (Universal) -->
+                                    <button onclick="window.openBooking('${safeName}', '${dateStr}')" 
+                                        class="absolute top-1 right-1 w-6 h-6 flex items-center justify-center bg-blue-50 text-blue-600 rounded-full shadow-sm opacity-0 group-hover:opacity-100 transition z-30 hover:bg-blue-600 hover:text-white font-bold pb-0.5"
+                                        title="Añadir evento">
+                                        +
+                                    </button>
                                   </div>`;
                     }
                 });
@@ -318,9 +323,19 @@
     }
 
     function paintReservations(hotel) {
-        // Clear previous paintings
-        document.querySelectorAll(".booking-card").forEach(el => el.remove());
-        document.querySelectorAll(".booking-placeholder").forEach(el => el.style.display = 'flex');
+        // RESET ALL CELLS to "Libre" state first (Handles deletions/updates cleanliness)
+        document.querySelectorAll(`[id^="cell_"]`).forEach(cell => {
+            if (cell.getAttribute("data-salon")) {
+                const s = cell.getAttribute("data-salon");
+                const d = cell.getAttribute("data-date");
+                // Use raw string for onclick to match renderGrid exactly
+                cell.innerHTML = `
+                    <div onclick="window.openBooking('${s}', '${d}', null, 'mañana')" class="relative flex items-center justify-center text-[10px] text-slate-200 hover:text-slate-400 font-bold uppercase tracking-widest cursor-pointer hover:bg-slate-50 transition border-b border-transparent hover:border-slate-100">LIBRE</div>
+                    <div onclick="window.openBooking('${s}', '${d}', null, 'tarde')" class="relative flex items-center justify-center text-[10px] text-slate-200 hover:text-slate-400 font-bold uppercase tracking-widest cursor-pointer hover:bg-slate-50 transition">LIBRE</div>
+                    <button onclick="window.openBooking('${s}', '${d}')" class="absolute top-1 right-1 w-6 h-6 flex items-center justify-center bg-blue-50 text-blue-600 rounded-full shadow-sm opacity-0 group-hover:opacity-100 transition z-30 hover:bg-blue-600 hover:text-white font-bold pb-0.5" title="Añadir evento">+</button>
+                 `;
+            }
+        });
 
         const filterEl = document.getElementById("filterStatus");
         const filterVal = filterEl ? filterEl.value : "todos";
@@ -328,8 +343,7 @@
         console.log("Painting Reservations. Hotel:", hotel, "Filter:", filterVal, "Total Loaded:", loadedReservations.length);
 
         // Group by cell
-        // 1. Map canonical salon names (from Config) to normalized keys
-        const salonMap = {}; // "puertadealarcos": "Puerta de Alarcos"
+        const salonMap = {};
         if (globalConfig[hotel]) {
             globalConfig[hotel].forEach(s => {
                 salonMap[s.name.replace(/\s/g, '').toLowerCase()] = s.name;
@@ -338,61 +352,37 @@
 
         const cellGroups = {};
         loadedReservations.forEach(res => {
-            // console.log("Processing:", res.cliente, res.estado, "Filter:", filterVal);
-
             const st = (res.estado || "").toLowerCase();
-
-            // Normalize Status
             const isConfirmed = st === 'confirmada' || st === 'confirmed';
             const isPending = st === 'provisional' || st === 'pendiente' || st === 'pending' || st === 'presupuesto';
             const isCancelled = st === 'cancelada' || st === 'cancelled' || st === 'anulada';
 
-            if (filterVal === 'todos') {
-                // Show everything
-            } else if (filterVal === 'activos') {
-                // Show Confirmed + Pending
-                if (!isConfirmed && !isPending) return;
-            } else if (filterVal === 'confirmada') {
-                if (!isConfirmed) return;
-            } else if (filterVal === 'provisional') {
-                if (!isPending) return;
-            } else if (filterVal === 'cancelada') {
-                if (!isCancelled) return;
-            } else {
-                // Specific
-                if (st !== filterVal.toLowerCase()) return;
-            }
+            if (filterVal === 'activos') { if (!isConfirmed && !isPending) return; }
+            else if (filterVal === 'confirmada') { if (!isConfirmed) return; }
+            else if (filterVal === 'provisional') { if (!isPending) return; }
+            else if (filterVal === 'cancelada') { if (!isCancelled) return; }
+            else if (filterVal !== 'todos') { if (st !== filterVal.toLowerCase()) return; }
 
-            // Group by cell (Multi-day support)
-            // If services have different dates, show on each date
             let relevantDates = new Set();
             if (res.servicios && res.servicios.length > 0) {
                 res.servicios.forEach(s => { if (s.fecha) relevantDates.add(s.fecha); });
             }
             if (relevantDates.size === 0) relevantDates.add(res.fecha);
 
-            // Find Canonical Salon Name
             const rawName = (res.salon || "").replace(/\s/g, '').toLowerCase();
             const canonicalName = salonMap[rawName];
 
-            if (!canonicalName) {
-                console.warn("Reservation salon not found in config:", res.salon);
-                return;
-            }
+            if (!canonicalName) return;
 
             relevantDates.forEach(date => {
                 const key = `${res.hotel}_${canonicalName}_${date}`;
                 if (!cellGroups[key]) cellGroups[key] = [];
 
-                // Derive Jornada for THIS date
                 let dailyJornada = res.detalles?.jornada || "todo";
                 if (res.servicios) {
                     const rentalService = res.servicios.find(s =>
-                        s.fecha === date &&
-                        s.concepto &&
-                        s.concepto.toLowerCase().startsWith("alquiler salón")
+                        s.fecha === date && s.concepto && s.concepto.toLowerCase().startsWith("alquiler salón")
                     );
-
                     if (rentalService) {
                         const c = rentalService.concepto.toLowerCase();
                         if (c.includes("- mañana") || c.includes(" mañana")) dailyJornada = "mañana";
@@ -405,102 +395,105 @@
             });
         });
 
+        // Register clicks
+        window._resRegistry = {};
+
         Object.keys(cellGroups).forEach(key => {
             const group = cellGroups[key];
             if (group.length === 0) return;
 
             const sample = group[0];
-            // construct ID using CANONICAL salon name from sample._canonicalSalon
             const cellId = getCellId(hotel, sample._canonicalSalon, sample.fecha);
             const cell = document.getElementById(cellId);
+            if (!cell) return;
 
-            if (!cell) {
-                // Only warn if the date is within the current view week
-                const dates = utils.getWeekDates(currentWeekStart).map(d => utils.toIsoDate(d));
-                if (dates.includes(sample.fecha)) {
-                    console.warn("Cell not found for:", cellId, "Canonical:", sample._canonicalSalon);
-                }
-                return;
+            const safeName = sample._canonicalSalon.replace(/'/g, "\\'");
+            const dateStr = sample.fecha;
+
+            // Re-generate "Libre" slots
+            const slotMañana = `<div onclick="window.openBooking('${safeName}', '${dateStr}', null, 'mañana')" class="relative flex items-center justify-center text-[10px] text-slate-200 hover:text-slate-400 font-bold uppercase tracking-widest cursor-pointer hover:bg-slate-50 transition border-b border-transparent hover:border-slate-100">LIBRE</div>`;
+            const slotTarde = `<div onclick="window.openBooking('${safeName}', '${dateStr}', null, 'tarde')" class="relative flex items-center justify-center text-[10px] text-slate-200 hover:text-slate-400 font-bold uppercase tracking-widest cursor-pointer hover:bg-slate-50 transition">LIBRE</div>`;
+            const staticAddBtn = `<button onclick="window.openBooking('${safeName}', '${dateStr}')" class="absolute top-1 right-1 w-6 h-6 flex items-center justify-center bg-blue-50 text-blue-600 rounded-full shadow-sm opacity-0 group-hover:opacity-100 transition z-30 hover:bg-blue-600 hover:text-white font-bold pb-0.5" title="Añadir evento">+</button>`;
+
+            let htmlFinal = "";
+
+            const evTodo = group.find(r => (r._displayJornada || 'todo').toLowerCase() === 'todo');
+
+            if (evTodo) {
+                htmlFinal += createCardHTML(evTodo, "row-span-2 h-full");
+            } else {
+                const evMañana = group.find(r => (r._displayJornada || '').toLowerCase() === 'mañana');
+                if (evMañana) htmlFinal += createCardHTML(evMañana, "h-full");
+                else htmlFinal += slotMañana;
+
+                const evTarde = group.find(r => (r._displayJornada || '').toLowerCase() === 'tarde');
+                if (evTarde) htmlFinal += createCardHTML(evTarde, "h-full");
+                else htmlFinal += slotTarde;
             }
 
-            // Hide placeholder if we have anything
-            const placeholder = cell.querySelector(".booking-placeholder");
-            if (placeholder) placeholder.style.display = 'none';
-
-            group.forEach(res => {
-                const jornada = res._displayJornada || res.detalles?.jornada || "todo";
-                // console.log(`[Render] ${ res.cliente } (${ res.fecha }) -> Jornada: '${jornada}'`);
-
-                // Colors
-                let colorClass = 'bg-blue-100 border-blue-500 text-blue-800'; // Default
-
-                if (res.estado === 'confirmada') colorClass = 'bg-green-100 border-green-500 text-green-800';
-                else if (res.estado === 'provisional') colorClass = 'bg-yellow-100 border-yellow-500 text-yellow-800';
-                else if (res.estado === 'presupuesto') colorClass = 'bg-orange-100 border-orange-500 text-orange-800';
-                else if (res.estado === 'cancelada') colorClass = 'bg-red-100 border-red-500 text-red-800 opacity-60'; // Dimmed
-
-                const card = document.createElement("div");
-
-                // Base classes (FLEX grow) - w-full to fill width, flex-1 to grow height
-                let classes = `booking-card w-full rounded border-l-4 ${colorClass} shadow-sm px-1 py-1 text-[10px] flex flex-col justify-between relative box-border hover:z-20 hover:shadow-md transition flex-1 cursor-pointer min-h-[50px]`;
-                card.className = classes;
-                card.style.zIndex = "10";
-
-                // Add margins if multiple items to separate them
-                if (group.length > 1) card.classList.add("mb-1", "last:mb-0");
-
-                card.onclick = (e) => { e.stopPropagation(); openBooking(res.salon, res.fecha, res); };
-
-                const timeStr = res.detalles?.hora ? `<span class="opacity-75"> ${res.detalles.hora}</span>` : '';
-                const paxTotal = (res.detalles?.pax_adultos || 0) + (res.detalles?.pax_ninos || 0);
-                const paxStr = paxTotal > 0 ? `<span class="text-[9px] bg-white/50 px-1 rounded ml-1">👤${paxTotal}</span>` : '';
-
-                // Red Dot if !revisado (and not cancelled)
-                const redDot = (!res.revisado && res.estado !== 'cancelada')
-                    ? `<div class="absolute top-1 right-1 w-2 h-2 rounded-full bg-red-500 shadow-sm animate-pulse" title="Sin Revisar"></div>`
-                    : '';
-
-                // Internal Note Indicator
-                const hasNote = res.notas && res.notas.interna && res.notas.interna.trim().length > 0;
-                const noteStr = hasNote ? `<span title="Nota Interna: ${res.notas.interna.replace(/"/g, '&quot;')}" class="cursor-help ml-1">📝</span>` : '';
-
-                // Jornada Styling
-                let jText = (jornada || "").toUpperCase();
-                let jClass = "text-slate-600";
-
-                if (jText.includes("MAÑANA")) {
-                    jText = "1/2 MAÑ";
-                    jClass = "text-sky-700 bg-sky-100/50";
-                } else if (jText.includes("TARDE")) {
-                    jText = "1/2 TARD";
-                    jClass = "text-orange-700 bg-orange-100/50";
-                } else if (jText.includes("TODO")) {
-                    jText = "COMP";
-                    jClass = "text-indigo-700 bg-indigo-100/50";
-                }
-
-                card.innerHTML = `
-                    ${redDot}
-                    <div class="flex items-center justify-between">
-                        <div class="font-bold truncate leading-tight flex-1" title="${res.cliente}">${res.cliente}</div>
-                        <div class="text-[10px]">${noteStr}</div>
-                    </div>
-                    
-                    <div class="flex justify-between items-end mt-1 text-[9px]">
-                        <div class="flex flex-col min-w-0 pr-1">
-                             <span class="text-[8px] font-extrabold uppercase tracking-tight leading-none mb-0.5 px-1 rounded w-fit ${jClass}">${jText}</span>
-                             <span class="truncate opacity-90">${res.detalles?.montaje || '-'}</span>
-                        </div>
-                         <div class="flex items-center space-x-1 shrink-0">
-                            ${timeStr}
-                            ${paxStr}
-                        </div>
-                    </div>
-                `;
-                cell.appendChild(card);
-            });
+            htmlFinal += staticAddBtn;
+            cell.innerHTML = htmlFinal;
         });
     }
+
+    // Helper for Card HTML
+    function createCardHTML(res, extraClasses = "") {
+        window._resRegistry[res.id] = res; // Register for click
+
+        const jornada = res._displayJornada || res.detalles?.jornada || "todo";
+        let colorClass = 'bg-blue-100 border-blue-500 text-blue-800';
+
+        if (res.estado === 'confirmada') {
+            colorClass = 'bg-green-100 border-green-500 text-green-800';
+            const jLower = (jornada || "").toLowerCase();
+            if (jLower.includes('mañana')) colorClass = 'bg-teal-100 border-green-500 text-green-800';
+            else if (jLower.includes('tarde')) colorClass = 'bg-lime-100 border-green-500 text-green-800';
+        }
+        else if (res.estado === 'provisional') colorClass = 'bg-yellow-100 border-yellow-500 text-yellow-800';
+        else if (res.estado === 'presupuesto') colorClass = 'bg-orange-100 border-orange-500 text-orange-800';
+        else if (res.estado === 'cancelada') colorClass = 'bg-red-100 border-red-500 text-red-800 opacity-60';
+
+        const timeStr = res.detalles?.hora ? `<span class="opacity-75"> ${res.detalles.hora}</span>` : '';
+        const paxTotal = (res.detalles?.pax_adultos || 0) + (res.detalles?.pax_ninos || 0);
+        const paxStr = paxTotal > 0 ? `<span class="text-[11px] bg-white/50 px-1 rounded ml-1">👤${paxTotal}</span>` : '';
+
+        const redDot = (!res.revisado && res.estado !== 'cancelada') ? `<div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-4 h-4 rounded-full bg-red-500 shadow-md animate-pulse z-20" title="Sin Revisar"></div>` : '';
+        const hasNote = res.notas && res.notas.interna && res.notas.interna.trim().length > 0;
+        const noteStr = hasNote ? `<span title="Nota Interna: ${res.notas.interna.replace(/"/g, '&quot;')}" class="cursor-help ml-1">📝</span>` : '';
+
+        let jText = (jornada || "").toUpperCase();
+        let jClass = "text-slate-600";
+        if (jText.includes("MAÑANA")) { jText = "1/2 MAÑ"; jClass = "text-sky-700 bg-sky-100/50"; }
+        else if (jText.includes("TARDE")) { jText = "1/2 TARD"; jClass = "text-orange-700 bg-orange-100/50"; }
+        else if (jText.includes("TODO")) { jText = "COMP"; jClass = "text-indigo-700 bg-indigo-100/50"; }
+
+        return `
+        <div onclick="window.handleCardClick('${res.id}', event)" 
+             class="booking-card w-full rounded border-l-4 ${colorClass} shadow-sm px-1 py-1 text-xs flex flex-col justify-between relative box-border hover:z-20 hover:shadow-md transition cursor-pointer overflow-hidden ${extraClasses}">
+            ${redDot}
+            <div class="flex items-center justify-between">
+                <div class="font-bold truncate leading-tight flex-1" title="${res.cliente}">${res.cliente}</div>
+                <div class="text-[11px]">${noteStr}</div>
+            </div>
+            <div class="flex justify-between items-end mt-1 text-[11px]">
+                <div class="flex flex-col min-w-0 pr-1">
+                     <span class="text-[10px] font-extrabold uppercase tracking-tight leading-none mb-0.5 px-1 rounded w-fit ${jClass}">${jText}</span>
+                     <span class="truncate opacity-90">${res.detalles?.montaje || '-'}</span>
+                </div>
+                 <div class="flex items-center space-x-1 shrink-0">
+                    ${timeStr}
+                    ${paxStr}
+                </div>
+            </div>
+        </div>
+        `;
+    }
+
+    window.handleCardClick = function (id, e) {
+        if (e) e.stopPropagation();
+        const res = window._resRegistry[id];
+        if (res) window.openBooking(res.salon, res.fecha, res);
+    };
 
     // --- GLOBAL SEARCH LOGIC ---
     let allReservations = [];

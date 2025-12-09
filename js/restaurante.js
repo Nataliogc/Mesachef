@@ -90,11 +90,28 @@
     // 2. LISTENERS
     document.getElementById("btnNuevaReserva").addEventListener("click", () => openBooking());
     document.getElementById("btnCerrarModal").addEventListener("click", closeModal);
-    document.getElementById("btnCancelarReserva").addEventListener("click", closeModal);
+    document.getElementById("btnAnular").addEventListener("click", anularReservation);
     document.getElementById("formReserva").addEventListener("submit", saveReservation);
 
     document.getElementById("btnPrev").addEventListener("click", () => changeWeek(-1));
     document.getElementById("btnNext").addEventListener("click", () => changeWeek(1));
+
+    // DYNAMIC TOTALS LISTENERS
+    const calcInputs = ["campoPrecio", "campoPax"];
+    calcInputs.forEach(id => {
+      document.getElementById(id).addEventListener("input", updateTotalDisplay);
+    });
+
+    // SERVICE INCLUDED TOGGLE
+    document.getElementById("checkServicioIncluido").addEventListener("change", function () {
+      if (this.checked) {
+        document.getElementById("campoPrecio").value = 0;
+        document.getElementById("campoPrecio").disabled = true;
+      } else {
+        document.getElementById("campoPrecio").disabled = false;
+      }
+      updateTotalDisplay();
+    });
 
     // PRINT
     document.getElementById("btnPrintWeek").addEventListener("click", () => printReport('semana'));
@@ -102,87 +119,115 @@
 
     // FILTERS
     document.getElementById("filtroEstado").addEventListener("change", () => paintReservations(loadedReservations));
-    document.getElementById("txtBuscar").addEventListener("input", () => paintReservations(loadedReservations));
+    document.getElementById("txtBuscar").addEventListener("input", function (e) {
+      paintReservations(loadedReservations);
+      if (typeof doSearch === 'function') doSearch(e.target.value);
+    });
 
     renderGridStructure();
     loadReservations();
   }
 
   function renderGridStructure() {
-    const grid = document.getElementById("gridRestaurante");
-    if (!grid) return;
+    console.log("DEBUG: renderGridStructure started");
+    try {
+      const grid = document.getElementById("gridRestaurante");
+      if (!grid) {
+        console.error("DEBUG: gridRestaurante NOT FOUND");
+        return;
+      }
 
-    const dates = utils.getWeekDates(currentWeekStart);
-    document.getElementById("inputSemana").value = utils.toIsoDate(dates[0]);
+      const dates = utils.getWeekDates(currentWeekStart);
+      const inputSemana = document.getElementById("inputSemana");
+      if (inputSemana) inputSemana.value = utils.toIsoDate(dates[0]);
 
-    let html = ``;
-    html += `<div class="grid-header-cell">ESPACIO</div>`;
-    dates.forEach(d => {
-      html += `<div class="grid-header-cell">${utils.formatDateShort(d)}</div>`;
-    });
+      console.log("DEBUG: Building HTML...");
 
-    SPACES.forEach(space => {
-      html += `<div class="space-label pl-4">${space}</div>`;
+      let html = ``;
+      html += `<div class="grid-header-cell">ESPACIO</div>`;
       dates.forEach(d => {
-        const dateStr = utils.toIsoDate(d);
-
-        // Calculate Totals for this cell
-        let lunchPax = 0;
-        let dinnerPax = 0;
-        const currentHotel = localStorage.getItem(STORAGE_KEY) || "Guadiana";
-
-        loadedReservations.forEach(r => {
-          if (r.hotel && r.hotel !== currentHotel) return;
-          // Status Check (only Count Active)
-          const st = (r.estado || 'pendiente').toLowerCase();
-          if (st === 'anulada') return;
-
-          // Date Check
-          let rDate = "";
-          if (r.fecha && r.fecha.toDate) rDate = utils.toIsoDate(r.fecha.toDate());
-          else if (typeof r.fecha === 'string') rDate = r.fecha;
-
-          if (rDate !== dateStr) return;
-          if ((r.espacio || 'Restaurante') !== space) return;
-
-          const t = (r.turno || 'almuerzo').toLowerCase();
-          const p = parseInt(r.pax) || 0;
-
-          if (t === 'almuerzo') lunchPax += p;
-          if (t === 'cena') dinnerPax += p;
-        });
-
-        const lunchDisplay = lunchPax > 0 ? `<span class="ml-1 font-bold text-slate-600">${lunchPax} 👥</span>` : '';
-        const dinnerDisplay = dinnerPax > 0 ? `<span class="ml-1 font-bold text-slate-600">${dinnerPax} 👥</span>` : '';
-
-        html += `
-                 <div class="day-column">
-                    <div class="turn-cell group">
-                         <div class="flex justify-between items-center mb-1">
-                            <div class="flex items-center">
-                                <span class="text-xs text-amber-500 mr-1">☀️</span>
-                                ${lunchDisplay}
-                            </div>
-                            <button onclick="openBooking('${space}', '${dateStr}', 'almuerzo')" class="opacity-0 group-hover:opacity-100 text-blue-600 font-bold bg-blue-50 px-1.5 rounded text-[10px] transition">+</button>
-                         </div>
-                         <div id="zone_${space}_${dateStr}_almuerzo" class="flex flex-col gap-2"></div>
-                    </div>
-                    <div class="turn-cell group">
-                         <div class="flex justify-between items-center mb-1">
-                            <div class="flex items-center">
-                                <span class="text-xs text-slate-400 mr-1">🌙</span>
-                                ${dinnerDisplay}
-                            </div>
-                            <button onclick="openBooking('${space}', '${dateStr}', 'cena')" class="opacity-0 group-hover:opacity-100 text-blue-600 font-bold bg-blue-50 px-1.5 rounded text-[10px] transition">+</button>
-                         </div>
-                         <div id="zone_${space}_${dateStr}_cena" class="flex flex-col gap-2"></div>
-                    </div>
-                 </div>`;
+        html += `<div class="grid-header-cell">${utils.formatDateShort(d)}</div>`;
       });
-    });
 
-    grid.innerHTML = html;
-    if (loadedReservations.length > 0) paintReservations(loadedReservations);
+      SPACES.forEach(space => {
+        html += `<div class="space-label pl-4">${space}</div>`;
+        dates.forEach(d => {
+          const dateStr = utils.toIsoDate(d);
+
+          let lunchPax = 0, dinnerPax = 0;
+          let lockLunch = null, lockDinner = null;
+          const currentHotel = localStorage.getItem(STORAGE_KEY) || "Guadiana";
+
+          loadedReservations.forEach(r => {
+            if (r.hotel && r.hotel !== currentHotel) return;
+            const st = (r.estado || 'pendiente').toLowerCase();
+            if (st === 'anulada') return;
+
+            let rDate = "";
+            if (r.fecha && r.fecha.toDate) rDate = utils.toIsoDate(r.fecha.toDate());
+            else if (typeof r.fecha === 'string') rDate = r.fecha;
+
+            if (rDate !== dateStr) return;
+            if ((r.espacio || 'Restaurante') !== space) return;
+
+            const t = (r.turno || 'almuerzo').toLowerCase();
+
+            if (r.type === 'lock') {
+              if (t === 'almuerzo') lockLunch = r;
+              if (t === 'cena') lockDinner = r;
+              return;
+            }
+
+            const p = parseInt(r.pax) || 0;
+            if (t === 'almuerzo') lunchPax += p;
+            if (t === 'cena') dinnerPax += p;
+          });
+
+          const renderHeader = (isLocked, turno, paxCount, icon) => {
+            const paxDisplay = paxCount > 0 ? `<span class="ml-1 font-bold text-slate-600">${paxCount} 👥</span>` : '';
+            const lockIcon = isLocked
+              ? `<button onclick="toggleLock('${space}', '${dateStr}', '${turno}')" class="text-red-500 hover:text-red-700 p-0.5" title="Desbloquear"><svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"></path></svg></button>`
+              : `<button onclick="toggleLock('${space}', '${dateStr}', '${turno}')" class="text-slate-300 hover:text-slate-500 opacity-0 group-hover:opacity-100 transition p-0.5" title="Bloquear (Completo)"><svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path d="M10 2a5 5 0 00-5 5v2a2 2 0 00-2 2v5a2 2 0 002 2h10a2 2 0 002-2v-5a2 2 0 00-2-2H7V7a3 3 0 016 0v2h-1V7a2 2 0 00-2-2z"></path></svg></button>`;
+
+            const addBtn = isLocked
+              ? `<span class="text-[10px] font-bold text-red-500 bg-red-50 px-1.5 rounded border border-red-100">COMPLETO</span>`
+              : `<button onclick="openBooking('${space}', '${dateStr}', '${turno}')" class="opacity-0 group-hover:opacity-100 text-blue-600 font-bold bg-blue-50 px-1.5 rounded text-[10px] transition">+</button>`;
+
+            const bgClass = isLocked ? "bg-slate-50 border-red-100" : "";
+
+            return `
+                            <div class="turn-cell group ${bgClass} relative">
+                                <div class="flex justify-between items-center mb-1">
+                                    <div class="flex items-center gap-1">
+                                        ${lockIcon}
+                                        <span class="text-xs ${turno === 'almuerzo' ? 'text-amber-500' : 'text-slate-400'}">${icon}</span>
+                                        ${paxDisplay}
+                                    </div>
+                                    ${addBtn}
+                                </div>
+                                <div id="zone_${space}_${dateStr}_${turno}" class="flex flex-col gap-2 ${isLocked ? 'opacity-75 blur-[0.5px] pointer-events-none select-none' : ''}"></div>
+                            </div>`;
+          };
+
+          html += `<div class="day-column">
+                            ${renderHeader(!!lockLunch, 'almuerzo', lunchPax, '☀️')}
+                            ${renderHeader(!!lockDinner, 'cena', dinnerPax, '🌙')}
+                        </div>`;
+        });
+      });
+
+      console.log("DEBUG: Setting grid innerHTML. Length:", html.length);
+      grid.innerHTML = html;
+
+      if (loadedReservations.length > 0) {
+        console.log("DEBUG: Calling paintReservations");
+        paintReservations(loadedReservations);
+      }
+      console.log("DEBUG: renderGridStructure finished");
+    } catch (err) {
+      console.error("DEBUG: renderGridStructure CRASHED:", err);
+      logUI("Render Error: " + err.message);
+    }
   }
 
   // Helper to log to UI
@@ -207,58 +252,58 @@
     }
   }
 
+  let unsubscribe = null;
+
   function loadReservations() {
-    logUI("Cargando...");
+    if (unsubscribe) unsubscribe();
+    console.log("DEBUG: loadReservations started");
+
+    // Calculate start/end of current week view
+    const dates = utils.getWeekDates(currentWeekStart);
+    const start = utils.toIsoDate(dates[0]);
+    const end = utils.toIsoDate(dates[6]);
     const hotel = localStorage.getItem(STORAGE_KEY) || "Guadiana";
 
-    // Correct Collection: reservas_restaurante
-    console.log("loadReservations: Subscribing to 'reservas_restaurante'...");
-    try {
-      db.collection("reservas_restaurante")
-        .onSnapshot(snapshot => {
-          logUI("Conectado");
-          loadedReservations = [];
-          snapshot.forEach(doc => {
-            const r = doc.data();
-            r.id = doc.id;
-            loadedReservations.push(r);
-          });
-          console.log("loadReservations: Data processed. Re-rendering...");
-          renderGridStructure();
+    console.log(`DEBUG: Querying ${hotel} from ${start} to ${end}`);
 
-          // Clear the loading message if it exists
-          // We don't have a specific loading ID element in the HTML other than the initial text.
-          // The grid render overwrites it.
-        }, err => {
-          logUI("CRITICAL ERROR: Snapshot failed: " + err.message);
-          console.error("Restaurante Load Error:", err);
+    unsubscribe = db.collection("reservas_restaurante")
+      .where("hotel", "==", hotel)
+      // Removed date filter to avoid 'Requires Index' error. 
+      // Filtering is done client-side in paintReservations.
+      .onSnapshot(snapshot => {
+        loadedReservations = [];
+        snapshot.forEach(doc => {
+          loadedReservations.push({ id: doc.id, ...doc.data() });
         });
-    } catch (e) {
-      log("CRITICAL ERROR invoking collection(): " + e.message);
-    }
+        console.log("DEBUG: Loaded", loadedReservations.length, "reservations");
+
+        // Re-render grid structure (totals) AND paint cards
+        renderGridStructure();
+        // renderGridStructure calls paintReservations if we fix the logic there,
+        // OR we just call paintReservations here.
+        // renderGridStructure calculates totals based on loadedReservations.
+        // So calling it IS necessary to update headers.
+      }, err => {
+        console.error("DEBUG: Load Error", err);
+        logUI("Error cargando reservas: " + err.message);
+      });
   }
 
   function paintReservations(reservations) {
-    const dates = utils.getWeekDates(currentWeekStart);
-    const startStr = utils.toIsoDate(dates[0]);
-    const endStr = utils.toIsoDate(dates[6]);
-    const hotel = localStorage.getItem(STORAGE_KEY) || "Guadiana";
+    if (!reservations) reservations = loadedReservations;
+    console.log("DEBUG: paintReservations called with", reservations.length);
 
+    const zones = document.querySelectorAll("[id^='zone_']");
+    zones.forEach(z => z.innerHTML = '');
+
+    const hotel = localStorage.getItem(STORAGE_KEY) || "Guadiana";
     const filterStatus = document.getElementById("filtroEstado").value;
     const searchText = (document.getElementById("txtBuscar").value || "").toLowerCase();
 
-    // Clean zones first? No, append logic. But renderGridStructure clears them.
-    // We probably should clear zones if we call this independently.
-    // For now, renderGridStructure clears HTML so we are safe only if called from there or we manually clear.
-    // Ideally we select all [id^='zone_'] and clear, but that's heavy.
-    // Let's assume renderGridStructure calls this.
-    // Wait, 'change' listener calls this directly! Duplicate cards risk!
-    // FIX: Clear zones logic or re-render grid.
-    // Efficient way: re-call renderGridStructure?
-    // Let's just re-call renderGridStructure() inside the listener, but avoid loop.
-    // Actually, easiest is:
-    const zones = document.querySelectorAll("[id^='zone_']");
-    zones.forEach(z => z.innerHTML = '');
+    // Date range for filtering
+    const dates = utils.getWeekDates(currentWeekStart);
+    const startStr = utils.toIsoDate(dates[0]);
+    const endStr = utils.toIsoDate(dates[6]);
 
     reservations.forEach(r => {
       // 1. Filter Hotel
@@ -302,6 +347,13 @@
         if (rStatus === 'confirmada') border = 'border-l-[3px] border-green-500';
         if (rStatus === 'anulada') border = 'border-l-[3px] border-red-500';
 
+        let priceDisplay = "";
+        if (r.servicioIncluido) {
+          priceDisplay = '<span class="text-xs font-bold text-blue-600 bg-blue-50 px-1 rounded">Incluido</span>';
+        } else if (precio) {
+          priceDisplay = precio + '€';
+        }
+
         div.className = `bg-white border border-gray-100 shadow-sm rounded p-1.5 cursor-pointer hover:shadow-md transition text-[10px] ${border} mb-1`;
         div.innerHTML = `
                     <div class="flex justify-between font-bold text-gray-700 pointer-events-none">
@@ -309,7 +361,7 @@
                         <span>${pax}p</span>
                     </div>
                     <div class="truncate text-gray-500 my-0.5 pointer-events-none" title="${name}">${name}</div>
-                    <div class="text-right text-gray-400 font-mono pointer-events-none">${precio ? precio + '€' : ''}</div>
+                    <div class="text-right text-gray-400 font-mono pointer-events-none">${priceDisplay}</div>
                 `;
         div.onclick = (e) => { e.stopPropagation(); openBooking(space, rDateStr, turno, r); };
         zone.appendChild(div);
@@ -320,7 +372,6 @@
   window.printReport = function (mode) {
     const hotel = localStorage.getItem(STORAGE_KEY) || "Guadiana";
     const dates = utils.getWeekDates(currentWeekStart);
-    let title = "";
     let filterFn;
 
     if (mode === 'dia') {
@@ -341,7 +392,6 @@
 
     const logoUrl = (hotel === "Guadiana") ? "Img/logo-guadiana.svg" : "Img/logo-cumbria.svg";
 
-    // Generate Grouped HTML instead of Table
     let html = `
             <div style="font-family: sans-serif; padding: 20px;">
                 <div style="display:flex; align-items:center; gap:20px; margin-bottom:20px; border-bottom:2px solid #eee; padding-bottom:15px;">
@@ -353,7 +403,6 @@
                 </div>
     `;
 
-    // 0. Collect Rows (Restored Logic)
     let rows = [];
     loadedReservations.forEach(r => {
       if (r.hotel && r.hotel !== hotel) return;
@@ -361,21 +410,18 @@
       if (r.fecha && r.fecha.toDate) rDateStr = utils.toIsoDate(r.fecha.toDate());
       else if (typeof r.fecha === 'string') rDateStr = r.fecha;
 
-      // STRICT FILTER: Date Range AND (Pendiente OR Confirmada)
       if (filterFn(r, rDateStr) && ['pendiente', 'confirmada'].includes(r.estado)) {
         rows.push({ ...r, dateStr: rDateStr, ts: new Date(rDateStr + 'T' + (r.hora || '00:00')) });
       }
     });
     rows.sort((a, b) => a.ts - b.ts);
 
-    // 1. Group records by Date
     const groups = {};
     rows.forEach(r => {
       if (!groups[r.dateStr]) groups[r.dateStr] = [];
       groups[r.dateStr].push(r);
     });
 
-    // 2. Iterate sorted dates
     const sortedDates = Object.keys(groups).sort();
 
     if (sortedDates.length === 0) {
@@ -383,10 +429,7 @@
     } else {
       sortedDates.forEach(dateStr => {
         const dateObj = new Date(dateStr);
-        // Format: "Lunes 8 de diciembre"
-        // Note: dateStr is ISO (YYYY-MM-DD), so sorting works.
         const dayName = dateObj.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' });
-        // Capitalize first letter
         const dayNameCap = dayName.charAt(0).toUpperCase() + dayName.slice(1);
 
         html += `<h3 style="font-size: 16px; font-weight: bold; margin-top: 20px; margin-bottom: 10px; color: #2c3e50; border-bottom: 1px solid #ddd; padding-bottom: 5px;">📅 ${dayNameCap}</h3>`;
@@ -397,7 +440,6 @@
         let countDinner = 0;
         let countSpecial = 0;
 
-        // Table (Start)
         html += `<table style="width: 100%; border-collapse: collapse; font-size: 11px; margin-bottom: 20px;">
                     <thead>
                         <tr style="background: #f1f5f9; color: #475569; text-align: left;">
@@ -419,12 +461,8 @@
           const time = r.hora || "00:00";
           const space = r.espacio || "Restaurante";
           let statusFull = r.estado || "confirmada";
-
-          // Abbreviate Status, Space
           let statusAbbr = (statusFull === 'confirmada' || statusFull === 'confirmed') ? 'Conf' : 'Pend';
           const spaceAbbr = space.substring(0, 8) + (space.length > 8 ? '.' : '');
-
-          // Fix Notes
           let notesText = "";
           if (r.notas) {
             if (typeof r.notas === 'string') notesText = r.notas;
@@ -432,20 +470,15 @@
               notesText = Object.values(r.notas).filter(v => v && typeof v === 'string').join(". ");
             }
           }
-
-          // Classification Logic
           let type = "Esp.";
           let typeFull = "Especial";
           const hour = parseInt(time.split(':')[0]);
-
           if (hour >= 12 && hour <= 15) { type = "Alm."; typeFull = "Almuerzo"; }
           else if (hour >= 20) { type = "Cena"; typeFull = "Cena"; }
-
           if (typeFull === "Almuerzo") countLunch += pax;
           else if (typeFull === "Cena") countDinner += pax;
           else countSpecial += pax;
 
-          // Row
           html += `<tr style="border-bottom: 1px solid #eee;">
                     <td style="padding: 6px; font-weight:bold;">${time}</td>
                     <td style="padding: 6px; color:#555;">${spaceAbbr}</td>
@@ -459,14 +492,12 @@
 
         html += `</tbody></table>`;
 
-        // Summary String construction
         let parts = [];
         if (countLunch > 0) parts.push(`${countLunch} almuerzo${countLunch > 1 ? 's' : ''}`);
         if (countDinner > 0) parts.push(`${countDinner} cena${countDinner > 1 ? 's' : ''}`);
         if (countSpecial > 0) parts.push(`${countSpecial} especial${countSpecial > 1 ? 'es' : ''}`);
         const breakdown = parts.length > 0 ? `(${parts.join(', ')})` : "";
 
-        // Summary Footer
         html += `<div style="font-size: 13px; font-weight: bold; color: #333; margin-bottom: 30px; background: #fafafa; padding: 10px; border-left: 4px solid #666;">
                     Resumen día ${dateObj.getDate()}: Total ${dailyPax} personas ${breakdown}
                  </div>`;
@@ -479,43 +510,91 @@
               </div>
           </div>`;
 
-
-    const printArea = document.getElementById("printArea");
-    if (printArea) {
-      printArea.innerHTML = html;
-      window.print();
+    const printWindow = window.open('', '', 'height=600,width=800');
+    if (printWindow) {
+      printWindow.document.write('<html><head><title>Imprimir</title></head><body>');
+      printWindow.document.write(html);
+      printWindow.document.write('</body></html>');
+      printWindow.document.close();
+      printWindow.print();
     }
-  };
+  }
 
-  // FORM LOGIC
+  // RESTORED FUNCTIONS
+
+  function updateTotalDisplay() {
+    const price = parseFloat(document.getElementById("campoPrecio").value) || 0;
+    const pax = parseInt(document.getElementById("campoPax").value) || 0;
+    const total = price * pax;
+    const el = document.getElementById("displayTotal");
+    if (el) el.innerText = total.toFixed(2) + " €";
+  }
+
   window.openBooking = function (space, dateStr, turno, data) {
-    window.scrollTo({ top: 0, behavior: 'smooth' }); // Go top
+    if (!data) {
+      const isLocked = loadedReservations.some(r =>
+        r.type === 'lock' &&
+        r.espacio === space &&
+        r.turno === turno &&
+        (r.fecha && (r.fecha.toDate ? utils.toIsoDate(r.fecha.toDate()) : r.fecha) === dateStr)
+      );
+      if (isLocked) {
+        alert("⛔ Este turno está BLOQUEADO (Completo). No se pueden añadir más reservas.");
+        return;
+      }
+    }
+
     const modal = document.getElementById("modalReserva");
-    document.getElementById("formReserva").reset();
+    if (!modal) return;
     modal.classList.remove("hidden");
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+
+    const checkServicio = document.getElementById("checkServicioIncluido");
+    if (checkServicio) checkServicio.checked = false;
+
+    document.getElementById("campoEstado").value = "confirmada";
+    const btnAnular = document.getElementById("btnAnular");
+    if (btnAnular) btnAnular.style.display = data ? 'block' : 'none';
 
     if (data) {
+      document.getElementById("campoReferencia").value = data.referencia || data.id || "SIN REF";
       document.getElementById("campoNombre").value = data.nombre || data.cliente || "";
       document.getElementById("campoTelefono").value = data.telefono || "";
       document.getElementById("campoHora").value = data.hora || "";
       document.getElementById("campoPrecio").value = data.precio || "";
       document.getElementById("campoPax").value = data.pax || "";
-      document.getElementById("campoNotas").value = data.notas || "";
+      document.getElementById("campoNotas").value = typeof data.notas === 'object' ? Object.values(data.notas).join(". ") : (data.notas || "");
       document.getElementById("campoNotaCliente").value = data.notaCliente || "";
       if (data.espacio) document.getElementById("campoEspacio").value = data.espacio;
       if (data.turno) document.getElementById("campoTurno").value = data.turno;
       if (data.estado) document.getElementById("campoEstado").value = data.estado;
+
       let dVal = dateStr;
-      if (!dVal && data.fecha) {
-        if (data.fecha.toDate) dVal = utils.toIsoDate(data.fecha.toDate());
-        else dVal = data.fecha;
-      }
+      if (!dVal && data.fecha) dVal = data.fecha && data.fecha.toDate ? utils.toIsoDate(data.fecha.toDate()) : data.fecha;
       document.getElementById("campoFecha").value = dVal;
+      document.getElementById("campoId").value = data.id;
+
+      const title = document.getElementById("modalTitle");
+      if (title) title.innerText = "Editar Reserva";
     } else {
+      document.getElementById("campoId").value = "";
       document.getElementById("campoEspacio").value = space || "Restaurante";
       document.getElementById("campoFecha").value = dateStr || utils.toIsoDate(new Date());
       if (turno) document.getElementById("campoTurno").value = turno;
+      document.getElementById("campoReferencia").value = "RES-" + Date.now().toString().slice(-6);
+
+      document.getElementById("campoNombre").value = "";
+      document.getElementById("campoTelefono").value = "";
+      document.getElementById("campoHora").value = "";
+      document.getElementById("campoPrecio").value = "";
+      document.getElementById("campoPax").value = "";
+      document.getElementById("campoNotas").value = "";
+      document.getElementById("campoNotaCliente").value = "";
+
+      const title = document.getElementById("modalTitle");
+      if (title) title.innerText = "Nueva Reserva";
     }
+    updateTotalDisplay();
   };
 
   window.closeModal = function () {
@@ -524,64 +603,120 @@
 
   window.saveReservation = async function (e) {
     e.preventDefault();
+    const nombre = document.getElementById("campoNombre").value.trim();
+    const telefono = document.getElementById("campoTelefono").value.trim();
+    const fecha = document.getElementById("campoFecha").value;
+    if (!nombre || !telefono || !fecha) {
+      alert("⚠️ Por favor, completa los campos obligatorios:\n- Nombre\n- Teléfono\n- Fecha");
+      return;
+    }
+    const isServiceIncluded = document.getElementById("checkServicioIncluido").checked;
+    let precio = parseFloat(document.getElementById("campoPrecio").value) || 0;
+    if (isServiceIncluded) precio = 0;
+
     const payload = {
       hotel: localStorage.getItem(STORAGE_KEY) || "Guadiana",
-      fecha: firebase.firestore.Timestamp.fromDate(new Date(document.getElementById("campoFecha").value)),
+      referencia: document.getElementById("campoReferencia").value,
+      fecha: firebase.firestore.Timestamp.fromDate(new Date(fecha)),
       espacio: document.getElementById("campoEspacio").value,
-      nombre: document.getElementById("campoNombre").value,
-      telefono: document.getElementById("campoTelefono").value,
+      nombre: nombre,
+      telefono: telefono,
       hora: document.getElementById("campoHora").value,
       pax: parseInt(document.getElementById("campoPax").value) || 0,
-      precio: parseFloat(document.getElementById("campoPrecio").value) || 0,
+      precio: precio,
       turno: document.getElementById("campoTurno").value,
       estado: document.getElementById("campoEstado").value,
       notas: document.getElementById("campoNotas").value,
       notaCliente: document.getElementById("campoNotaCliente").value,
-      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      servicioIncluido: isServiceIncluded,
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
     };
+
+    if (!document.getElementById("campoId").value) {
+      payload.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+    }
+
     try {
-      await db.collection("reservas_restaurante").add(payload);
+      const id = document.getElementById("campoId").value;
+      if (id) {
+        await db.collection("reservas_restaurante").doc(id).update(payload);
+      } else {
+        await db.collection("reservas_restaurante").add(payload);
+      }
       closeModal();
     } catch (err) {
-      alert(err);
+      console.error(err);
+      alert("Error al guardar: " + err.message);
     }
   };
 
-  window.changeWeek = function (d) {
-    currentWeekStart.setDate(currentWeekStart.getDate() + (d * 7));
-    renderGridStructure();
+  async function anularReservation() {
+    const id = document.getElementById("campoId").value;
+    if (!id) return;
+    if (!confirm("¿Estás seguro de querer ANULAR esta reserva?")) return;
+    try {
+      await db.collection("reservas_restaurante").doc(id).update({
+        estado: 'anulada',
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      closeModal();
+    } catch (err) {
+      alert("Error: " + err.message);
+    }
   }
 
-  // --- GLOBAL SEARCH LOGIC (Restaurante) ---
-  let searchDebounce = null;
-
-  window.handleSearch = function (query) {
-    clearTimeout(searchDebounce);
-    const container = document.getElementById("searchResults");
-
-    if (!query || query.trim().length < 2) {
-      if (container) container.classList.add("hidden");
-      return;
-    }
-
-    searchDebounce = setTimeout(() => {
-      doSearch(query);
-    }, 300);
-  };
-
   function doSearch(query) {
-    const q = query.toLowerCase();
     const container = document.getElementById("searchResults");
     if (!container) return;
 
+    if (!query) {
+      container.classList.add("hidden");
+      return;
+    }
+
+    const q = query.toLowerCase();
     const results = loadedReservations.filter(r => {
       const combined = `${r.nombre || ''} ${r.cliente || ''} ${r.telefono || ''} ${r.email || ''} ${r.id || ''} ${r.espacio || ''} `.toLowerCase();
       const dateStr = r.fecha && r.fecha.toDate ? utils.toIsoDate(r.fecha.toDate()) : (r.fecha || "");
       return combined.includes(q) || dateStr.includes(q);
     });
-
     renderSearchResults(results);
   }
+
+  window.toggleLock = async function (space, dateStr, turno) {
+    if (!confirm(`¿Cambiar estado de BLOQUEO para ${space} - ${dateStr} - ${turno}?`)) return;
+    const currentHotel = localStorage.getItem(STORAGE_KEY) || "Guadiana";
+
+    let existingLockId = null;
+    loadedReservations.forEach(r => {
+      if (r.type !== 'lock') return;
+      if (r.espacio !== space) return;
+      if (r.turno !== turno) return;
+      let rDate = "";
+      if (r.fecha && r.fecha.toDate) rDate = utils.toIsoDate(r.fecha.toDate());
+      else if (typeof r.fecha === 'string') rDate = r.fecha;
+      if (rDate === dateStr) existingLockId = r.id;
+    });
+
+    try {
+      if (existingLockId) {
+        await db.collection("reservas_restaurante").doc(existingLockId).delete();
+      } else {
+        await db.collection("reservas_restaurante").add({
+          hotel: currentHotel,
+          espacio: space,
+          fecha: firebase.firestore.Timestamp.fromDate(new Date(dateStr)),
+          turno: turno,
+          type: 'lock',
+          estado: 'COMPLETO',
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Error al cambiar bloqueo: " + err.message);
+    }
+  };
 
   function renderSearchResults(results) {
     const container = document.getElementById("searchResults");
@@ -635,6 +770,22 @@
     currentWeekStart = d;
     renderGridStructure();
   };
+
+  window.changeWeek = function (offset) {
+    currentWeekStart.setDate(currentWeekStart.getDate() + (offset * 7));
+    loadReservations(); // Reloads creates the grid structure and fetches data
+  };
+
+  // Listen for manual date change
+  const inputSemana = document.getElementById("inputSemana");
+  if (inputSemana) {
+    inputSemana.addEventListener("change", (e) => {
+      if (e.target.value) {
+        const d = new Date(e.target.value);
+        goToDate(d);
+      }
+    });
+  }
 
   ensureFirebase(startApp);
 })();

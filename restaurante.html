@@ -260,8 +260,8 @@
                                 d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
                         </svg>
                     </div>
-                    <input type="text" id="txtBuscar" onkeyup="handleSearch(this.value)" placeholder="Buscar..."
-                        class="w-full md:w-64 pl-10 pr-4 py-1.5 border border-slate-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition shadow-sm h-9" />
+                    <input type="text" id="txtBuscar" placeholder="Buscar..."
+                        class="w-full md:w-64 pl-10 pr-4 py-1.5 border border-slate-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition shadow-sm h-9 bg-white" />
                     <!-- Dropdown -->
                     <div id="searchResults"
                         class="hidden absolute top-full left-0 mt-1 w-full md:w-80 bg-white rounded-xl shadow-xl border border-slate-100 max-h-96 overflow-y-auto z-50 divide-y divide-slate-50 text-left">
@@ -294,96 +294,183 @@
     <!-- MODAL RESERVA ("FICHA") -->
     <div id="modalReserva"
         class="fixed inset-0 z-50 hidden flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm">
-        <div class="bg-white rounded-lg shadow-xl w-full max-w-2xl overflow-hidden animate-fade-in-up">
-            <div class="bg-slate-800 text-white px-4 py-3 flex justify-between items-center">
-                <h3 class="font-bold text-lg">Ficha de Reserva</h3>
-                <button type="button" id="btnCerrarModal" class="text-gray-400 hover:text-white">&times;</button>
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-4xl overflow-hidden animate-fade-in-up">
+            <!-- Header -->
+            <div class="bg-white px-6 py-4 border-b border-gray-100 flex justify-between items-center">
+                <h3 class="font-bold text-xl text-slate-800">Nueva Reserva</h3>
+                <button type="button" id="btnCerrarModal" class="text-gray-400 hover:text-gray-600 transition">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
+                        </path>
+                    </svg>
+                </button>
             </div>
-            <form id="formReserva" class="p-4 space-y-4">
-                <!-- Row 1: Fecha & Nombre -->
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-xs font-bold text-gray-500 uppercase">Fecha</label>
-                        <input type="date" id="campoFecha"
-                            class="w-full border p-2 rounded bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none"
-                            required>
+
+            <form id="formReserva" class="p-6 space-y-6 bg-slate-50/50">
+
+                <!-- ID/STATUS ROW -->
+                <div class="bg-blue-50/50 p-4 rounded-lg border border-blue-100 flex flex-wrap gap-4 items-end">
+                    <!-- Reference (Read Only) -->
+                    <div class="flex-1 min-w-[150px]">
+                        <label
+                            class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Referencia</label>
+                        <input type="text" id="campoReferencia" readonly
+                            class="w-full bg-slate-100 border border-slate-200 rounded px-3 py-2 text-sm font-mono text-slate-500 cursor-not-allowed"
+                            placeholder="Generando...">
                     </div>
-                    <div>
-                        <label class="block text-xs font-bold text-gray-500 uppercase">Nombre Cliente</label>
-                        <input type="text" id="campoNombre"
-                            class="w-full border p-2 rounded focus:ring-2 focus:ring-blue-500 outline-none font-bold text-gray-800"
-                            placeholder="Nombre..." required>
+
+                    <!-- Date -->
+                    <div class="flex-1 min-w-[150px]">
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Fecha
+                            Inicio</label>
+                        <div class="relative">
+                            <input type="date" id="campoFecha" required
+                                class="w-full border border-slate-300 rounded px-3 py-2 text-sm font-bold text-slate-700 focus:ring-2 focus:ring-blue-500 outline-none shadow-sm">
+                        </div>
+                    </div>
+
+                    <!-- Status -->
+                    <div class="flex-1 min-w-[150px]">
+                        <label
+                            class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Estado</label>
+                        <select id="campoEstado"
+                            class="w-full border border-slate-300 rounded px-3 py-2 text-sm font-bold text-slate-700 focus:ring-2 focus:ring-blue-500 outline-none shadow-sm cursor-pointer">
+                            <option value="pendiente">⏳ Pendiente</option>
+                            <option value="confirmada" selected>✅ Confirmada</option>
+                            <option value="anulada">❌ Anulada</option>
+                        </select>
+                    </div>
+
+                    <!-- Total Display (Dynamic) -->
+                    <div class="flex-none text-right flex flex-col justify-end min-w-[100px]">
+                        <span class="text-2xl font-black text-slate-800 tracking-tight" id="displayTotal">0.00 €</span>
                     </div>
                 </div>
 
-                <!-- Row 2: Hora, Pax, Zona, Turno -->
-                <div class="grid grid-cols-4 gap-4 p-3 bg-gray-50 rounded border border-gray-100">
-                    <div>
-                        <label class="block text-xs font-bold text-gray-400 uppercase">Hora</label>
-                        <input type="time" id="campoHora" class="w-full border p-1 rounded">
+                <!-- MAIN DETAILS ROW -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Column 1: Client & Contact -->
+                    <div class="space-y-4">
+                        <div>
+                            <label
+                                class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Cliente
+                                / Evento <span class="text-red-500">*</span></label>
+                            <input type="text" id="campoNombre" required
+                                class="w-full border border-slate-300 rounded px-4 py-2 text-sm font-bold text-slate-800 focus:ring-2 focus:ring-blue-500 outline-none shadow-sm placeholder-slate-400"
+                                placeholder="Nombre del cliente...">
+                        </div>
+                        <div>
+                            <label
+                                class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Teléfono
+                                <span class="text-red-500">*</span></label>
+                            <input type="tel" id="campoTelefono" required
+                                class="w-full border border-slate-300 rounded px-4 py-2 text-sm text-slate-700 focus:ring-2 focus:ring-blue-500 outline-none shadow-sm"
+                                placeholder="600 000 000">
+                        </div>
                     </div>
-                    <div>
-                        <label class="block text-xs font-bold text-gray-400 uppercase">Pax</label>
-                        <input type="number" id="campoPax" class="w-full border p-1 rounded" min="1">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-gray-400 uppercase">Espacio</label>
-                        <select id="campoEspacio" class="w-full border p-1 rounded">
-                            <option value="Restaurante">Restaurante</option>
-                            <option value="Cafeteria">Cafetería</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-gray-400 uppercase">Turno</label>
-                        <select id="campoTurno" class="w-full border p-1 rounded">
-                            <option value="almuerzo">Almuerzo</option>
-                            <option value="cena">Cena</option>
-                        </select>
+
+                    <!-- Column 2: Logistics -->
+                    <div class="bg-white p-4 rounded-lg border border-slate-200 shadow-sm space-y-4">
+                        <div class="grid grid-cols-3 gap-3">
+                            <div>
+                                <label
+                                    class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Hora</label>
+                                <div class="relative">
+                                    <input type="time" id="campoHora"
+                                        class="w-full border border-slate-200 rounded px-2 py-1.5 text-sm font-bold text-slate-700">
+                                </div>
+                            </div>
+                            <div>
+                                <label
+                                    class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Pax</label>
+                                <input type="number" id="campoPax" min="1"
+                                    class="w-full border border-slate-200 rounded px-2 py-1.5 text-sm font-bold text-slate-700 text-center"
+                                    placeholder="0">
+                            </div>
+                            <div>
+                                <label
+                                    class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Precio
+                                    p/p (€)</label>
+                                <div class="relative">
+                                    <input type="number" id="campoPrecio" step="0.01"
+                                        class="w-full border border-slate-200 rounded px-2 py-1.5 pr-6 text-sm font-bold text-slate-700 text-right"
+                                        placeholder="0.00">
+                                    <span
+                                        class="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 font-bold text-xs">€</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label
+                                    class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Zona</label>
+                                <select id="campoEspacio"
+                                    class="w-full border border-slate-200 rounded px-2 py-1.5 text-sm text-slate-700">
+                                    <option value="Restaurante">Restaurante</option>
+                                    <option value="Cafeteria">Cafetería</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label
+                                    class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Turno</label>
+                                <select id="campoTurno"
+                                    class="w-full border border-slate-200 rounded px-2 py-1.5 text-sm text-slate-700">
+                                    <option value="almuerzo">☀️ Almuerzo</option>
+                                    <option value="cena">🌙 Cena</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Service Included Toggle -->
+                        <div
+                            class="flex items-center justify-between pt-2 border-t border-dashed border-slate-100 mt-2">
+                            <span class="text-xs font-bold text-slate-500">Servicio Incluido</span>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" id="checkServicioIncluido" class="sr-only peer">
+                                <div
+                                    class="w-9 h-5 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600">
+                                </div>
+                            </label>
+                        </div>
                     </div>
                 </div>
 
-                <!-- Row 3: Phone, Price, Status -->
-                <div class="grid grid-cols-3 gap-4">
-                    <div>
-                        <label class="block text-xs font-bold text-gray-500 uppercase">Teléfono</label>
-                        <input type="tel" id="campoTelefono" class="w-full border p-2 rounded" placeholder="600...">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-gray-500 uppercase">Importe (€)</label>
-                        <input type="number" step="0.01" id="campoPrecio"
-                            class="w-full border p-2 rounded text-right font-mono" placeholder="0.00">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-gray-500 uppercase">Estado</label>
-                        <select id="campoEstado" class="w-full border p-2 rounded font-medium">
-                            <option value="pendiente" class="text-orange-500">Pendiente</option>
-                            <option value="confirmada" class="text-green-600">Confirmada</option>
-                            <option value="anulada" class="text-red-500">Anulada</option>
-                        </select>
-                    </div>
-                </div>
-
-                <!-- Row 4: Notes -->
+                <!-- Notes -->
                 <div>
-                    <label class="block text-xs font-bold text-gray-500 uppercase">Notas Internas</label>
-                    <textarea id="campoNotas" rows="2" class="w-full border p-2 rounded text-sm text-gray-600"
-                        placeholder="Detalles internos..."></textarea>
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Notas
+                        Internas</label>
+                    <textarea id="campoNotas" rows="2"
+                        class="w-full border border-slate-300 rounded px-3 py-2 text-sm text-slate-600 placeholder-slate-300 focus:ring-1 focus:ring-blue-300 outline-none resize-none"
+                        placeholder="Escribe aquí cualquier detalle importante..."></textarea>
                 </div>
 
-                <!-- Hidden Fields -->
-                <input type="hidden" id="campoNotaCliente">
+                <!-- Hidden -->
                 <input type="hidden" id="campoId">
+                <input type="hidden" id="campoNotaCliente">
 
-                <!-- Buttons -->
-                <div class="flex justify-end gap-3 pt-2 border-t mt-2">
-                    <button type="button" id="btnCancelarReserva"
-                        class="px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded transition font-medium">
-                        Cancelar
+                <!-- Footer / Actions -->
+                <div class="flex justify-between items-center pt-4 border-t border-slate-100">
+                    <!-- Left: Trash -->
+                    <button type="button" id="btnAnular"
+                        class="text-gray-400 hover:text-red-500 transition p-2 rounded-full hover:bg-red-50"
+                        title="Anular Reserva">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16">
+                            </path>
+                        </svg>
                     </button>
-                    <button type="submit"
-                        class="px-6 py-2 text-sm bg-slate-800 text-white rounded hover:bg-slate-700 font-bold shadow-lg transform active:scale-95 transition">
-                        GUARDAR
-                    </button>
+
+                    <!-- Right: Save/Cancel -->
+                    <div class="flex gap-3">
+                        <button type="button" onclick="closeModal()"
+                            class="px-5 py-2.5 text-sm font-semibold text-slate-600 hover:text-slate-800 transition">Cancelar</button>
+                        <button type="submit"
+                            class="px-6 py-2.5 text-sm font-bold bg-slate-800 text-white rounded shadow-lg hover:bg-slate-700 transform active:scale-95 transition flex items-center gap-2">
+                            <span>GUARDAR</span>
+                        </button>
+                    </div>
                 </div>
             </form>
         </div>
