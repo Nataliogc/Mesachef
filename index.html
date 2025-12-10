@@ -554,7 +554,31 @@
 
         // PWA Service Worker
         if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('sw.js').catch(err => console.log('SW Registration skipped:', err));
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js')
+                    .then(registration => {
+                        console.log('SW Registrado:', registration.scope);
+
+                        registration.addEventListener('updatefound', () => {
+                            const newWorker = registration.installing;
+                            newWorker.addEventListener('statechange', () => {
+                                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                    console.log('Nueva versión disponible. Actualizando...');
+                                    // Opcional: Mostrar toast al usuario
+                                }
+                            });
+                        });
+                    })
+                    .catch(err => console.log('SW Falló:', err));
+            });
+
+            // Recargar si el SW toma el control (actualización inmediata)
+            let refreshing;
+            navigator.serviceWorker.addEventListener('controllerchange', () => {
+                if (refreshing) return;
+                window.location.reload();
+                refreshing = true;
+            });
         }
     </script>
 </body>

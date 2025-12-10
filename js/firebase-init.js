@@ -10,3 +10,15 @@ const firebaseConfig = {
 
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
+
+// Habilitar persistencia offline para carga instantánea de datos
+db.enablePersistence({ synchronizeTabs: true }).catch(err => {
+  if (err.code == 'failed-precondition') {
+    console.warn('Persistencia falló: Multiples pestañas abiertas.');
+  } else if (err.code == 'unimplemented') {
+    console.warn('Persistencia falló: El navegador no lo soporta.');
+  }
+});
+
+window.db = db; // Exponer globalmente porsiaca
+
