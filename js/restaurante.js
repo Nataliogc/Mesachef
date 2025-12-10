@@ -377,8 +377,9 @@
 
         // CHECK NOTES
         let notesIcon = "";
-        if (r.notas && r.notas.trim().length > 0) {
-          notesIcon = `<span title="${r.notas}" class="ml-1 text-[10px] cursor-help">📝</span>`;
+        const notasStr = (typeof r.notas === 'string') ? r.notas : "";
+        if (notasStr.trim().length > 0) {
+          notesIcon = `<span title="${notasStr}" class="ml-1 text-[10px] cursor-help">📝</span>`;
         }
 
         div.className = `bg-white border border-gray-100 shadow-sm rounded p-1.5 cursor-pointer hover:shadow-md transition text-[10px] ${border} mb-1`;

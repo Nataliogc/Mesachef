@@ -340,7 +340,7 @@
         const filterEl = document.getElementById("filterStatus");
         const filterVal = filterEl ? filterEl.value : "todos";
 
-        console.log("Painting Reservations. Hotel:", hotel, "Filter:", filterVal, "Total Loaded:", loadedReservations.length);
+        console.log("Painting Reservations. Hotel:", hotel, "Filter:", filterVal, "Total Loaded:", loadedReservations.length, loadedReservations);
 
         // Group by cell
         const salonMap = {};
@@ -405,7 +405,10 @@
             const sample = group[0];
             const cellId = getCellId(hotel, sample._canonicalSalon, sample.fecha);
             const cell = document.getElementById(cellId);
-            if (!cell) return;
+            if (!cell) {
+                // If cell is not found, just skip (legacy data or date outside range)
+                return;
+            }
 
             const safeName = sample._canonicalSalon.replace(/'/g, "\\'");
             const dateStr = sample.fecha;
@@ -417,16 +420,20 @@
 
             let htmlFinal = "";
 
-            const evTodo = group.find(r => (r._displayJornada || 'todo').toLowerCase() === 'todo');
+            // Relaxed 'Todo' check: matches 'todo', 'dia', 'completo' or if it's not half-day
+            const evTodo = group.find(r => {
+                const j = (r._displayJornada || 'todo').toLowerCase();
+                return j === 'todo' || j.includes('todo') || j.includes('dia') || j.includes('completo');
+            });
 
             if (evTodo) {
                 htmlFinal += createCardHTML(evTodo, "row-span-2 h-full");
             } else {
-                const evMañana = group.find(r => (r._displayJornada || '').toLowerCase() === 'mañana');
+                const evMañana = group.find(r => (r._displayJornada || '').toLowerCase().includes('mañana'));
                 if (evMañana) htmlFinal += createCardHTML(evMañana, "h-full");
                 else htmlFinal += slotMañana;
 
-                const evTarde = group.find(r => (r._displayJornada || '').toLowerCase() === 'tarde');
+                const evTarde = group.find(r => (r._displayJornada || '').toLowerCase().includes('tarde'));
                 if (evTarde) htmlFinal += createCardHTML(evTarde, "h-full");
                 else htmlFinal += slotTarde;
             }
@@ -710,10 +717,19 @@
         }
 
         // RESET
+
+        // RESET
         currentBookingId = null;
+        window.currentFullServices = []; // Store full services list for multi-day events
+        window.currentViewDate = null;   // Store the date we are viewing/editing
+
         document.getElementById("evt-nombre").value = "";
         document.getElementById("evt-telefono").value = "";
         document.getElementById("evt-email").value = "";
+
+        // Reset Budget Label
+        const budgetLabel = document.getElementById("evt-budget-label");
+        if (budgetLabel) budgetLabel.innerText = "";
 
         // Phone Mask Listener
         const telInput = document.getElementById("evt-telefono");
@@ -743,9 +759,17 @@
         if (existing) {
             currentBookingId = existing.id;
             document.getElementById("evt-fecha").value = existing.fecha;
+            window.currentViewDate = dateStr || existing.fecha; // Store view date
+
             sSel.value = existing.salon;
             populateDatalist(existing.salon); // Filter for this salon
             document.getElementById("evt-nombre").value = existing.cliente;
+
+            // Show Budget Ref if exists
+            if (existing.referenciaPresupuesto) {
+                const bl = document.getElementById("evt-budget-label");
+                if (bl) bl.innerHTML = `<span class="bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded text-[10px] font-bold">Presupuesto: ${existing.referenciaPresupuesto}</span>`;
+            }
             if (existing.contact) {
                 document.getElementById("evt-telefono").value = existing.contact.tel || "";
                 document.getElementById("evt-email").value = existing.contact.email || "";
@@ -767,10 +791,16 @@
             }
 
             if (existing.servicios) {
-                existing.servicios.forEach(s => {
+                window.currentFullServices = existing.servicios; // Keep full copy
+
+                // Filter: Show only services for the clicked date (or all if no date provided)
+                const viewDate = window.currentViewDate;
+                const visibleServices = viewDate ? existing.servicios.filter(s => s.fecha === viewDate) : existing.servicios;
+
+                visibleServices.forEach(s => {
                     const row = document.createElement("tr");
                     row.innerHTML = `
-                    <td class="p-2 border-b"><input type="date" value="${s.fecha}" class="text-xs bg-gray-50 w-full rounded border-gray-200"></td>
+                    <td class="p-2 border-b"><input type="date" value="${s.fecha}" class="text-xs bg-gray-50 w-24 rounded border-gray-200"></td>
                         <td class="p-2 border-b"><input type="text" value="${s.concepto}" list="charge-options" onchange="updateRowPrice(this)" class="text-xs font-bold w-full rounded border-gray-200"></td>
                         <td class="p-2 border-b"><input type="number" onchange="calcTotal()" value="${s.uds}" class="text-xs text-center row-uds w-full rounded border-gray-200"></td>
                         <td class="p-2 border-b"><input type="number" onchange="calcTotal()" value="${s.precio}" class="text-xs text-right row-price w-full rounded border-gray-200"></td>
@@ -802,8 +832,9 @@
 
     window.addServiceRow = function () {
         const row = document.createElement("tr");
+        const defaultDate = window.currentViewDate || document.getElementById("evt-fecha").value;
         row.innerHTML = `
-            <td class="p-2 border-b"><input type="date" value="${document.getElementById("evt-fecha").value}" class="text-xs bg-gray-50 w-full rounded border-gray-200"></td>
+            <td class="p-2 border-b"><input type="date" value="${defaultDate}" class="text-xs bg-gray-50 w-24 rounded border-gray-200"></td>
             <td class="p-2 border-b"><input type="text" placeholder="Concepto" list="charge-options" onchange="updateRowPrice(this)" class="text-xs font-bold w-full rounded border-gray-200"></td>
             <td class="p-2 border-b"><input type="number" onchange="calcTotal()" value="1" class="text-xs text-center row-uds w-full rounded border-gray-200"></td>
             <td class="p-2 border-b"><input type="number" onchange="calcTotal()" value="0" class="text-xs text-right row-price w-full rounded border-gray-200"></td>
@@ -864,9 +895,9 @@
         if (!found) {
             console.log("Creating new rental row...");
             const row = document.createElement("tr");
-            const dateStr = document.getElementById("evt-fecha").value;
+            const dateStr = window.currentViewDate || document.getElementById("evt-fecha").value;
             row.innerHTML = `
-                <td class="p-2 border-b"><input type="date" value="${dateStr}" class="text-xs bg-gray-50 w-full rounded border-gray-200"></td>
+                <td class="p-2 border-b"><input type="date" value="${dateStr}" class="text-xs bg-gray-50 w-24 rounded border-gray-200"></td>
                 <td class="p-2 border-b"><input type="text" value="Alquiler Salón ${salonName} - ${jornada}" list="charge-options" onchange="updateRowPrice(this)" class="text-xs font-bold w-full rounded border-gray-200"></td>
                 <td class="p-2 border-b"><input type="number" onchange="calcTotal()" value="1" class="text-xs text-center row-uds w-full rounded border-gray-200"></td>
                 <td class="p-2 border-b"><input type="number" onchange="calcTotal()" value="${price}" class="text-xs text-right row-price w-full rounded border-gray-200"></td>
@@ -910,9 +941,10 @@
             servicios: []
         };
 
+        const visibleServicios = [];
         document.querySelectorAll("#services-list tr").forEach(row => {
             const inputs = row.querySelectorAll("input");
-            payload.servicios.push({
+            visibleServicios.push({
                 fecha: inputs[0].value,
                 concepto: inputs[1].value,
                 uds: parseFloat(inputs[2].value) || 0,
@@ -920,6 +952,17 @@
                 total: parseFloat(row.querySelector(".row-total").innerText)
             });
         });
+
+        // MERGE: Keep invisible services from other dates, replace visible ones
+        const viewDate = window.currentViewDate;
+        if (viewDate && window.currentFullServices.length > 0) {
+            // Keep all services NOT for this date
+            const otherServices = window.currentFullServices.filter(s => s.fecha !== viewDate);
+            // Add the current visible ones (which are for this date, or edited to be)
+            payload.servicios = [...otherServices, ...visibleServicios];
+        } else {
+            payload.servicios = visibleServicios;
+        }
 
         console.log("Validating Event:", payload);
 

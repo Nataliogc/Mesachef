@@ -10,7 +10,7 @@
   <link rel="apple-touch-icon" href="Img/mesa-chef-192.png" />
 
   <!-- Estilos base -->
-  <link rel="stylesheet" href="css/styles.css?v=9.6" />
+  <link rel="stylesheet" href="css/styles.css?v=9.1" />
 
   <style>
     /* Estilos específicos para tabla/lista de presupuestos */
@@ -211,6 +211,27 @@
 
         <!-- RIGHT: ACTIONS -->
         <div class="flex items-center gap-3">
+          <a href="restaurante.html"
+            class="group flex items-center gap-1.5 text-blue-600 hover:text-blue-800 transition px-3 py-1.5 rounded-md hover:bg-blue-50">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z">
+              </path>
+            </svg>
+            <span class="text-xs font-bold uppercase tracking-wide">Restaurante</span>
+          </a>
+
+          <a href="salones.html"
+            class="group flex items-center gap-1.5 text-blue-600 hover:text-blue-800 transition px-3 py-1.5 rounded-md hover:bg-blue-50">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+            </svg>
+            <span class="text-xs font-bold uppercase tracking-wide">Ir a Salones</span>
+          </a>
+
+          <div class="h-6 w-px bg-slate-200 mx-1"></div>
+
           <a href="index.html"
             class="group flex items-center gap-1.5 text-slate-500 hover:text-slate-800 transition px-3 py-1.5 rounded-md hover:bg-slate-50">
             <svg class="w-4 h-4 text-slate-400 group-hover:text-slate-600" fill="none" stroke="currentColor"
@@ -292,74 +313,37 @@
 
       <form id="formPresupuesto" class="modal-body p-6 space-y-5">
 
-        <!-- ROW 1: Dates & Client -->
+        <!-- ROW 1: Client & Type -->
         <div class="grid grid-cols-1 md:grid-cols-12 gap-4">
-          <div class="md:col-span-2 form-control hidden">
-            <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Desde</label>
-            <input type="date" id="campoFechaDesde"
-              class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:border-blue-500 outline-none">
-          </div>
-          <div class="md:col-span-2 form-control hidden">
-            <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Hasta</label>
-            <input type="date" id="campoFechaHasta"
-              class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:border-blue-500 outline-none">
-          </div>
           <div class="md:col-span-8 form-control">
             <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Cliente / Evento</label>
             <input type="text" id="campoCliente"
               class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:border-blue-500 outline-none"
               placeholder="Nombre del cliente o evento...">
           </div>
-          <div class="md:col-span-3 form-control">
-            <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Tipo</label>
-            <select id="campoTipoEvento"
-              class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:border-blue-500 outline-none">
-              <option value="Banquete / Celebración">Banquete / Celebración</option>
-              <option value="Empresa / Reunión">Empresa / Reunión</option>
-              <option value="Otro">Otro</option>
-            </select>
+          <div class="md:col-span-4 form-control">
+            <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Tipo de Evento</label>
+            <input type="text" id="evt-montaje"
+              class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:border-blue-500 outline-none"
+              placeholder="Ej: Banquete, Reunión...">
           </div>
         </div>
 
-        <!-- ROW 2: Space & Pax -->
+        <!-- ROW 2: Space, Turno, Time -->
+        <!-- ROW 2: Space, Montaje, Turno, Time -->
         <div class="grid grid-cols-1 md:grid-cols-12 gap-4">
-          <div class="md:col-span-4 form-control">
+          <div class="md:col-span-5 form-control">
             <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Salón / Espacio</label>
             <select id="campoSalon"
               class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:border-blue-500 outline-none">
               <option value="">-- Seleccionar --</option>
             </select>
           </div>
-          <div class="md:col-span-4 form-control">
-            <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Turno</label>
-            <select id="campoTurno"
-              class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:border-blue-500 outline-none">
-              <option value="Día completo">Día completo</option>
-              <option value="1/2 Mañana">1/2 Mañana</option>
-              <option value="1/2 Tarde">1/2 Tarde</option>
-            </select>
-          </div>
           <div class="md:col-span-2 form-control">
-            <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Adultos</label>
-            <input type="number" id="campoPaxAdultos"
-              class="w-16 border border-gray-300 rounded px-1 py-1 text-sm focus:border-blue-500 outline-none text-center"
-              min="0">
-          </div>
-          <div class="md:col-span-2 form-control">
-            <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Niños</label>
-            <input type="number" id="campoPaxNinos"
-              class="w-16 border border-gray-300 rounded px-1 py-1 text-sm focus:border-blue-500 outline-none text-center"
-              min="0">
-          </div>
-        </div>
-
-        <!-- ROW 3: Setup & Times -->
-        <div class="grid grid-cols-1 md:grid-cols-12 gap-4">
-          <div class="md:col-span-6 form-control">
             <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Montaje</label>
             <input type="text" id="campoMontaje" list="listMontajes"
               class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:border-blue-500 outline-none"
-              placeholder="Escuela, teatro, imperial...">
+              placeholder="Escuela...">
             <datalist id="listMontajes">
               <option value="Escuela">
               <option value="Teatro">
@@ -368,62 +352,51 @@
               <option value="U">
               <option value="Cocktail">
             </datalist>
+            <div id="capacityDisplay" class="text-[10px] text-blue-600 font-bold mt-1 h-3 ml-1"></div>
           </div>
           <div class="md:col-span-3 form-control">
-            <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Inicio</label>
-            <input type="time" id="campoHoraInicio"
-              class="w-20 border border-gray-300 rounded px-2 py-2 text-sm focus:border-blue-500 outline-none">
-          </div>
-        </div>
-
-        <!-- Row 2: Evento, Notas Comercial -->
-        <div class="grid grid-cols-1 md:grid-cols-12 gap-4 mb-4">
-          <div class="md:col-span-4">
-            <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Tipo de Evento</label>
-            <input type="text" id="evt-montaje"
-              class="w-full bg-slate-50 border border-slate-200 rounded px-2 py-1.5 text-sm focus:outline-none focus:border-blue-500 transition"
-              placeholder="Ej: Banquete, Reunión...">
-          </div>
-          <div class="md:col-span-8">
-            <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Notas Comercial</label>
-            <input type="text" id="evt-nota-comercial"
-              class="w-full bg-slate-50 border border-slate-200 rounded px-2 py-1.5 text-sm focus:outline-none focus:border-blue-500 transition"
-              placeholder="Nota visible en PDF (Ej: Incluye proyector)">
-          </div>
-        </div>
-
-        <!-- Row 3: Pax, Jornada, Hora -->
-        <div class="grid grid-cols-1 md:grid-cols-12 gap-4 mb-4">
-          <div class="md:col-span-2">
-            <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Pax Adultos</label>
-            <input type="number" id="evt-pax-a"
-              class="w-full bg-slate-50 border border-slate-200 rounded px-2 py-1.5 text-sm focus:outline-none focus:border-blue-500 transition"
-              placeholder="0">
-          </div>
-          <div class="md:col-span-2">
-            <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Pax Niños</label>
-            <input type="number" id="evt-pax-n"
-              class="w-full bg-slate-50 border border-slate-200 rounded px-2 py-1.5 text-sm focus:outline-none focus:border-blue-500 transition"
-              placeholder="0">
-          </div>
-          <div class="md:col-span-5">
             <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Jornada/Turno</label>
             <input type="text" id="evt-jornada" list="turnos-list"
-              class="w-full bg-slate-50 border border-slate-200 rounded px-2 py-1.5 text-sm focus:outline-none focus:border-blue-500 transition"
-              placeholder="Todo el dia / Mañana / Tarde">
+              class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:border-blue-500 outline-none"
+              placeholder="Seleccionar turno...">
             <datalist id="turnos-list">
               <option value="Todo el dia"></option>
-              <option value="Mañana"></option>
-              <option value="Tarde"></option>
-              <option value="Cena"></option>
-              <option value="Cocktail"></option>
+              <option value="½ Jornada Mañana"></option>
+              <option value="½ Jornada Tarde"></option>
             </datalist>
           </div>
-          <div class="md:col-span-3">
+          <div class="md:col-span-2 form-control">
             <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Hora Inicio</label>
             <input type="time" id="campoHoraInicio"
-              class="w-full bg-slate-50 border border-slate-200 rounded px-2 py-1.5 text-sm focus:outline-none focus:border-blue-500 transition">
+              class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:border-blue-500 outline-none">
           </div>
+        </div>
+
+        <!-- ROW 3: Pax & Commercial Note -->
+        <div class="grid grid-cols-1 md:grid-cols-12 gap-4">
+          <div class="md:col-span-2 form-control">
+            <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Pax Adultos</label>
+            <input type="number" id="evt-pax-a"
+              class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:border-blue-500 outline-none text-center"
+              min="0">
+          </div>
+          <div class="md:col-span-2 form-control">
+            <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Pax Niños</label>
+            <input type="number" id="evt-pax-n"
+              class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:border-blue-500 outline-none text-center"
+              min="0">
+          </div>
+          <div class="md:col-span-8 form-control">
+            <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Notas Comercial</label>
+            <input type="text" id="evt-nota-comercial"
+              class="w-full bg-slate-50 border border-slate-200 rounded px-2 py-2 text-sm focus:outline-none focus:border-blue-500 transition"
+              placeholder="Notas comerciales no visible en documentos">
+          </div>
+        </div>
+
+        <!-- Hidden inputs for compatibility/future use -->
+        <div class="hidden">
+          <input type="date" id="campoFechaDesde"><input type="date" id="campoFechaHasta">
         </div>
 
         <!-- Row 4: Contact Data -->
@@ -500,13 +473,19 @@
           class="modal-footer flex flex-col md:flex-row justify-between items-center pt-4 border-t border-gray-100 mt-2 gap-4">
 
           <!-- Status Selector in Footer -->
-          <div class="w-full md:w-auto">
-            <select id="campoEstado"
-              class="border border-gray-300 rounded px-3 py-1.5 text-sm font-bold text-slate-700 outline-none bg-white">
-              <option value="pendiente">Pendiente</option>
-              <option value="confirmada">Confirmada</option>
-              <option value="rechazada">Rechazada</option>
-            </select>
+          <div class="w-full md:w-auto flex items-center gap-2">
+            <input type="hidden" id="campoEstado" value="pendiente">
+            <span id="statusTextDisplay"
+              class="text-xs font-bold text-slate-500 uppercase mr-2 border border-slate-200 px-2 py-1 rounded bg-slate-50">PENDIENTE</span>
+
+            <button type="button" id="btnAnular" title="Anular Presupuesto"
+              class="w-8 h-8 flex items-center justify-center bg-red-50 text-red-600 rounded-full hover:bg-red-100 transition border border-red-200">
+              🗑️
+            </button>
+            <button type="button" id="btnConfirmar" title="Confirmar Presupuesto"
+              class="flex items-center gap-2 px-3 py-1.5 bg-green-50 text-green-700 rounded-full hover:bg-green-100 transition border border-green-200 font-bold text-xs">
+              ✅ Confirmar
+            </button>
           </div>
 
           <!-- Action Buttons -->

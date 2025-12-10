@@ -46,7 +46,9 @@
     const campoPaxAdultos = document.getElementById("evt-pax-a");
     const campoPaxNinos = document.getElementById("evt-pax-n");
 
-    // const campoMontaje = document.getElementById("campoMontaje"); // Redundant/Renamed
+    const campoMontaje = document.getElementById("campoMontaje");
+    const capacityDisplay = document.getElementById("capacityDisplay");
+
     const campoHoraInicio = document.getElementById("campoHoraInicio");
 
     const campoContacto = document.getElementById("campoContacto");
@@ -57,6 +59,47 @@
     const campoNotas = document.getElementById("campoNotas");
     const campoNotasCliente = document.getElementById("campoNotasCliente");
     const campoNotaComercial = document.getElementById("evt-nota-comercial");
+
+    // --- Capacity Logic ---
+    function updateCapacityDisplay() {
+        if (!campoSalon || !campoMontaje || !capacityDisplay) return;
+
+        const salonName = campoSalon.value;
+        const montajeVal = campoMontaje.value.trim().toLowerCase();
+
+        if (!salonName || !montajeVal) {
+            capacityDisplay.textContent = "";
+            return;
+        }
+
+        const salon = globalConfig.salones.find(s => s.name === salonName);
+        if (!salon || !salon.capacities) {
+            capacityDisplay.textContent = "";
+            return;
+        }
+
+        let key = montajeVal; // default
+        // Map user input to keys
+        if (montajeVal === "escuela") key = "escuela";
+        else if (montajeVal === "teatro") key = "teatro";
+        else if (montajeVal === "imperial") key = "imperial";
+        else if (montajeVal === "banquete") key = "banquete";
+        else if (montajeVal === "u" || montajeVal === "forma u") key = "forma_u";
+        else if (montajeVal === "cocktail" || montajeVal === "cóctel" || montajeVal === "coctel") key = "coctel";
+
+        const cap = salon.capacities[key];
+        if (cap) {
+            capacityDisplay.textContent = `Capacidad Máx: ${cap} pax`;
+        } else {
+            capacityDisplay.textContent = "";
+        }
+    }
+
+    if (campoSalon) campoSalon.addEventListener("change", updateCapacityDisplay);
+    if (campoMontaje) {
+        campoMontaje.addEventListener("change", updateCapacityDisplay);
+        campoMontaje.addEventListener("input", updateCapacityDisplay);
+    }
 
     // --- CONFIG STATE ---
     let globalConfig = { salones: [], conceptos: [] };
@@ -128,7 +171,14 @@
                     globalConfig.salones.forEach(s => {
                         const opt = document.createElement("option");
                         opt.value = s.name;
-                        opt.textContent = s.name;
+
+                        // Construct label: Name - M2 - Capacity
+                        let label = s.name;
+                        if (s.m2) label += ` - ${s.m2} m²`;
+                        const cap = s.capacidad || s.capacity || s.maxPax;
+                        if (cap) label += ` - Max ${cap} pax`;
+
+                        opt.textContent = label;
                         campoSalon.appendChild(opt);
                     });
                     if (currentVal) campoSalon.value = currentVal;
@@ -269,9 +319,15 @@
 
     if (btnAddLine) {
         btnAddLine.onclick = () => {
+            // Default concept logic
+            let defaultConcept = "";
+            if (!campoSalon.value) {
+                defaultConcept = "Alquiler de salón";
+            }
+
             currentLines.push({
                 fecha: campoFechaDesde.value || toIsoDate(new Date()),
-                concepto: "",
+                concepto: defaultConcept,
                 uds: 1,
                 precio: 0
             });
@@ -396,15 +452,46 @@
 
             // Filtro Estado
             const st = (item.estado || "pendiente").toLowerCase();
-            if (state.filtroEstado === "activos") {
-                return st !== "anulada" && st !== "rechazada" && st !== "archivada" && st !== "caducado";
-            }
-            if (state.filtroEstado === "todos") return true;
-            if (state.filtroEstado === "pendientes" && (st === "pendiente" || st === "enviada")) return true;
-            if (state.filtroEstado === "confirmados" && (st === "confirmada" || st === "aceptada")) return true;
-            if (state.filtroEstado === "anulados" && (st === "anulada" || st === "rechazada" || st === "caducado")) return true;
 
-            return st.includes(state.filtroEstado); // fallback simple
+            // 1. ACTIVOS: solo (PENDIENTE or ENVIADA) OR (CONFIRMADA/ACEPTADA con fecha >= Hoy)
+            // EXCLUYE: ANULADA, RECHAZADA, ARCHIVADA, CADUCADO
+            if (state.filtroEstado === "activos") {
+                if (st === "anulada" || st === "rechazada" || st === "archivada" || st === "caducado") return false;
+
+                // Si está confirmada/aceptada, verificar fecha
+                if (st === "confirmada" || st === "aceptada") {
+                    if (item.fechaDesde || item.fechaEvento) {
+                        const evtDate = new Date(item.fechaDesde || item.fechaEvento);
+                        const today = new Date();
+                        today.setHours(0, 0, 0, 0);
+                        evtDate.setHours(0, 0, 0, 0);
+                        // Si es pasado -> false
+                        if (evtDate < today) return false;
+                    }
+                }
+                // Si es pendiente/enviada (y no caducado, que ya lo filtramos arriba), pasa.
+                return true;
+            }
+
+            // 2. Pendientes: solo pendientes/enviadas (se ve si caducan o no por el badge, pero aqui el user pidio "solo pendientes")
+            if (state.filtroEstado === "pendientes") {
+                return (st === "pendiente" || st === "enviada");
+            }
+
+            // 3. Confirmados: TODOS (cualquier fecha)
+            if (state.filtroEstado === "confirmados") {
+                return (st === "confirmada" || st === "aceptada");
+            }
+
+            // 4. Anulados: TODOS
+            if (state.filtroEstado === "anulados") {
+                return (st === "anulada" || st === "rechazada" || st === "archivada" || st === "caducado");
+            }
+
+            // 5. Ver Todos/Fallback
+            if (state.filtroEstado === "todos") return true;
+
+            return st.includes(state.filtroEstado);
         });
 
         if (filtered.length === 0) {
@@ -472,7 +559,17 @@
 
             html += `
         <div class="presupuesto-row" data-id="${p.id}">
-           <div class="p-ref"><strong>${p.referencia || "---"}</strong></div>
+           <div class="p-ref">
+                <strong>${p.referencia || "---"}</strong>
+                ${p.updatedAt && p.updatedAt.toDate ? (() => {
+                    const d = p.updatedAt.toDate();
+                    const day = String(d.getDate()).padStart(2, '0');
+                    const month = String(d.getMonth() + 1).padStart(2, '0');
+                    const hours = String(d.getHours()).padStart(2, '0');
+                    const mins = String(d.getMinutes()).padStart(2, '0');
+                    return `<div style="font-size:9px; color:#999; margin-top:2px;">Edit: ${day}/${month} ${hours}:${mins}</div>`;
+                })() : ""}
+           </div>
            <div class="p-fecha">${fechaFmt}</div>
            <div class="p-salon" style="font-size:12px; color:#555; text-align:left;">${p.salon || "---"}</div>
            <div class="p-cliente" style="text-align:left;">
@@ -534,11 +631,14 @@
             if (campoNotaComercial) campoNotaComercial.value = item.notaComercial || "";
 
             // Restore Lines
+            // Restore Lines
             currentLines = item.lines || [];
             if (currentLines.length === 0 && item.importeTotal > 0) {
                 // Migration logic
                 currentLines.push({ fecha: item.fechaDesde || item.fechaEvento, concepto: "Importe Migrado", uds: 1, precio: item.importeTotal });
             }
+            updateCapacityDisplay();
+            updateStatusUI(); // Sync UI
             renderLines();
 
         } else {
@@ -556,7 +656,7 @@
             campoCliente.value = "";
             campoTipoEvento.value = "Banquete / Celebración";
 
-            campoTurno.value = "Día completo";
+            campoTurno.value = "";
             campoPaxAdultos.value = "";
             campoPaxNinos.value = "";
 
@@ -573,8 +673,86 @@
             if (campoNotaComercial) campoNotaComercial.value = "";
 
             currentLines = [];
+            updateCapacityDisplay();
+            updateStatusUI(); // Sync UI
             renderLines();
         }
+    }
+
+    // --- Status UI Logic ---
+    const btnAnular = document.getElementById("btnAnular");
+    const btnConfirmar = document.getElementById("btnConfirmar");
+    const statusTextDisplay = document.getElementById("statusTextDisplay");
+
+    function updateStatusUI() {
+        const val = campoEstado.value;
+        if (!statusTextDisplay) return;
+
+        // Reset Styles
+        statusTextDisplay.className = "text-xs font-bold uppercase mr-2 border px-2 py-1 rounded";
+
+        if (val === "pendiente") {
+            statusTextDisplay.textContent = "PENDIENTE";
+            statusTextDisplay.classList.add("text-slate-500", "border-slate-200", "bg-slate-50");
+            if (btnAnular) btnAnular.classList.remove("hidden");
+            if (btnConfirmar) btnConfirmar.classList.remove("hidden");
+        } else if (val === "confirmada") {
+            statusTextDisplay.textContent = "CONFIRMADA";
+            statusTextDisplay.classList.add("text-green-700", "border-green-200", "bg-green-50");
+            // Can't confirm again, but can cancel? Or maybe hide actions?
+            if (btnAnular) btnAnular.classList.remove("hidden"); // Allow rollback
+            if (btnConfirmar) btnConfirmar.classList.add("hidden");
+        } else if (val === "rechazada" || val === "anulada") {
+            statusTextDisplay.textContent = "RECHAZADA";
+            statusTextDisplay.classList.add("text-red-700", "border-red-200", "bg-red-50");
+            // Can confirm if changed mind?
+            if (btnAnular) btnAnular.classList.add("hidden");
+            if (btnConfirmar) btnConfirmar.classList.remove("hidden"); // Allow restore
+        } else {
+            statusTextDisplay.textContent = val.toUpperCase();
+            statusTextDisplay.classList.add("text-gray-500", "border-gray-200", "bg-gray-50");
+            if (btnAnular) btnAnular.classList.remove("hidden");
+            if (btnConfirmar) btnConfirmar.classList.remove("hidden");
+        }
+    }
+
+    // Button Listeners
+    if (btnAnular) {
+        btnAnular.onclick = async () => {
+            if (confirm("¿Marcar este presupuesto como RECHAZADO? Se cancelará la reserva del salón.")) {
+                campoEstado.value = "rechazada";
+                updateStatusUI();
+                await guardarDatos(); // Save the rejection state
+
+                // Sync: Cancel Salones Reservation
+                if (state.editingId) {
+                    try {
+                        const snap = await db.collection("reservas_salones").where("presupuestoId", "==", state.editingId).get();
+                        if (!snap.empty) {
+                            // Update all matches (usually 1)
+                            const batch = db.batch();
+                            snap.docs.forEach(doc => {
+                                batch.update(doc.ref, { estado: 'cancelada' });
+                            });
+                            await batch.commit();
+                            alert("⚠️ Presupuesto rechazado y Reserva(s) CANCELADA(S) en Salones.");
+                        }
+                    } catch (e) {
+                        console.error("Error cancelling reservation:", e);
+                        alert("Error cancelando reserva en Salones: " + e.message);
+                    }
+                }
+            }
+        };
+    }
+    if (btnConfirmar) {
+        btnConfirmar.onclick = async () => {
+            if (confirm("¿Confirmar este presupuesto y bloquear salón?")) {
+                campoEstado.value = "confirmada";
+                updateStatusUI();
+                await guardarDatos();
+            }
+        };
     }
 
     function cerrarModal() {
@@ -881,6 +1059,174 @@
         }
     };
 
+    async function syncWithSalones(presupuestoId, pData) {
+        if (pData.estado !== 'confirmada') return;
+
+        try {
+            const reservasCol = db.collection("reservas_salones");
+            // Check if exists
+            const snap = await reservasCol.where("presupuestoId", "==", presupuestoId).get();
+
+            const reservaPayload = {
+                hotel: pData.hotel,
+                salon: pData.salon,
+                cliente: pData.cliente,
+                fecha: pData.fechaDesde, // Main date
+                estado: 'confirmada',
+                revisado: false, // New from budget, likely needs review
+                presupuestoId: presupuestoId,
+                referenciaPresupuesto: pData.referencia,
+                contact: {
+                    tel: pData.telefono || "",
+                    email: pData.email || ""
+                },
+                detalles: {
+                    jornada: pData.turno || "todo",
+                    montaje: pData.montaje || "",
+                    hora: pData.horaInicio || "",
+                    pax_adultos: pData.paxAdultos || 0,
+                    pax_ninos: pData.paxNinos || 0
+                },
+                notas: {
+                    interna: pData.notas || "",
+                    cliente: pData.notasCliente || ""
+                },
+                servicios: (pData.lines || []).map(l => ({
+                    fecha: l.fecha,
+                    concepto: l.concepto,
+                    uds: l.uds,
+                    precio: l.precio,
+                    total: (l.uds || 0) * (l.precio || 0)
+                })),
+                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+            };
+
+            if (!snap.empty) {
+                // Update first match
+                const resId = snap.docs[0].id;
+                await reservasCol.doc(resId).update(reservaPayload);
+                console.log("Reserva Sincronizada (Actualizada):", resId);
+            } else {
+                // Create
+                reservaPayload.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+                await reservasCol.add(reservaPayload);
+                console.log("Reserva Sincronizada (Creada)");
+            }
+
+        } catch (e) {
+            console.error("Error syncing with Salones:", e);
+            alert("Presupuesto guardado, pero hubo un error sincronizando con Salones: " + e.message);
+        }
+    }
+
+    async function syncWithRestaurante(presupuestoId, pData) {
+        if (pData.estado !== 'confirmada') return;
+
+        try {
+            const reservasRestCol = db.collection("reservas_restaurante");
+
+            // 1. Detect intended shifts from Lines
+            const lines = pData.lines || [];
+            const targets = new Map(); // Use Map to store Shift -> Price
+            let hasSalonMenu = false; // Flag to detect Salon food
+
+            lines.forEach(l => {
+                const c = (l.concepto || '').toLowerCase();
+                const isRte = /\b(rte|restaurante)\b/i.test(c);
+                const isMenu = /\b(menú|menu)\b/i.test(c);
+                const linePrice = parseFloat(l.precio) || 0;
+
+                if (isRte) {
+                    // Explicit Restaurant Line
+                    if (/\b(cena|dinner|noche)\b/i.test(c)) {
+                        targets.set('cena', linePrice);
+                    } else {
+                        // Default to lunch if Rte is specified but no shift
+                        targets.set('almuerzo', linePrice);
+                    }
+                } else if (isMenu) {
+                    // Menu WITHOUT Rte -> Salon Food
+                    hasSalonMenu = true;
+                }
+            });
+
+            // 2. Fallback to Jornada
+            if (targets.size === 0 && !hasSalonMenu) {
+                const jornada = (pData.turno || '').toLowerCase();
+                if (jornada.includes('tarde') || jornada.includes('noche') || jornada.includes('cena')) {
+                    targets.set('cena', 0); // No price from lines
+                } else {
+                    targets.set('almuerzo', 0);
+                }
+            }
+
+            // 3. Sync Logic (Loop through targets)
+            for (const [turnoTarget, price] of targets) {
+                // Check if reservation exists for this budget AND this shift
+                const snap = await reservasRestCol
+                    .where("presupuestoId", "==", presupuestoId)
+                    .where("turno", "==", turnoTarget)
+                    .get();
+
+                const reservaPayload = {
+                    hotel: pData.hotel || "Guadiana",
+                    espacio: "Restaurante",
+                    fecha: pData.fechaDesde,
+                    turno: turnoTarget,
+                    pax: (parseInt(pData.paxAdultos) || 0) + (parseInt(pData.paxNinos) || 0),
+                    precio: price, // Synced Price
+                    cliente: pData.cliente,
+                    telefono: pData.telefono || "",
+                    email: pData.email || "",
+                    notas: `[Ref: ${pData.referencia}] ${pData.notas || ""}`,
+                    estado: 'confirmada',
+                    origen: 'presupuesto',
+                    presupuestoId: presupuestoId,
+                    referenciaPresupuesto: pData.referencia,
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                };
+
+                // Add createAt only for new
+                if (snap.empty) {
+                    reservaPayload.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+                }
+
+                if (!snap.empty) {
+                    // Update existing
+                    const resId = snap.docs[0].id;
+                    await reservasRestCol.doc(resId).update(reservaPayload);
+                    console.log(`Reserva Restaurante (${turnoTarget}) Sincronizada (Actualizada):`, resId);
+                    alert(`✅ Sincronizado con Rte: Actualizada reserva de ${turnoTarget} (${price}€/pax)`);
+                } else {
+                    // Create new
+                    await reservasRestCol.add(reservaPayload);
+                    console.log(`Reserva Restaurante (${turnoTarget}) Sincronizada (Creada)`);
+                    alert(`✅ Sincronizado con Rte: Creada reserva de ${turnoTarget} (${price}€/pax)`);
+                }
+            }
+
+            // Optional: Handle cleanup if a shift was removed? 
+            // Current strict logic implies we only Create/Update what we see. 
+            // Deleting "orphaned" reservations for this budget (e.g. if it switched from Dinner to Lunch) 
+            // would require querying ALL reservations for this budgetId and deleting those NOT in `targets`.
+            // Let's implement that for robustness.
+
+            const allSnap = await reservasRestCol.where("presupuestoId", "==", presupuestoId).get();
+            allSnap.forEach(doc => {
+                const data = doc.data();
+                if (!targets.has(data.turno)) {
+                    // This reservation exists but is no longer valid according to current budget lines/turno
+                    // e.g. changed from "Cena" to "Almuerzo"
+                    console.log(`Eliminando reserva obsoleta (${data.turno}) id: ${doc.id}`);
+                    reservasRestCol.doc(doc.id).delete();
+                }
+            });
+
+        } catch (e) {
+            console.error("Error syncing with Restaurante:", e);
+        }
+    }
+
     async function guardarDatos() {
         try {
             // Validation: Past Date
@@ -890,17 +1236,21 @@
                 today.setHours(0, 0, 0, 0);
                 eventDate.setHours(0, 0, 0, 0); // Reset time to compare only dates
 
-                if (eventDate < today) {
-                    alert("⚠️ No se puede crear un presupuesto con fecha pasada.");
-                    return;
+                if (eventDate < today && !state.editingId) {
+                    if (!confirm("⚠️ La fecha es pasada. ¿Seguro que quieres guardar?")) {
+                        return;
+                    }
                 }
             }
+
+
 
             const pAdultos = parseInt(campoPaxAdultos.value) || 0;
             const pNinos = parseInt(campoPaxNinos.value) || 0;
             const totalPax = pAdultos + pNinos;
 
             const payload = {
+                referencia: state.editingId ? document.getElementById('labelRef').textContent : undefined,
                 hotel: hotelId,
                 fechaDesde: campoFechaDesde.value,
                 fechaHasta: campoFechaHasta.value,
@@ -932,6 +1282,8 @@
                 updatedAt: firebase.firestore.FieldValue.serverTimestamp()
             };
 
+            let savedId = state.editingId;
+
             if (state.editingId) {
                 // Update
                 await colPresupuestos.doc(state.editingId).update(payload);
@@ -942,7 +1294,14 @@
                 const nuevaRef = await generarReferenciaUnica();
                 payload.referencia = nuevaRef;
                 payload.createdAt = firebase.firestore.FieldValue.serverTimestamp();
-                await colPresupuestos.add(payload);
+                const docRef = await colPresupuestos.add(payload);
+                savedId = docRef.id;
+            }
+
+            // --- SYNC WITH SALONES ---
+            if (payload.estado === 'confirmada' && savedId) {
+                await syncWithSalones(savedId, payload);
+                await syncWithRestaurante(savedId, payload);
             }
 
             cerrarModal();
