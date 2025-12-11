@@ -796,12 +796,8 @@
                     "Email: info@hotelguadiana.es",
                     "Web: www.sercotelhoteles.com"
                 ];
-                // Use Base64 from js/logos.js
-                if (typeof LOGO_GUADIANA_BASE64 !== 'undefined') {
-                    logoFile = LOGO_GUADIANA_BASE64;
-                } else {
-                    logoFile = "Img/logo-guadiana.jpg"; // Fallback to path
-                }
+                // Force PNG Path (User Request)
+                logoFile = "Img/logo-guadiana.png";
             } else {
                 hotelName = "Cumbria Spa & Hotel";
                 hotelAddress = [
@@ -811,12 +807,8 @@
                     "Email: info@encumbria.es",
                     "Web: www.cumbriahotel.es"
                 ];
-                // Use Base64 from js/logos.js
-                if (typeof LOGO_CUMBRIA_BASE64 !== 'undefined') {
-                    logoFile = LOGO_CUMBRIA_BASE64;
-                } else {
-                    logoFile = "Img/logo-cumbria.jpg"; // Fallback to path
-                }
+                // Force PNG Path
+                logoFile = "Img/logo-cumbria.png";
             }
 
             // Helper to load image with timeout (Handles Data URL immediately)
@@ -841,12 +833,13 @@
                         canvas.width = img.width;
                         canvas.height = img.height;
                         const ctx = canvas.getContext("2d");
+                        ctx.clearRect(0, 0, canvas.width, canvas.height);
                         ctx.drawImage(img, 0, 0);
                         try {
-                            finish(canvas.toDataURL("image/jpeg"));
+                            finish(canvas.toDataURL("image/png"));
                         } catch (e) {
                             console.warn("Canvas tainted", e);
-                            finish(null);
+                            finish(url); // Fallback
                         }
                     };
                     img.onerror = () => {
@@ -890,7 +883,7 @@
 
             // --- HEADER ---
             // Header Bg
-            doc.setFillColor(245, 247, 250);
+            doc.setFillColor(255, 255, 255); // White (User Request)
             doc.rect(0, 0, 210, 40, 'F');
 
             // Logo (Left)
@@ -999,6 +992,13 @@
                 foot: [['', '', '', 'TOTAL', formatEuro(state.currentTotal)]],
                 footStyles: { fillColor: [245, 247, 250], textColor: [0, 0, 0], fontStyle: 'bold', halign: 'right' }
             });
+
+            // Add IVA Included text below Total
+            const finalYTable = doc.lastAutoTable.finalY;
+            doc.setFontSize(8);
+            doc.setTextColor(100);
+            doc.setFont(undefined, 'normal');
+            doc.text("I.V.A. incluido", 196, finalYTable + 5, null, null, 'right');
 
             const finalY = doc.lastAutoTable.finalY + 15;
 

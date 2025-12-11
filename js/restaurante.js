@@ -465,7 +465,7 @@
       filterFn = (r, dateStr) => dateStr >= utils.toIsoDate(dates[0]) && dateStr <= utils.toIsoDate(dates[6]);
     }
 
-    const logoUrl = (hotel === "Guadiana") ? "Img/logo-guadiana.svg" : "Img/logo-cumbria.svg";
+    const logoUrl = (hotel === "Guadiana") ? "Img/logo-guadiana.png" : "Img/logo-cumbria.png";
 
     let html = `
             <div style="font-family: sans-serif; padding: 20px;">
