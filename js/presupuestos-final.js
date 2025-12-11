@@ -926,14 +926,14 @@
             // Date & Ref
             doc.setFontSize(10);
             doc.setTextColor(100, 100, 100);
-            doc.text(`Fecha: ${formatDateES(new Date())}`, 14, 40); // Moved down
-            doc.text(`Ref: ${labelRef.textContent}`, 14, 45); // Moved down
+            doc.text(`Fecha: ${formatDateES(new Date())}`, 14, 45);
+            doc.text(`Ref: ${labelRef.textContent}`, 14, 50);
 
             // --- CLIENT INFO ---
-            const startY = 50;
+            const startY = 85; // Massive gap as requested
             doc.setDrawColor(200, 200, 200);
             doc.setLineWidth(0.1);
-            doc.line(14, 45, 196, 45); // Separator
+            doc.line(14, 70, 196, 70); // Separator moved down
 
             doc.setFontSize(14);
             doc.setTextColor(0, 0, 0);
