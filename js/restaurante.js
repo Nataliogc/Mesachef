@@ -697,6 +697,15 @@
       if (data.turno) document.getElementById("campoTurno").value = data.turno;
       if (data.estado) document.getElementById("campoEstado").value = data.estado;
 
+      // [FIX] Restore servicioIncluido checkbox state
+      if (data.servicioIncluido) {
+        checkServicio.checked = true;
+        document.getElementById("campoPrecio").disabled = true;
+      } else {
+        checkServicio.checked = false;
+        document.getElementById("campoPrecio").disabled = false;
+      }
+
       let dVal = dateStr;
       if (!dVal && data.fecha) dVal = data.fecha && data.fecha.toDate ? utils.toIsoDate(data.fecha.toDate()) : data.fecha;
       document.getElementById("campoFecha").value = dVal;
