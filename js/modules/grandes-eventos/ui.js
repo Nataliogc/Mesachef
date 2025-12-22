@@ -13,6 +13,7 @@ export function initEventListeners() {
     $('btnCloseModal')?.addEventListener('click', closeParticipantModal);
     $('formParticipant')?.addEventListener('submit', handleParticipantSubmit);
     $('btnToggleStatus')?.addEventListener('click', toggleStatus);
+    $('btnCancelEvent')?.addEventListener('click', handleCancelEvent);
 
     // Filters
     $('listStatusFilter')?.addEventListener('change', refreshEventsList);
@@ -24,6 +25,9 @@ export function initEventListeners() {
     ['pAdults', 'pKids', 'pCollectionDate'].forEach(id => {
         $(id)?.addEventListener('input', recalcModalFinancials);
     });
+
+    // Servicio Incluido Checkbox
+    $('pServicioIncluido')?.addEventListener('change', recalcModalFinancials);
 
     $('btnAddPayment')?.addEventListener('click', addPaymentToModal);
     $('paymentsList')?.addEventListener('click', handlePaymentListClick);
@@ -40,6 +44,14 @@ export function initEventListeners() {
     $('btnNewEventParams')?.addEventListener('click', () => $('modalNewEvent').classList.remove('hidden'));
     $('btnCloseNewEvent')?.addEventListener('click', () => $('modalNewEvent').classList.add('hidden'));
     $('btnCreateNewEvent')?.addEventListener('click', handleCreateNewEvent);
+
+    // Unsaved changes warning
+    window.addEventListener('beforeunload', (e) => {
+        if (state.hasUnsavedChanges) {
+            e.preventDefault();
+            e.returnValue = '';
+        }
+    });
 }
 
 // --- List View ---
@@ -101,6 +113,33 @@ export async function loadEventDetail(eventId) {
     $('inputPriceAdult').value = event.precioAdulto || 0;
     $('inputPriceChild').value = event.precioNino || 0;
 
+    // Update status badge and toggle button based on event status
+    const status = event.estado || 'abierto';
+    const badge = $('eventStatusBadge');
+    if (badge) {
+        badge.textContent = status === 'completo' ? 'CERRADO' : (status === 'anulado' ? 'ANULADO' : 'ABIERTO');
+        badge.className = status === 'completo' ? 'status-badge status-closed' : (status === 'anulado' ? 'status-badge status-closed' : 'status-badge status-open');
+    }
+
+    const btn = $('btnToggleStatus');
+    if (btn) {
+        btn.textContent = status === 'completo' ? 'Reabrir Evento' : 'Marcar Completo';
+    }
+
+    // Reset unsaved changes flag when loading event
+    state.hasUnsavedChanges = false;
+
+    // Add change listeners to detect unsaved changes
+    const configInputs = ['inputName', 'inputDate', 'inputCapacity', 'inputPriceAdult', 'inputPriceChild'];
+    configInputs.forEach(id => {
+        const input = $(id);
+        if (input) {
+            input.addEventListener('input', () => {
+                state.hasUnsavedChanges = true;
+            });
+        }
+    });
+
     // Load Participants
     await loadParticipants(eventId);
 }
@@ -134,6 +173,31 @@ export function renderParticipantsTable() {
         // Calcs
         const paid = (p.pagos || []).reduce((acc, pay) => acc + (parseFloat(pay.amount) || 0), 0) + (parseFloat(p.pagado) || 0); // Legacy compat
 
+        // Calculate total and pending
+        const priceAdult = parseFloat($('inputPriceAdult')?.value) || 0;
+        const priceChild = parseFloat($('inputPriceChild')?.value) || 0;
+        const isIncluded = p.servicioIncluido || false;
+
+        // Always calculate real total
+        const total = ((parseInt(p.adultos) || 0) * priceAdult) + ((parseInt(p.ninos) || 0) * priceChild);
+
+        // If included, add total to paid automatically
+        const displayPaid = isIncluded ? (paid + total) : paid;
+        const pending = Math.max(0, total - displayPaid);
+
+        // Display logic for pending column
+        let pendingDisplay;
+        if (isIncluded) {
+            pendingDisplay = '<span class="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded">Incluido</span>';
+        } else if (pending > 0) {
+            pendingDisplay = `<span class="font-mono text-xs text-orange-600 font-semibold">${Utils.formatCurrency(pending)}</span>`;
+        } else {
+            pendingDisplay = '<span class="font-mono text-xs text-slate-400">-</span>';
+        }
+
+        // Total always shows real amount
+        const totalDisplay = total > 0 ? Utils.formatCurrency(total) : '-';
+
         tr.innerHTML = `
             <td class="font-mono text-xs">${p.mesa || '-'}</td>
             <td class="font-medium ${isAnulado ? 'text-red-700 line-through' : 'text-slate-800'}">
@@ -141,9 +205,9 @@ export function renderParticipantsTable() {
             </td>
             <td class="text-xs text-slate-500">${p.telefono || '-'}</td>
             <td><span class="font-bold">${p.adultos}</span> / ${p.ninos}</td>
-            <td class="font-mono text-xs">-</td>
-            <td class="font-mono text-xs text-green-700">${Utils.formatCurrency(paid)}</td>
-            <td class="font-mono text-xs text-orange-600">-</td>
+            <td class="font-mono text-xs">${totalDisplay}</td>
+            <td class="font-mono text-xs text-green-700">${Utils.formatCurrency(displayPaid)}</td>
+            <td>${pendingDisplay}</td>
             <td>
                 <button class="btn-action edit-p" data-id="${p.id}">Editar</button>
             </td>
@@ -178,9 +242,18 @@ export function openParticipantModal(participant = null) {
         state.modalPagos = participant.pagos ? [...participant.pagos] : [];
         $('pId').value = participant.id;
         $('pName').value = participant.titular;
+        $('pPhone').value = participant.telefono || '';
+        $('pEmail').value = participant.email || '';
         $('pAdults').value = participant.adultos;
         $('pKids').value = participant.ninos;
-        // ... fill other fields
+        $('pObservaciones').value = participant.observaciones || '';
+
+        // Servicio Incluido checkbox
+        $('pServicioIncluido').checked = participant.servicioIncluido || false;
+
+        // Display timestamps
+        $('pCreatedAt').value = Utils.formatTimestamp(participant.createdAt);
+        $('pUpdatedAt').value = Utils.formatTimestamp(participant.updatedAt);
 
         // Show Cancel Button logic
         const btnCancel = $('btnShowCancel');
@@ -194,12 +267,15 @@ export function openParticipantModal(participant = null) {
         btnCancel.style.display = 'block';
 
     } else {
-        // New
+        // New participant
         state.modalPagos = [];
         $('pId').value = '';
         $('formParticipant').reset();
         $('btnShowCancel').style.display = 'none';
         $('pCollectionDate').value = new Date().toISOString().split('T')[0];
+        $('pServicioIncluido').checked = false;
+        $('pCreatedAt').value = 'No disponible';
+        $('pUpdatedAt').value = 'No disponible';
     }
 
     renderModalPayments();
@@ -207,14 +283,52 @@ export function openParticipantModal(participant = null) {
 }
 
 function recalcModalFinancials() {
-    // ... Implement logic similar to original, checking capacity
-    // Updating 'pWarningCapacity' visibility
     const adults = parseInt($('pAdults').value) || 0;
     const kids = parseInt($('pKids').value) || 0;
-    const currentTotal = adults + kids;
+    const isServiceIncluded = $('pServicioIncluido').checked;
 
-    // Check availability using Utils or State
-    // ...
+    // Get prices from event config
+    const priceAdult = parseFloat($('inputPriceAdult')?.value) || 0;
+    const priceChild = parseFloat($('inputPriceChild')?.value) || 0;
+
+    // Calculate total cost
+    let totalCost = 0;
+    if (!isServiceIncluded) {
+        totalCost = (adults * priceAdult) + (kids * priceChild);
+    }
+
+    // Calculate paid amount
+    const paid = state.modalPagos.reduce((acc, p) => acc + (parseFloat(p.amount) || 0), 0);
+
+    // Calculate pending
+    const pending = Math.max(0, totalCost - paid);
+
+    // Update UI
+    $('pTotalCalc').value = Utils.formatCurrency(totalCost);
+    $('pPaidSummary').value = Utils.formatCurrency(paid);
+    $('pPendingCalc').value = Utils.formatCurrency(pending);
+
+    // Check capacity warning
+    const currentTotal = adults + kids;
+    const capacity = parseInt($('inputCapacity')?.value) || 0;
+    const currentPax = state.participants
+        .filter(p => !p.estado || p.estado === 'activo')
+        .reduce((acc, p) => acc + (parseInt(p.adultos) || 0) + (parseInt(p.ninos) || 0), 0);
+
+    const oldPax = parseInt($('pOldPax').value) || 0;
+    const netNewPax = currentTotal - oldPax;
+    const wouldExceed = (currentPax + netNewPax) > capacity;
+
+    const warning = $('pWarningCapacity');
+    if (warning) {
+        if (wouldExceed) {
+            warning.classList.remove('hidden');
+            warning.style.display = 'flex';
+        } else {
+            warning.classList.add('hidden');
+            warning.style.display = 'none';
+        }
+    }
 }
 
 // --- Helpers ---
@@ -342,7 +456,9 @@ async function handleParticipantSubmit(e) {
         email: $('pEmail').value,
         adultos: parseInt($('pAdults').value) || 0,
         ninos: parseInt($('pKids').value) || 0,
+        observaciones: $('pObservaciones').value,
         pagos: state.modalPagos,
+        servicioIncluido: $('pServicioIncluido').checked
     };
 
     try {
@@ -366,10 +482,70 @@ function closeParticipantModal() {
     $('modalParticipant').classList.add('hidden');
 }
 
-function toggleStatus() {
-    // Implementation for toggling status (open/complete)
+async function toggleStatus() {
+    if (!state.currentEventId || !state.currentEvent) {
+        alert('No hay evento cargado');
+        return;
+    }
+
+    const currentStatus = state.currentEvent.estado || 'abierto';
+    const newStatus = currentStatus === 'completo' ? 'abierto' : 'completo';
+
+    try {
+        await API.updateEvent(state.currentEventId, { estado: newStatus });
+        state.currentEvent.estado = newStatus;
+
+        // Update button text and badge
+        const btn = $('btnToggleStatus');
+        if (btn) {
+            btn.textContent = newStatus === 'completo' ? 'Reabrir Evento' : 'Marcar Completo';
+        }
+
+        // Update status badge if exists
+        const badge = $('eventStatusBadge');
+        if (badge) {
+            badge.textContent = newStatus === 'completo' ? 'CERRADO' : 'ABIERTO';
+            badge.className = newStatus === 'completo' ? 'status-badge status-closed' : 'status-badge status-open';
+        }
+
+        alert(`Estado actualizado a: ${newStatus.toUpperCase()}`);
+    } catch (err) {
+        console.error('Error updating status:', err);
+        alert('Error al actualizar el estado');
+    }
 }
 
 function handleCreateNewEvent() {
     // Implementation for creating new event
+}
+
+async function handleCancelEvent() {
+    if (!state.currentEventId || !state.currentEvent) {
+        alert('No hay evento cargado');
+        return;
+    }
+
+    const eventName = state.currentEvent.nombre || 'este evento';
+    const confirmMessage = `⚠️ ANULAR EVENTO\n\n¿Estás seguro de que deseas anular "${eventName}"?\n\nEsta acción:\n- Marcará el evento como ANULADO\n- Liberará la reserva del salón\n- NO eliminará ningún dato\n\n¿Deseas continuar?`;
+
+    if (!confirm(confirmMessage)) {
+        return;
+    }
+
+    try {
+        const { salonId, fecha } = state.currentEvent;
+        await API.cancelEvent(state.currentEventId, salonId, fecha);
+
+        // Update local state
+        state.currentEvent.estado = 'anulado';
+
+        // Show success message
+        alert('✓ Evento anulado correctamente.\n\nEl estado se ha actualizado y la reserva del salón ha sido liberada.');
+
+        // Refresh the page to reflect changes
+        window.location.reload();
+    } catch (err) {
+        console.error('Error cancelling event:', err);
+        alert('Error al anular el evento. Por favor, inténtalo de nuevo.');
+    }
 }

@@ -12,6 +12,7 @@
         currentEvent: null,
         participants: [],
         modalPagos: [],
+        hasUnsavedChanges: false,
         hotelInfo: {
             name: "Sercotel Guadiana", // Default
             logo: "Img/logo-guadiana.png",
@@ -59,6 +60,29 @@
         return `${d}/${m}/${y}`;
     }
 
+    function formatTimestamp(timestamp) {
+        if (!timestamp) return "No disponible";
+
+        // Handle Firebase Timestamp object
+        let date;
+        if (timestamp.toDate && typeof timestamp.toDate === 'function') {
+            date = timestamp.toDate();
+        } else if (timestamp instanceof Date) {
+            date = timestamp;
+        } else {
+            return "No disponible";
+        }
+
+        // Format as: DD/MM/YYYY, HH:MM
+        return date.toLocaleString('es-ES', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+    }
+
     // [FIX] Get hotel logo path
     function getHotelLogo() {
         const hotelId = state.hotelInfo?.id || 'Guadiana';
@@ -88,13 +112,18 @@
             } else {
                 totalAdults += parseInt(p.adultos) || 0;
                 totalKids += parseInt(p.ninos) || 0;
-                totalCollected += paidAmount;
 
                 const priceAd = parseFloat(document.getElementById("inputPriceAdult").value) || 0;
                 const priceCh = parseFloat(document.getElementById("inputPriceChild").value) || 0;
                 const totalCost = ((parseInt(p.adultos) || 0) * priceAd) + ((parseInt(p.ninos) || 0) * priceCh);
 
-                const pending = Math.max(0, totalCost - paidAmount);
+                // Si está incluido, sumar el total al recaudado
+                const isIncluded = p.servicioIncluido || false;
+                const effectivePaid = isIncluded ? (paidAmount + totalCost) : paidAmount;
+
+                totalCollected += effectivePaid;
+
+                const pending = Math.max(0, totalCost - effectivePaid);
                 totalPending += pending;
             }
         });
@@ -134,13 +163,34 @@
             try {
                 const snapshot = await query.get();
                 let events = [];
-                snapshot.forEach(doc => {
+
+                // Process each event with participant stats
+                for (const doc of snapshot.docs) {
                     const data = doc.data();
                     const evtHotel = data.hotel || "Guadiana"; // Legacy fallback
+
                     if (evtHotel === currentHotel) {
-                        events.push({ id: doc.id, ...data });
+                        const eventData = { id: doc.id, ...data };
+
+                        // Fetch participants for this event to calculate totalPax
+                        const participantsSnapshot = await participantesRef.where("eventoId", "==", doc.id).get();
+                        let totalPax = 0;
+
+                        participantsSnapshot.forEach(pDoc => {
+                            const p = pDoc.data();
+                            // Only count active participants
+                            const isAnulado = p.estado && p.estado.startsWith('anulado');
+                            if (!isAnulado) {
+                                totalPax += (parseInt(p.adultos) || 0) + (parseInt(p.ninos) || 0);
+                            }
+                        });
+
+                        // Add stats to event object
+                        eventData.stats = { totalPax };
+                        events.push(eventData);
                     }
-                });
+                }
+
                 return events;
             } catch (e) {
                 console.error("Error fetching events", e);
@@ -218,7 +268,8 @@
                 // Create new
                 await participantesRef.add({
                     ...dataToSave,
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
                 });
             }
         }
@@ -247,8 +298,61 @@
             });
         }
 
+        async function cancelEvent(eventId, salonId, fecha) {
+            console.log('cancelEvent called with:', { eventId, salonId, fecha });
+            if (!initAPI()) {
+                console.error('API not initialized');
+                return;
+            }
+
+            try {
+                console.log('Updating event status to anulado...');
+                // Update event status to 'anulado'
+                await eventosRef.doc(eventId).update({
+                    estado: 'anulado',
+                    fechaAnulacion: firebase.firestore.FieldValue.serverTimestamp(),
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                console.log('Event status updated successfully');
+
+                // Release salon reservation if exists
+                if (salonId && fecha) {
+                    console.log('Releasing salon reservation...');
+                    await releaseSalonReservation(salonId, fecha, eventId);
+                }
+            } catch (error) {
+                console.error('Error in cancelEvent:', error);
+                throw error; // Re-throw to be caught by handleCancelEvent
+            }
+        }
+
+        async function releaseSalonReservation(salonId, fecha, eventoId) {
+            try {
+                // Query for the salon reservation by eventoId
+                const salonesRef = db.collection("reservas_salones");
+                const snapshot = await salonesRef
+                    .where("eventoId", "==", eventoId)
+                    .get();
+
+                // Mark reservation as cancelled (don't delete, preserve data)
+                const batch = db.batch();
+                snapshot.forEach(doc => {
+                    batch.update(doc.ref, {
+                        estado: 'cancelado',
+                        fechaCancelacion: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                });
+
+                await batch.commit();
+                console.log(`Reserva de salón liberada para evento ${eventoId}`);
+            } catch (e) {
+                console.error("Error releasing salon reservation:", e);
+                // Don't throw - event cancellation should proceed even if salon release fails
+            }
+        }
+
         return {
-            fetchEvents, fetchEventDetails, fetchParticipants, createEvent, updateEvent, saveParticipant, cancelParticipant, recoverParticipant, fetchSalonConfig
+            fetchEvents, fetchEventDetails, fetchParticipants, createEvent, updateEvent, saveParticipant, cancelParticipant, recoverParticipant, cancelEvent, fetchSalonConfig
         };
     })();
 
@@ -460,6 +564,9 @@
             $(id)?.addEventListener('input', recalcModalFinancials);
         });
 
+        // Servicio Incluido Checkbox
+        $('pServicioIncluido')?.addEventListener('change', recalcModalFinancials);
+
         // [FIX] Real-time Dashboard Updates
         ['inputCapacity', 'inputPriceAdult', 'inputPriceChild'].forEach(id => {
             $(id)?.addEventListener('input', updateDashboard);
@@ -569,7 +676,14 @@
         }
     }
 
-    function showListView() {
+    async function showListView() {
+        // Check for unsaved changes
+        if (state.hasUnsavedChanges) {
+            if (!confirm('⚠️ Hay cambios sin guardar. ¿Deseas continuar sin guardar?')) {
+                return; // Cancel navigation
+            }
+        }
+
         $('view-detail').classList.add('hidden');
         $('view-list').classList.remove('hidden');
 
@@ -584,6 +698,12 @@
         try {
             window.history.pushState({}, document.title, window.location.pathname);
         } catch (e) { console.warn("History API restricted on file://"); }
+
+        // Reset unsaved changes flag when leaving detail view
+        state.hasUnsavedChanges = false;
+
+        // Refresh event list to show any changes made
+        await refreshEventsList();
     }
 
     async function renderEventsList(events) {
@@ -639,6 +759,33 @@
             $('inputPriceAdult').value = event.precioAdulto || 0;
             $('inputPriceChild').value = event.precioNino || 0;
 
+            // Update status badge and toggle button based on event status
+            const status = event.estado || 'abierto';
+            const badge = $('eventStatusBadge');
+            if (badge) {
+                badge.textContent = status === 'completo' ? 'CERRADO' : (status === 'anulado' ? 'ANULADO' : 'ABIERTO');
+                badge.className = status === 'completo' ? 'status-badge status-closed' : (status === 'anulado' ? 'status-badge status-closed' : 'status-badge status-open');
+            }
+
+            const btn = $('btnToggleStatus');
+            if (btn) {
+                btn.textContent = status === 'completo' ? 'Reabrir Evento' : 'Marcar Completo';
+            }
+
+            // Reset unsaved changes flag when loading event
+            state.hasUnsavedChanges = false;
+
+            // Add change listeners to detect unsaved changes
+            const configInputs = ['inputName', 'inputDate', 'inputCapacity', 'inputPriceAdult', 'inputPriceChild'];
+            configInputs.forEach(id => {
+                const input = $(id);
+                if (input) {
+                    input.addEventListener('input', () => {
+                        state.hasUnsavedChanges = true;
+                    });
+                }
+            });
+
             await loadParticipants(eventId);
         } catch (e) { console.error(e); }
     }
@@ -670,8 +817,27 @@
             // [FIX] Calculate total and pending
             const priceAdult = parseFloat($('inputPriceAdult')?.value) || 0;
             const priceChild = parseFloat($('inputPriceChild')?.value) || 0;
+            const isIncluded = p.servicioIncluido || false;
+
+            // Always calculate real total
             const total = ((parseInt(p.adultos) || 0) * priceAdult) + ((parseInt(p.ninos) || 0) * priceChild);
-            const pending = Math.max(0, total - paid);
+
+            // If included, add total to paid automatically
+            const displayPaid = isIncluded ? (paid + total) : paid;
+            const pending = Math.max(0, total - displayPaid);
+
+            // Display logic for pending column
+            let pendingDisplay;
+            if (isIncluded) {
+                pendingDisplay = '<span class="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded">Incluido</span>';
+            } else if (pending > 0) {
+                pendingDisplay = `<span class="font-mono text-xs text-orange-600 font-semibold">${formatCurrency(pending)}</span>`;
+            } else {
+                pendingDisplay = '<span class="font-mono text-xs text-slate-400">-</span>';
+            }
+
+            // Total always shows real amount
+            const totalDisplay = total > 0 ? formatCurrency(total) : '-';
 
             tr.innerHTML = `
                 <td class="font-mono text-xs">${p.mesa || '-'}</td>
@@ -680,9 +846,9 @@
                 </td>
                 <td class="text-xs text-slate-500">${p.telefono || '-'}</td>
                 <td><span class="font-bold">${p.adultos}</span> / ${p.ninos}</td>
-                <td class="font-mono text-xs font-semibold">${total > 0 ? formatCurrency(total) : '-'}</td>
-                <td class="font-mono text-xs text-green-700">${formatCurrency(paid)}</td>
-                <td class="font-mono text-xs ${pending > 0 ? 'text-orange-600 font-semibold' : 'text-slate-400'}">${pending > 0 ? formatCurrency(pending) : '-'}</td>
+                <td class="font-mono text-xs">${totalDisplay}</td>
+                <td class="font-mono text-xs text-green-700">${formatCurrency(displayPaid)}</td>
+                <td>${pendingDisplay}</td>
                 <td><button class="btn-action edit-p" data-id="${p.id}">Editar</button></td>
             `;
             tr.querySelector('.edit-p').addEventListener('click', () => openParticipantModal(p));
@@ -744,6 +910,13 @@
             $('pKids').value = participant.ninos;
             $('pObservaciones').value = participant.observaciones || '';
 
+            // Servicio Incluido checkbox
+            $('pServicioIncluido').checked = participant.servicioIncluido || false;
+
+            // Display timestamps
+            $('pCreatedAt').value = formatTimestamp(participant.createdAt);
+            $('pUpdatedAt').value = formatTimestamp(participant.updatedAt);
+
             // [FIX] Store Old Pax to avoid calculation errors on save
             const oldTotal = (parseInt(participant.adultos) || 0) + (parseInt(participant.ninos) || 0);
             $('pOldPax').value = oldTotal;
@@ -770,6 +943,9 @@
             $('pAdults').value = 1;
             $('pAdults').value = 1;
             $('pOldPax').value = 0;
+            $('pServicioIncluido').checked = false;
+            $('pCreatedAt').value = 'No disponible';
+            $('pUpdatedAt').value = 'No disponible';
         }
 
         // [FIX] Set Default Date to Today
@@ -783,10 +959,15 @@
         // Simple recalc visual logic if needed
         const adults = parseInt($('pAdults').value) || 0;
         const kids = parseInt($('pKids').value) || 0;
+        const isServiceIncluded = $('pServicioIncluido')?.checked || false;
         const priceAd = parseFloat($('inputPriceAdult').value) || 0;
         const priceCh = parseFloat($('inputPriceChild').value) || 0;
 
-        const total = (adults * priceAd) + (kids * priceCh);
+        let total = 0;
+        if (!isServiceIncluded) {
+            total = (adults * priceAd) + (kids * priceCh);
+        }
+
         const paid = state.modalPagos.reduce((acc, p) => acc + (parseFloat(p.amount) || 0), 0);
 
         $('pTotalCalc').value = total.toFixed(2);
@@ -846,6 +1027,7 @@
             ninos: newKids,
             observaciones: $('pObservaciones').value || '',
             pagos: state.modalPagos,
+            servicioIncluido: $('pServicioIncluido')?.checked || false
         };
         try {
             await API.saveParticipant(data);
@@ -1110,6 +1292,8 @@
 
     $('btnCreateNewEvent')?.addEventListener('click', handleCreateNewEvent);
 
+    $('btnCancelEvent')?.addEventListener('click', handleCancelEvent);
+
     async function saveConfig() {
         const id = state.currentEventId;
         if (!id) return;
@@ -1122,10 +1306,66 @@
         };
         try {
             await API.updateEvent(id, updates);
-            alert('Guardado.');
+            state.hasUnsavedChanges = false; // Reset flag after save
             state.currentEvent = { ...state.currentEvent, ...updates };
+
+            // Update UI without reload
             updateDashboard();
+
+            // Show success feedback
+            const btn = $('btnSaveEventConfig');
+            const originalText = btn ? btn.textContent : '';
+            if (btn) {
+                btn.textContent = '✓ Guardado';
+                btn.style.backgroundColor = '#10b981';
+                setTimeout(() => {
+                    btn.textContent = originalText;
+                    btn.style.backgroundColor = '';
+                }, 2000);
+            } else {
+                alert('Guardado.');
+            }
         } catch (e) { console.error(e); alert('Error al guardar.'); }
+    }
+
+    async function toggleStatus() {
+        if (!state.currentEventId || !state.currentEvent) {
+            alert('No hay evento cargado');
+            return;
+        }
+
+        const currentStatus = state.currentEvent.estado || 'abierto';
+        const newStatus = currentStatus === 'completo' ? 'abierto' : 'completo';
+
+        try {
+            await API.updateEvent(state.currentEventId, { estado: newStatus });
+            state.currentEvent.estado = newStatus;
+
+            // Update button text and badge
+            const btn = $('btnToggleStatus');
+            if (btn) {
+                btn.textContent = newStatus === 'completo' ? 'Reabrir Evento' : 'Marcar Completo';
+            }
+
+            // Update status badge if exists
+            const badge = $('eventStatusBadge');
+            if (badge) {
+                badge.textContent = newStatus === 'completo' ? 'CERRADO' : 'ABIERTO';
+                badge.className = newStatus === 'completo' ? 'status-badge status-closed' : 'status-badge status-open';
+            }
+
+            // Visual feedback on button instead of alert
+            if (btn) {
+                const originalBg = btn.style.backgroundColor;
+                btn.style.backgroundColor = '#10b981';
+                setTimeout(() => {
+                    btn.style.backgroundColor = originalBg;
+                }, 1500);
+            }
+        } catch (err) {
+            console.error('Error updating status:', err);
+            alert('Error al actualizar el estado');
+        }
     }
 
     async function refreshEventsList() {
@@ -1136,7 +1376,7 @@
             const statusFilter = $('listStatusFilter')?.value || 'todos';
 
             const filtered = events.filter(e => {
-                if (statusFilter === 'abierto') return e.estado !== 'completo' && e.estado !== 'cerrado';
+                if (statusFilter === 'abierto') return e.estado !== 'completo' && e.estado !== 'cerrado' && e.estado !== 'anulado';
                 if (statusFilter === 'completo') return e.estado === 'completo' || e.estado === 'cerrado';
                 return true;
             });
@@ -1146,11 +1386,66 @@
         } catch (e) { console.warn("Error refreshing events", e); }
     }
 
+    async function handleCancelEvent() {
+        if (!state.currentEventId || !state.currentEvent) {
+            alert('No hay evento cargado');
+            return;
+        }
+
+        const eventName = state.currentEvent.nombre || 'este evento';
+        const confirmMessage = `⚠️ ANULAR EVENTO\n\n¿Estás seguro de que deseas anular "${eventName}"?\n\nEsta acción:\n- Marcará el evento como ANULADO\n- Liberará la reserva del salón\n- NO eliminará ningún dato\n\n¿Deseas continuar?`;
+
+        if (!confirm(confirmMessage)) {
+            return;
+        }
+
+        try {
+            const { salonId, fecha } = state.currentEvent;
+            await API.cancelEvent(state.currentEventId, salonId, fecha);
+
+            // Update local state
+            state.currentEvent.estado = 'anulado';
+
+            // Update badge dynamically
+            const badge = $('eventStatusBadge');
+            if (badge) {
+                badge.textContent = 'ANULADO';
+                badge.className = 'status-badge status-closed';
+            }
+
+            // Disable action buttons
+            const btnToggle = $('btnToggleStatus');
+            const btnSave = $('btnSaveEventConfig');
+            const btnCancel = $('btnCancelEvent');
+            if (btnToggle) btnToggle.disabled = true;
+            if (btnSave) btnSave.disabled = true;
+            if (btnCancel) {
+                btnCancel.textContent = '✓ Evento Anulado';
+                btnCancel.disabled = true;
+                btnCancel.style.backgroundColor = '#6b7280';
+            }
+
+            // Show success message
+            alert('✓ Evento anulado correctamente.\n\nEl estado se ha actualizado y la reserva del salón ha sido liberada.');
+        } catch (err) {
+            console.error('Error cancelling event:', err);
+            alert('Error al anular el evento. Por favor, inténtalo de nuevo.');
+        }
+    }
+
     // [FIX] Ensure init is called
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', init);
     } else {
         init();
     }
+
+    // Unsaved changes warning for browser close/refresh
+    window.addEventListener('beforeunload', (e) => {
+        if (state.hasUnsavedChanges) {
+            e.preventDefault();
+            e.returnValue = '';
+        }
+    });
 
 })();

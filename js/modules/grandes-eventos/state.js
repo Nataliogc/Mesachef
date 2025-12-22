@@ -7,6 +7,7 @@ export const state = {
     currentEvent: null,
     participants: [],
     modalPagos: [],
+    hasUnsavedChanges: false,
     hotelInfo: {
         name: "Sercotel Guadiana",
         logo: "Img/logo-guadiana.png"

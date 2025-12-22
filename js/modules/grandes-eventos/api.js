@@ -21,7 +21,29 @@ export async function fetchEvents(filters = {}) {
     let query = eventosRef.orderBy("fecha", "desc");
     const snapshot = await query.get();
     let events = [];
-    snapshot.forEach(doc => events.push({ id: doc.id, ...doc.data() }));
+
+    // Load events with participant stats
+    for (const doc of snapshot.docs) {
+        const eventData = { id: doc.id, ...doc.data() };
+
+        // Fetch participants for this event to calculate totalPax
+        const participantsSnapshot = await participantesRef.where("eventoId", "==", doc.id).get();
+        let totalPax = 0;
+
+        participantsSnapshot.forEach(pDoc => {
+            const p = pDoc.data();
+            // Only count active participants
+            const isAnulado = p.estado && p.estado.startsWith('anulado');
+            if (!isAnulado) {
+                totalPax += (parseInt(p.adultos) || 0) + (parseInt(p.ninos) || 0);
+            }
+        });
+
+        // Add stats to event object
+        eventData.stats = { totalPax };
+        events.push(eventData);
+    }
+
     return events;
 }
 
@@ -64,7 +86,7 @@ export async function updateEvent(eventId, updates) {
 
 export async function saveParticipant(participantData) {
     if (participantData.id) {
-        // Update
+        // Update existing participant
         const ref = participantesRef.doc(participantData.id);
         const { id, ...data } = participantData;
         await ref.update({
@@ -72,14 +94,11 @@ export async function saveParticipant(participantData) {
             updatedAt: firebase.firestore.FieldValue.serverTimestamp()
         });
     } else {
-        // Create
-        // Need to calculate sequence first? 
-        // For simplicity, letting the backend or next step handle sequence numbers
-        // ideally logic should be here or strict transaction.
-        // Assuming sequence passed in or handled.
+        // Create new participant
         await participantesRef.add({
             ...participantData,
-            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
         });
     }
 }
@@ -116,6 +135,50 @@ export async function recoverParticipant(pId) {
         motivoAnulacion: firebase.firestore.FieldValue.delete(),
         updatedAt: firebase.firestore.FieldValue.serverTimestamp()
     });
+}
+
+export async function cancelEvent(eventId, salonId, fecha) {
+    // Update event status to 'anulado'
+    await eventosRef.doc(eventId).update({
+        estado: 'anulado',
+        fechaAnulacion: firebase.firestore.FieldValue.serverTimestamp(),
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+
+    // Release salon reservation if exists
+    if (salonId && fecha) {
+        await releaseSalonReservation(salonId, fecha, eventId);
+    }
+}
+
+async function releaseSalonReservation(salonId, fecha, eventoId) {
+    try {
+        // Query for the salon reservation
+        const salonesRef = db.collection("reservas_salones");
+        const snapshot = await salonesRef
+            .where("salon", "==", salonId)
+            .where("fecha", "==", fecha)
+            .where("tipo", "==", "evento")
+            .get();
+
+        // Mark reservation as cancelled (don't delete, preserve data)
+        const batch = db.batch();
+        snapshot.forEach(doc => {
+            // Check if this reservation belongs to this event
+            const data = doc.data();
+            if (data.eventoId === eventoId || data.referencia?.includes(eventoId)) {
+                batch.update(doc.ref, {
+                    estado: 'cancelado',
+                    fechaCancelacion: firebase.firestore.FieldValue.serverTimestamp()
+                });
+            }
+        });
+
+        await batch.commit();
+    } catch (e) {
+        console.error("Error releasing salon reservation:", e);
+        // Don't throw - event cancellation should proceed even if salon release fails
+    }
 }
 
 export async function batchUpdateReferences(updates) {

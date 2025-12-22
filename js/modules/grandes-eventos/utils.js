@@ -13,6 +13,29 @@ export function formatDate(dateString) {
     return `${d}/${m}/${y}`;
 }
 
+export function formatTimestamp(timestamp) {
+    if (!timestamp) return "No disponible";
+
+    // Handle Firebase Timestamp object
+    let date;
+    if (timestamp.toDate && typeof timestamp.toDate === 'function') {
+        date = timestamp.toDate();
+    } else if (timestamp instanceof Date) {
+        date = timestamp;
+    } else {
+        return "No disponible";
+    }
+
+    // Format as: DD/MM/YYYY, HH:MM
+    return date.toLocaleString('es-ES', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+}
+
 export function getHotelLogo(salonName) {
     // Lógica simplificada basada en el nombre del salón o defecto
     if (salonName === 'Cumbria') return "Img/logo-cumbria.png";
@@ -40,15 +63,20 @@ export function calculateStats(participants, capacity) {
             // Activos
             totalAdults += parseInt(p.adultos) || 0;
             totalKids += parseInt(p.ninos) || 0;
-            totalCollected += paidAmount;
 
-            // Calcular pendiente
+            // Calcular costo total
             const priceAd = parseFloat(document.getElementById("inputPriceAdult").value) || 0;
             const priceCh = parseFloat(document.getElementById("inputPriceChild").value) || 0;
             const totalCost = ((parseInt(p.adultos) || 0) * priceAd) + ((parseInt(p.ninos) || 0) * priceCh);
 
+            // Si está incluido, sumar el total al recaudado
+            const isIncluded = p.servicioIncluido || false;
+            const effectivePaid = isIncluded ? (paidAmount + totalCost) : paidAmount;
+
+            totalCollected += effectivePaid;
+
             // Pendiente nunca negativo
-            const pending = Math.max(0, totalCost - paidAmount);
+            const pending = Math.max(0, totalCost - effectivePaid);
             totalPending += pending;
         }
     });
