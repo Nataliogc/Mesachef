@@ -93,6 +93,12 @@
       color: #991b1b;
     }
 
+    .status-cancelled {
+      background: #f1f5f9;
+      color: #475569;
+      text-decoration: line-through;
+    }
+
     /* Stats Cards */
     .stats-grid {
       display: grid;
@@ -275,6 +281,7 @@
               <option value="todos">Ver todos</option>
               <option value="abierto" selected>Ver activos</option>
               <option value="completo">Completos</option>
+              <option value="anulado">Anulados</option>
             </select>
             <div class="relative" style="width: 250px;">
               <input type="text" id="listSearch" class="form-input" placeholder="Buscar evento..."
@@ -793,6 +800,82 @@
   <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-firestore-compat.js"></script>
   <script src="js/firebase-init.js"></script>
   <script src="js/app-common.js"></script>
+  <script>
+    // Patch: Add renderStatusBadge function for three estados
+    window.renderStatusBadge = function (status) {
+      if (status === 'anulado') {
+        return '<span class="status-badge status-cancelled">Anulado</span>';
+      }
+      const isClosed = status === 'completo' || status === 'cerrado';
+      return `<span class="status-badge ${isClosed ? 'status-closed' : 'status-open'}">
+        ${isClosed ? 'Completo' : 'Abierto'}
+      </span>`;
+    };
+
+    // Auto-fix: Monitor table and correct anulado status badges
+    document.addEventListener('DOMContentLoaded', function () {
+      const fixAnuladoBadges = async () => {
+        try {
+          const rows = document.querySelectorAll('#eventsListBody tr');
+
+          for (const row of rows) {
+            // Find status badge that says "Abierto"
+            const badge = Array.from(row.querySelectorAll('.status-badge, span'))
+              .find(s => s.textContent.trim() === 'Abierto');
+
+            if (badge && window.db) {
+              // Get event reference from first cell
+              const refCell = row.cells?.[0];
+              if (refCell) {
+                const refText = refCell.textContent.trim();
+
+                // Query Firebase to check actual estado
+                try {
+                  const snapshot = await window.db.collection('grandes_eventos')
+                    .where('referencia', '==', refText)
+                    .get();
+
+                  if (!snapshot.empty) {
+                    const doc = snapshot.docs[0];
+                    const estado = doc.data().estado;
+
+                    if (estado === 'anulado') {
+                      // Fix badge
+                      badge.textContent = 'Anulado';
+                      badge.classList.remove('status-open');
+                      badge.classList.add('status-cancelled');
+
+                      // Fix visibility based on filter
+                      const currentFilter = document.getElementById('listStatusFilter')?.value;
+                      if (currentFilter === 'abierto') {
+                        row.style.display = 'none';
+                      }
+                    }
+                  }
+                } catch (e) {
+                  // Silently fail per event
+                }
+              }
+            }
+          }
+        } catch (e) {
+          console.error('Error fixing anulado badges:', e);
+        }
+      };
+
+      // Run initial fix after a short delay to ensure table is rendered
+      setTimeout(fixAnuladoBadges, 1500);
+
+      // Set up MutationObserver to auto-fix on table changes
+      const target = document.getElementById('eventsListBody');
+      if (target) {
+        const observer = new MutationObserver(() => {
+          setTimeout(fixAnuladoBadges, 100);
+        });
+        observer.observe(target, { childList: true, subtree: true });
+      }
+    });
+  </script>
   <script src="js/grandes-eventos-bundled.js"></script>
 </body>
 

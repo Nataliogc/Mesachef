@@ -86,6 +86,9 @@ export async function renderEventsList(events) {
 }
 
 function renderStatusBadge(status) {
+    if (status === 'anulado') {
+        return `<span class="status-badge status-cancelled">Anulado</span>`;
+    }
     const isClosed = status === 'completo' || status === 'cerrado';
     return `<span class="status-badge ${isClosed ? 'status-closed' : 'status-open'}">
         ${isClosed ? 'Completo' : 'Abierto'}

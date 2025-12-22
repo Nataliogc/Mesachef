@@ -1378,6 +1378,7 @@
             const filtered = events.filter(e => {
                 if (statusFilter === 'abierto') return e.estado !== 'completo' && e.estado !== 'cerrado' && e.estado !== 'anulado';
                 if (statusFilter === 'completo') return e.estado === 'completo' || e.estado === 'cerrado';
+                if (statusFilter === 'anulado') return e.estado === 'anulado';
                 return true;
             });
 
