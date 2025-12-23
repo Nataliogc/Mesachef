@@ -861,6 +861,8 @@
         const stats = calculateStats(state.participants, capacity);
 
         $('statTotalPax').textContent = stats.totalPax;
+        if ($('statAdults')) $('statAdults').textContent = stats.totalAdults;
+        if ($('statKids')) $('statKids').textContent = stats.totalKids;
         $('statOccupancy').textContent = stats.occupancy + '%';
 
         // [FIX] Update Context Label
