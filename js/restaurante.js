@@ -356,7 +356,16 @@
 
   function paintReservations(reservations) {
     if (!reservations) reservations = loadedReservations;
-    console.log("DEBUG: paintReservations called with", reservations.length);
+
+    // Sort by time (HH:mm string comparison)
+    // We use a copy to avoid mutating the original array if it's used elsewhere
+    const sortedReservations = [...reservations].sort((a, b) => {
+      const timeA = a.hora || "99:99";
+      const timeB = b.hora || "99:99";
+      return timeA.localeCompare(timeB);
+    });
+
+    console.log("DEBUG: paintReservations called with", sortedReservations.length);
 
     const zones = document.querySelectorAll("[id^='zone_']");
     zones.forEach(z => z.innerHTML = '');
@@ -370,7 +379,7 @@
     const startStr = utils.toIsoDate(dates[0]);
     const endStr = utils.toIsoDate(dates[6]);
 
-    reservations.forEach(r => {
+    sortedReservations.forEach(r => {
       // 1. Filter Hotel & Locks
       if (r.hotel && r.hotel !== hotel) return;
       if (r.type === 'lock') return; // Do not paint locks as cards
