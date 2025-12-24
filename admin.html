@@ -228,6 +228,9 @@
                     <button onclick="setTab('Bloqueos')" id="btnBloqueos"
                         class="tab-btn px-4 py-1.5 rounded-md font-bold text-sm border border-transparent hover:bg-gray-50 text-gray-600 transition h-9 flex items-center gap-2">🚫
                         Bloqueos</button>
+                    <button onclick="setTab('RteEspecial')" id="btnRteEspecial"
+                        class="tab-btn px-4 py-1.5 rounded-md font-bold text-sm border border-transparent hover:bg-gray-50 text-gray-600 transition h-9 flex items-center gap-2">🍽️
+                        Rte. Especial</button>
                 </div>
 
                 <!-- Config Area -->
@@ -467,6 +470,7 @@
             else if (currentTab === 'Extras') renderExtras(c);
             else if (currentTab === 'Festivos') renderFestivos(c);
             else if (currentTab === 'Bloqueos') renderBloqueos(c);
+            else if (currentTab === 'RteEspecial') renderRteEspecial(c);
             else renderSalones(c, currentTab);
         }
 
@@ -643,6 +647,29 @@
             c.innerHTML = html;
         }
 
+        function renderRteEspecial(c) {
+            var list = fullConfig.restauranteEspecial || [];
+            var html = `<div class="card"><div class="flex justify-between items-center mb-4"><h3>🍽️ Capacidad Especial (Aforos)</h3><button onclick="addItem()" class="bg-blue-600 text-white px-3 py-1 rounded text-sm">+ Añadir</button></div>
+            <div class="overflow-x-auto"><table class="w-full text-left text-xs"><thead class="bg-gray-50 text-gray-500 uppercase"><tr>
+                <th class="p-2 w-32 text-center">Fecha</th>
+                <th class="p-2 text-center bg-blue-50/50">Rte Alm</th>
+                <th class="p-2 text-center bg-blue-50/50">Rte Cena</th>
+                <th class="p-2 text-center bg-amber-50/50">Caf Alm</th>
+                <th class="p-2 text-center bg-amber-50/50">Caf Cena</th>
+                <th class="w-10"></th></tr></thead><tbody class="divide-y divide-gray-100">`;
+            list.forEach((f, i) => {
+                html += `<tr>
+                    <td class="p-2 text-center"><input type="date" value="${f.date}" onchange="updArr('restauranteEspecial',${i},'date',this.value)" class="w-full bg-transparent outline-none"></td>
+                    <td class="p-2 text-center bg-blue-50/20"><input type="number" value="${f.lunchMax || 0}" onchange="updArr('restauranteEspecial',${i},'lunchMax',parseInt(this.value))" class="w-full bg-transparent outline-none text-center font-bold"></td>
+                    <td class="p-2 text-center bg-blue-50/20"><input type="number" value="${f.dinnerMax || 0}" onchange="updArr('restauranteEspecial',${i},'dinnerMax',parseInt(this.value))" class="w-full bg-transparent outline-none text-center font-bold"></td>
+                    <td class="p-2 text-center bg-amber-50/20"><input type="number" value="${f.cafLunchMax || 0}" onchange="updArr('restauranteEspecial',${i},'cafLunchMax',parseInt(this.value))" class="w-full bg-transparent outline-none text-center font-bold"></td>
+                    <td class="p-2 text-center bg-amber-50/20"><input type="number" value="${f.cafDinnerMax || 0}" onchange="updArr('restauranteEspecial',${i},'cafDinnerMax',parseInt(this.value))" class="w-full bg-transparent outline-none text-center font-bold"></td>
+                    <td class="p-2 text-center"><button onclick="delItem(${i})" class="text-red-400 font-bold">&times;</button></td></tr>`;
+            });
+            html += `</tbody></table></div></div>`;
+            c.innerHTML = html;
+        }
+
         // --- UPDATERS ---
         function updCfg(cat, k, v) { if (!fullConfig[cat]) fullConfig[cat] = {}; fullConfig[cat][k] = v; markDirty(); }
         function updS(i, k, v) { if (k !== 'name' && k !== 'active') v = parseFloat(v); fullConfig[currentTab][i][k] = v; markDirty(); }
@@ -654,6 +681,7 @@
             else if (currentTab === 'Extras') { if (!fullConfig.extras) fullConfig.extras = []; fullConfig.extras.push({ name: "Nuevo Extra", price: 0, type: "General" }); render(); markDirty(); }
             else if (currentTab === 'Festivos') { if (!fullConfig.festivos) fullConfig.festivos = []; fullConfig.festivos.push({ date: new Date().toISOString().split('T')[0], name: "Festivo" }); render(); markDirty(); }
             else if (currentTab === 'Bloqueos') { if (!fullConfig.bloqueos) fullConfig.bloqueos = []; var today = new Date().toISOString().split('T')[0]; fullConfig.bloqueos.push({ salon: "TODOS", start: today, end: today, note: "Nuevo Bloqueo" }); render(); markDirty(); }
+            else if (currentTab === 'RteEspecial') { if (!fullConfig.restauranteEspecial) fullConfig.restauranteEspecial = []; fullConfig.restauranteEspecial.push({ date: new Date().toISOString().split('T')[0], lunchMax: 130, dinnerMax: 130, cafLunchMax: 50, cafDinnerMax: 50 }); render(); markDirty(); }
             else if (currentTab !== 'General') { fullConfig[currentTab].push({ name: "Nuevo", pax: 0, m2: 0, active: true, capacities: {} }); render(); markDirty(); }
         }
         window.delItem = (i) => {
@@ -662,6 +690,7 @@
                 else if (currentTab === 'Extras') fullConfig.extras.splice(i, 1);
                 else if (currentTab === 'Festivos') fullConfig.festivos.splice(i, 1);
                 else if (currentTab === 'Bloqueos') fullConfig.bloqueos.splice(i, 1);
+                else if (currentTab === 'RteEspecial') fullConfig.restauranteEspecial.splice(i, 1);
                 else fullConfig[currentTab].splice(i, 1);
                 render(); markDirty();
             }

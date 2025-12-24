@@ -60,13 +60,16 @@
   };
 
   let restaurantConfig = {}; // Global Config
+  let specialDatesConfig = []; // [NEW] Special Capacity Dates
 
   async function loadRestaurantConfig() {
     try {
       const doc = await db.collection("master_data").doc("CONFIG_SALONES").get();
       if (doc.exists) {
-        restaurantConfig = doc.data().horarios || {};
-        console.log("DEBUG: Restaurant Config Loaded", restaurantConfig);
+        const data = doc.data();
+        restaurantConfig = data.horarios || {};
+        specialDatesConfig = data.restauranteEspecial || [];
+        console.log("DEBUG: Restaurant Config Loaded", restaurantConfig, "Special Dates:", specialDatesConfig);
       }
     } catch (e) { console.error("Config Load Error", e); }
   }
@@ -84,11 +87,11 @@
     field.value = time;
   }
 
-  function startApp() {
+  async function startApp() {
     console.log("Restaurante v7: Starting...");
     db = firebase.firestore();
 
-    loadRestaurantConfig(); // <--- Load Config
+    await loadRestaurantConfig(); // <--- Load Config
 
     // Event Listener for Auto-Time
     const turnoSelect = document.getElementById("campoTurno");
@@ -235,7 +238,30 @@
           });
 
           const renderHeader = (isLocked, turno, paxCount, icon) => {
-            const paxDisplay = paxCount > 0 ? `<span class="ml-1 font-bold text-slate-600">${paxCount} 👥</span>` : '';
+            const tName = (turno || 'almuerzo').toLowerCase();
+            const special = specialDatesConfig.find(sd => sd.date === dateStr);
+            let maxCap = 0;
+            if (special) {
+              if (space === 'Restaurante') {
+                maxCap = tName === 'almuerzo' ? (special.lunchMax || 0) : (special.dinnerMax || 0);
+              } else if (space === 'Cafeteria') {
+                maxCap = tName === 'almuerzo' ? (special.cafLunchMax || 0) : (special.cafDinnerMax || 0);
+              }
+            }
+
+            let paxDisplay = paxCount > 0 ? `<span class="ml-1 font-bold text-slate-600">${paxCount} 👥</span>` : '';
+            if (maxCap > 0) {
+              const remaining = maxCap - paxCount;
+              const capColor = remaining <= 0 ? 'text-red-600' : (remaining <= maxCap * 0.2 ? 'text-amber-600' : 'text-blue-600');
+
+              const remainingText = remaining <= 0 ? 'AFORO COMPLETO' : `Quedan ${remaining} pers.`;
+              paxDisplay = `
+                <div class="flex flex-col items-start ml-1 leading-[1.1] py-0.5">
+                  <span class="text-[10px] font-bold ${capColor}">${paxCount} Van / ${maxCap} Máx.</span>
+                  <span class="text-[9px] font-semibold opacity-90 ${capColor}">${remainingText}</span>
+                </div>`;
+            }
+
             const lockIcon = isLocked
               ? `<button onclick="toggleLock('${space}', '${dateStr}', '${turno}')" class="text-red-500 hover:text-red-700 p-0.5" title="Desbloquear"><svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"></path></svg></button>`
               : `<button onclick="toggleLock('${space}', '${dateStr}', '${turno}')" class="text-slate-300 hover:text-slate-500 opacity-0 group-hover:opacity-100 transition p-0.5" title="Bloquear (Completo)"><svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path d="M10 2a5 5 0 00-5 5v2a2 2 0 00-2 2v5a2 2 0 002 2h10a2 2 0 002-2v-5a2 2 0 00-2-2H7V7a3 3 0 016 0v2h-1V7a2 2 0 00-2-2z"></path></svg></button>`;
@@ -891,6 +917,35 @@
       const currentHotel = localStorage.getItem(STORAGE_KEY) || "Guadiana";
       const targetSpace = document.getElementById("campoEspacio").value;
       const targetTurn = document.getElementById("campoTurno").value;
+
+      // [NEW] Special Capacity Check
+      const tName = targetTurn.toLowerCase();
+      const special = specialDatesConfig.find(sd => sd.date === fecha);
+      if (special) {
+        let maxCap = 0;
+        if (targetSpace === 'Restaurante') {
+          maxCap = tName === 'almuerzo' ? (special.lunchMax || 0) : (special.dinnerMax || 0);
+        } else if (targetSpace === 'Cafeteria') {
+          maxCap = tName === 'almuerzo' ? (special.cafLunchMax || 0) : (special.cafDinnerMax || 0);
+        }
+
+        if (maxCap > 0) {
+          const currentPax = loadedReservations.reduce((sum, r) => {
+            if (r.type === 'lock' || (r.estado || '').toLowerCase() === 'anulada') return sum;
+            const rDate = (r.fecha && r.fecha.toDate ? utils.toIsoDate(r.fecha.toDate()) : r.fecha);
+            if (rDate !== fecha) return sum;
+            if ((r.espacio || 'Restaurante') !== targetSpace) return sum;
+            if ((r.turno || 'almuerzo').toLowerCase() !== tName) return sum;
+            return sum + (parseInt(r.pax) || 0) + (parseInt(r.ninos) || 0);
+          }, 0);
+
+          const newPax = (parseInt(document.getElementById("campoPax").value) || 0) + (parseInt(document.getElementById("campoNinos").value) || 0);
+          if (currentPax + newPax > maxCap) {
+            alert(`⛔ VENTA CERRADA: AFORO COMPLETO\n\nEl aforo máximo para ${targetSpace} (${tName}) es de ${maxCap} personas.\nActualmente hay ${currentPax} reservadas.\nNo se pueden añadir ${newPax} personas más.`);
+            return;
+          }
+        }
+      }
 
       // 1. Client-Side Check (Fast & Matches UI)
       // Uses same defaults as Grid Render to ensure consistency
