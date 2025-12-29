@@ -524,6 +524,9 @@
 
         function renderSalones(c, hotel) {
             var list = fullConfig[hotel] || [];
+            var whatsappKey = 'whatsappTemplate' + hotel;
+            var whatsappTemplate = fullConfig[whatsappKey] || '';
+
             var html = `<div class="card">
                 <div class="flex justify-between items-center mb-4">
                     <h3 class="border-0 mb-0">Salones: ${hotel}</h3>
@@ -573,6 +576,18 @@
                 </tr>`;
             });
             html += `</tbody></table></div></div>`;
+
+            // WhatsApp Template Card
+            html += `
+            <div class="card mt-4 border-l-4 border-green-500">
+                <h3 class="text-green-700">📱 Plantilla WhatsApp - Confirmación Reserva</h3>
+                <p class="text-xs text-gray-500 mb-2">Usa estos tags: <code class="bg-gray-100 px-1 rounded">{nombre}</code> <code class="bg-gray-100 px-1 rounded">{fecha}</code> <code class="bg-gray-100 px-1 rounded">{hora}</code> <code class="bg-gray-100 px-1 rounded">{pax}</code> <code class="bg-gray-100 px-1 rounded">{turno}</code> <code class="bg-gray-100 px-1 rounded">{espacio}</code> <code class="bg-gray-100 px-1 rounded">{hotel}</code></p>
+                <textarea rows="4" 
+                    onchange="fullConfig['${whatsappKey}']=this.value; markDirty()" 
+                    class="w-full border border-gray-200 rounded p-2 text-sm"
+                    placeholder="Ej: Hola {nombre}, le confirmamos su reserva en {espacio} para el día {fecha} a las {hora} para {pax} personas. Por favor, confirme respondiendo a este mensaje. ¡Gracias y le esperamos!">${whatsappTemplate}</textarea>
+            </div>`;
+
             c.innerHTML = html;
         }
 
@@ -651,26 +666,77 @@
         }
 
         function renderRteEspecial(c) {
-            var list = fullConfig.restauranteEspecial || [];
-            var html = `<div class="card"><div class="flex justify-between items-center mb-4"><h3>🍽️ Capacidad Especial (Aforos)</h3><button onclick="addItem()" class="bg-blue-600 text-white px-3 py-1 rounded text-sm">+ Añadir</button></div>
-            <div class="overflow-x-auto"><table class="w-full text-left text-xs"><thead class="bg-gray-50 text-gray-500 uppercase"><tr>
-                <th class="p-2 w-32 text-center">Fecha</th>
-                <th class="p-2 text-center bg-blue-50/50">Rte Alm</th>
-                <th class="p-2 text-center bg-blue-50/50">Rte Cena</th>
-                <th class="p-2 text-center bg-amber-50/50">Caf Alm</th>
-                <th class="p-2 text-center bg-amber-50/50">Caf Cena</th>
-                <th class="w-10"></th></tr></thead><tbody class="divide-y divide-gray-100">`;
-            list.forEach((f, i) => {
+            var html = '';
+
+            // GUADIANA SECTION
+            var listGuadiana = fullConfig.restauranteEspecialGuadiana || [];
+            html += `<div class="card mb-6 border-l-4 border-blue-500">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-blue-700">🏨 Guadiana - Capacidad Especial (Aforos)</h3>
+                    <button onclick="addItemHotel('Guadiana')" class="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700">+ Añadir</button>
+                </div>
+                <div class="overflow-x-auto"><table class="w-full text-left text-xs"><thead class="bg-blue-50 text-gray-500 uppercase"><tr>
+                    <th class="p-2 w-32 text-center">Fecha</th>
+                    <th class="p-2 text-center">Rte Alm</th>
+                    <th class="p-2 text-center">Rte Cena</th>
+                    <th class="p-2 text-center">Caf Alm</th>
+                    <th class="p-2 text-center">Caf Cena</th>
+                    <th class="w-10"></th></tr></thead><tbody class="divide-y divide-gray-100">`;
+            listGuadiana.forEach((f, i) => {
                 html += `<tr>
-                    <td class="p-2 text-center"><input type="date" value="${f.date}" onchange="updArr('restauranteEspecial',${i},'date',this.value)" class="w-full bg-transparent outline-none"></td>
-                    <td class="p-2 text-center bg-blue-50/20"><input type="number" value="${f.lunchMax || 0}" onchange="updArr('restauranteEspecial',${i},'lunchMax',parseInt(this.value))" class="w-full bg-transparent outline-none text-center font-bold"></td>
-                    <td class="p-2 text-center bg-blue-50/20"><input type="number" value="${f.dinnerMax || 0}" onchange="updArr('restauranteEspecial',${i},'dinnerMax',parseInt(this.value))" class="w-full bg-transparent outline-none text-center font-bold"></td>
-                    <td class="p-2 text-center bg-amber-50/20"><input type="number" value="${f.cafLunchMax || 0}" onchange="updArr('restauranteEspecial',${i},'cafLunchMax',parseInt(this.value))" class="w-full bg-transparent outline-none text-center font-bold"></td>
-                    <td class="p-2 text-center bg-amber-50/20"><input type="number" value="${f.cafDinnerMax || 0}" onchange="updArr('restauranteEspecial',${i},'cafDinnerMax',parseInt(this.value))" class="w-full bg-transparent outline-none text-center font-bold"></td>
-                    <td class="p-2 text-center"><button onclick="delItem(${i})" class="text-red-400 font-bold">&times;</button></td></tr>`;
+                    <td class="p-2 text-center"><input type="date" value="${f.date}" onchange="updArr('restauranteEspecialGuadiana',${i},'date',this.value)" class="w-full bg-transparent outline-none"></td>
+                    <td class="p-2 text-center bg-blue-50/20"><input type="number" value="${f.lunchMax || 0}" onchange="updArr('restauranteEspecialGuadiana',${i},'lunchMax',parseInt(this.value))" class="w-full bg-transparent outline-none text-center font-bold"></td>
+                    <td class="p-2 text-center bg-blue-50/20"><input type="number" value="${f.dinnerMax || 0}" onchange="updArr('restauranteEspecialGuadiana',${i},'dinnerMax',parseInt(this.value))" class="w-full bg-transparent outline-none text-center font-bold"></td>
+                    <td class="p-2 text-center bg-amber-50/20"><input type="number" value="${f.cafLunchMax || 0}" onchange="updArr('restauranteEspecialGuadiana',${i},'cafLunchMax',parseInt(this.value))" class="w-full bg-transparent outline-none text-center font-bold"></td>
+                    <td class="p-2 text-center bg-amber-50/20"><input type="number" value="${f.cafDinnerMax || 0}" onchange="updArr('restauranteEspecialGuadiana',${i},'cafDinnerMax',parseInt(this.value))" class="w-full bg-transparent outline-none text-center font-bold"></td>
+                    <td class="p-2 text-center"><button onclick="delItemHotel('Guadiana',${i})" class="text-red-400 font-bold">&times;</button></td></tr>`;
             });
             html += `</tbody></table></div></div>`;
+
+            // CUMBRIA SECTION
+            var listCumbria = fullConfig.restauranteEspecialCumbria || [];
+            html += `<div class="card border-l-4 border-emerald-500">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-emerald-700">🏨 Cumbria - Capacidad Especial (Aforos)</h3>
+                    <button onclick="addItemHotel('Cumbria')" class="bg-emerald-600 text-white px-3 py-1 rounded text-sm hover:bg-emerald-700">+ Añadir</button>
+                </div>
+                <div class="overflow-x-auto"><table class="w-full text-left text-xs"><thead class="bg-emerald-50 text-gray-500 uppercase"><tr>
+                    <th class="p-2 w-32 text-center">Fecha</th>
+                    <th class="p-2 text-center">Rte Alm</th>
+                    <th class="p-2 text-center">Rte Cena</th>
+                    <th class="p-2 text-center">Caf Alm</th>
+                    <th class="p-2 text-center">Caf Cena</th>
+                    <th class="w-10"></th></tr></thead><tbody class="divide-y divide-gray-100">`;
+            listCumbria.forEach((f, i) => {
+                html += `<tr>
+                    <td class="p-2 text-center"><input type="date" value="${f.date}" onchange="updArr('restauranteEspecialCumbria',${i},'date',this.value)" class="w-full bg-transparent outline-none"></td>
+                    <td class="p-2 text-center bg-blue-50/20"><input type="number" value="${f.lunchMax || 0}" onchange="updArr('restauranteEspecialCumbria',${i},'lunchMax',parseInt(this.value))" class="w-full bg-transparent outline-none text-center font-bold"></td>
+                    <td class="p-2 text-center bg-blue-50/20"><input type="number" value="${f.dinnerMax || 0}" onchange="updArr('restauranteEspecialCumbria',${i},'dinnerMax',parseInt(this.value))" class="w-full bg-transparent outline-none text-center font-bold"></td>
+                    <td class="p-2 text-center bg-amber-50/20"><input type="number" value="${f.cafLunchMax || 0}" onchange="updArr('restauranteEspecialCumbria',${i},'cafLunchMax',parseInt(this.value))" class="w-full bg-transparent outline-none text-center font-bold"></td>
+                    <td class="p-2 text-center bg-amber-50/20"><input type="number" value="${f.cafDinnerMax || 0}" onchange="updArr('restauranteEspecialCumbria',${i},'cafDinnerMax',parseInt(this.value))" class="w-full bg-transparent outline-none text-center font-bold"></td>
+                    <td class="p-2 text-center"><button onclick="delItemHotel('Cumbria',${i})" class="text-red-400 font-bold">&times;</button></td></tr>`;
+            });
+            html += `</tbody></table></div></div>`;
+
             c.innerHTML = html;
+        }
+
+        // Helper functions for hotel-specific items
+        window.addItemHotel = (hotel) => {
+            const arrName = 'restauranteEspecial' + hotel;
+            if (!fullConfig[arrName]) fullConfig[arrName] = [];
+            fullConfig[arrName].push({ date: new Date().toISOString().split('T')[0], lunchMax: 130, dinnerMax: 130, cafLunchMax: 50, cafDinnerMax: 50 });
+            render();
+            markDirty();
+        }
+
+        window.delItemHotel = (hotel, i) => {
+            if (confirm("¿Borrar?")) {
+                const arrName = 'restauranteEspecial' + hotel;
+                fullConfig[arrName].splice(i, 1);
+                render();
+                markDirty();
+            }
         }
 
         // --- UPDATERS ---

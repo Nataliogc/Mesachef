@@ -75,6 +75,7 @@
 
   let restaurantConfig = {}; // Global Config
   let specialDatesConfig = []; // [NEW] Special Capacity Dates
+  let whatsappTemplate = ''; // WhatsApp message template
 
   async function loadRestaurantConfig() {
     try {
@@ -82,8 +83,13 @@
       if (doc.exists) {
         const data = doc.data();
         restaurantConfig = data.horarios || {};
-        specialDatesConfig = data.restauranteEspecial || [];
-        console.log("DEBUG: Restaurant Config Loaded", restaurantConfig, "Special Dates:", specialDatesConfig);
+        // Load hotel-specific configs
+        const hotel = localStorage.getItem(STORAGE_KEY) || "Guadiana";
+        const specialKey = 'restauranteEspecial' + hotel;
+        const whatsappKey = 'whatsappTemplate' + hotel;
+        specialDatesConfig = data[specialKey] || [];
+        whatsappTemplate = data[whatsappKey] || '';
+        console.log("DEBUG: Restaurant Config Loaded", restaurantConfig, "Special Dates (" + hotel + "):", specialDatesConfig, "WhatsApp Template:", whatsappTemplate ? "✓" : "✗");
       }
     } catch (e) { console.error("Config Load Error", e); }
   }
@@ -682,6 +688,67 @@
     if (el) el.innerText = total.toLocaleString("es-ES", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " €";
   }
 
+  // WhatsApp Confirmation Message
+  window.sendWhatsApp = function () {
+    if (!whatsappTemplate) {
+      alert("⚠️ No hay plantilla de WhatsApp configurada para este hotel. Configúrala en Admin → [Hotel] → Plantilla WhatsApp.");
+      return;
+    }
+
+    // Get data from modal fields
+    const nombre = document.getElementById("campoNombre")?.value || '';
+    const telefono = document.getElementById("campoTelefono")?.value || '';
+    const fecha = document.getElementById("campoFecha")?.value || '';
+    const hora = document.getElementById("campoHora")?.value || '';
+    const paxAdultos = parseInt(document.getElementById("campoPax")?.value) || 0;
+    const paxNinos = parseInt(document.getElementById("campoNinos")?.value) || 0;
+    const pax = paxAdultos + paxNinos;
+    const turno = document.getElementById("campoTurno")?.value || '';
+    const espacio = document.getElementById("campoEspacio")?.value || '';
+
+    // Get hotel name
+    const hotelId = localStorage.getItem(STORAGE_KEY) || "Guadiana";
+    const hotel = hotelId === "Guadiana" ? "Sercotel Guadiana" : "Cumbria Spa&Hotel";
+
+    // Format date for display (dd/mm/yyyy)
+    let fechaFormatted = fecha;
+    if (fecha) {
+      const parts = fecha.split('-');
+      if (parts.length === 3) {
+        fechaFormatted = `${parts[2]}/${parts[1]}/${parts[0]}`;
+      }
+    }
+
+    // Format turno for display
+    const turnoFormatted = turno === 'almuerzo' ? 'Almuerzo' : (turno === 'cena' ? 'Cena' : turno);
+
+    // Build message by replacing placeholders
+    let message = whatsappTemplate
+      .replace(/{nombre}/gi, nombre)
+      .replace(/{fecha}/gi, fechaFormatted)
+      .replace(/{hora}/gi, hora)
+      .replace(/{pax}/gi, pax.toString())
+      .replace(/{turno}/gi, turnoFormatted)
+      .replace(/{espacio}/gi, espacio)
+      .replace(/{hotel}/gi, hotel);
+
+    // Format phone number (remove spaces, ensure country code)
+    let phone = telefono.replace(/\s+/g, '').replace(/[^\d]/g, '');
+    if (phone.length === 9 && !phone.startsWith('34')) {
+      phone = '34' + phone; // Add Spain country code
+    }
+
+    if (!phone) {
+      alert("⚠️ No hay teléfono válido para enviar el mensaje.");
+      return;
+    }
+
+    // Open WhatsApp (app:// format opens the app directly instead of web)
+    const url = `whatsapp://send?phone=${phone}&text=${encodeURIComponent(message)}`;
+    window.open(url, '_blank');
+  }
+
+
   window.openBooking = function (space, dateStr, turno, data) {
     // [NEW] Initialize Global State for Sync Context
     window.state = {
@@ -722,10 +789,16 @@
 
     document.getElementById("campoEstado").value = "confirmada";
     const btnAnular = document.getElementById("btnAnular");
+    const btnWhatsApp = document.getElementById("btnWhatsApp");
     const btnGuardar = document.getElementById("btnGuardar"); // Assuming ID 'btnGuardar' exists for Save button
 
     // Reset visibility first
     if (btnAnular) btnAnular.style.display = data ? 'block' : 'none';
+    // Show WhatsApp button only for existing reservations with template configured
+    if (btnWhatsApp) {
+      const hasTemplate = whatsappTemplate && whatsappTemplate.length > 0;
+      btnWhatsApp.classList.toggle('hidden', !(data && hasTemplate));
+    }
     if (btnGuardar) btnGuardar.style.display = 'block';
 
     // Inputs to disable/enable
