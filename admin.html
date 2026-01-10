@@ -231,6 +231,9 @@
                     <button onclick="setTab('RteEspecial')" id="btnRteEspecial"
                         class="tab-btn px-4 py-1.5 rounded-md font-bold text-sm border border-transparent hover:bg-gray-50 text-gray-600 transition h-9 flex items-center gap-2">🍽️
                         Rte. Especial</button>
+                    <button onclick="setTab('RteCierres')" id="btnRteCierres"
+                        class="tab-btn px-4 py-1.5 rounded-md font-bold text-sm border border-transparent hover:bg-gray-50 text-gray-600 transition h-9 flex items-center gap-2">🔒
+                        Cierres Rte.</button>
                 </div>
 
                 <!-- Config Area -->
@@ -474,6 +477,7 @@
             else if (currentTab === 'Festivos') renderFestivos(c);
             else if (currentTab === 'Bloqueos') renderBloqueos(c);
             else if (currentTab === 'RteEspecial') renderRteEspecial(c);
+            else if (currentTab === 'RteCierres') renderRteCierres(c);
             else renderSalones(c, currentTab);
         }
 
@@ -721,6 +725,68 @@
             c.innerHTML = html;
         }
 
+        function renderRteCierres(c) {
+            var list = fullConfig.restauranteCierres || [];
+            var html = `<div class="card border-l-4 border-red-600 font-sans">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-red-700">🔒 Reglas de Cierre Automático (Restaurante)</h3>
+                    <button onclick="addItem()" class="bg-red-600 text-white px-3 py-1 rounded text-sm hover:bg-red-700 font-bold">+ Nueva Regla</button>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-xs">
+                        <thead class="bg-red-50 text-gray-600 uppercase">
+                            <tr>
+                                <th class="p-2">Hotel</th>
+                                <th class="p-2">Día Semana</th>
+                                <th class="p-2">Turno</th>
+                                <th class="p-2">Desde</th>
+                                <th class="p-2">Hasta</th>
+                                <th class="p-2">Motivo / Nota</th>
+                                <th class="w-10"></th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-100">`;
+
+            var dows = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
+
+            list.forEach((r, i) => {
+                html += `<tr>
+                    <td class="p-2">
+                        <select onchange="updArr('restauranteCierres',${i},'hotel',this.value)" class="w-full bg-white border border-gray-200 rounded p-1">
+                            <option value="Guadiana" ${r.hotel === 'Guadiana' ? 'selected' : ''}>S. Guadiana</option>
+                            <option value="Cumbria" ${r.hotel === 'Cumbria' ? 'selected' : ''}>Cumbria Spa</option>
+                            <option value="AMBOS" ${r.hotel === 'AMBOS' ? 'selected' : ''}>AMBOS HOTELES</option>
+                        </select>
+                    </td>
+                    <td class="p-2">
+                        <select onchange="updArr('restauranteCierres',${i},'dow',this.value)" class="w-full bg-white border border-gray-200 rounded p-1">
+                            <option value="ALL" ${r.dow === 'ALL' ? 'selected' : ''}>Todos los días</option>
+                            ${dows.map((d, idx) => `<option value="${idx}" ${r.dow == idx ? 'selected' : ''}>${d}</option>`).join('')}
+                        </select>
+                    </td>
+                    <td class="p-2">
+                        <select onchange="updArr('restauranteCierres',${i},'turno',this.value)" class="w-full bg-white border border-gray-200 rounded p-1">
+                            <option value="almuerzo" ${r.turno === 'almuerzo' ? 'selected' : ''}>☀️ Almuerzo</option>
+                            <option value="cena" ${r.turno === 'cena' ? 'selected' : ''}>🌙 Cena</option>
+                            <option value="AMBOS" ${r.turno === 'AMBOS' ? 'selected' : ''}>Completos (A+C)</option>
+                        </select>
+                    </td>
+                    <td class="p-2"><input type="date" value="${r.start || ''}" onchange="updArr('restauranteCierres',${i},'start',this.value)" class="w-full border border-gray-200 rounded p-1"></td>
+                    <td class="p-2"><input type="date" value="${r.end || ''}" onchange="updArr('restauranteCierres',${i},'end',this.value)" class="w-full border border-gray-200 rounded p-1"></td>
+                    <td class="p-2"><input value="${r.note || ''}" placeholder="Ej: Cerrado por descanso" onchange="updArr('restauranteCierres',${i},'note',this.value)" class="w-full border border-gray-200 rounded p-1"></td>
+                    <td class="p-2 text-center"><button onclick="delItem(${i})" class="text-red-400 font-bold text-lg">&times;</button></td>
+                </tr>`;
+            });
+
+            html += `</tbody></table></div>
+                <div class="mt-4 p-3 bg-gray-50 rounded border border-gray-200 text-[10px] text-gray-500 italic">
+                    💡 Las reglas de cierre automático se aplican de forma inmediata al calendario y bloquean la creación de nuevas reservas.
+                    Si no pones fecha "Desde" o "Hasta", la regla se aplicará indefinidamente.
+                </div>
+            </div>`;
+            c.innerHTML = html;
+        }
+
         // Helper functions for hotel-specific items
         window.addItemHotel = (hotel) => {
             const arrName = 'restauranteEspecial' + hotel;
@@ -750,6 +816,7 @@
             else if (currentTab === 'Extras') { if (!fullConfig.extras) fullConfig.extras = []; fullConfig.extras.push({ name: "Nuevo Extra", price: 0, type: "General" }); render(); markDirty(); }
             else if (currentTab === 'Festivos') { if (!fullConfig.festivos) fullConfig.festivos = []; fullConfig.festivos.push({ date: new Date().toISOString().split('T')[0], name: "Festivo" }); render(); markDirty(); }
             else if (currentTab === 'Bloqueos') { if (!fullConfig.bloqueos) fullConfig.bloqueos = []; var today = new Date().toISOString().split('T')[0]; fullConfig.bloqueos.push({ salon: "TODOS", start: today, end: today, note: "Nuevo Bloqueo" }); render(); markDirty(); }
+            else if (currentTab === 'RteCierres') { if (!fullConfig.restauranteCierres) fullConfig.restauranteCierres = []; fullConfig.restauranteCierres.push({ hotel: "Guadiana", dow: "0", turno: "cena", start: "2026-01-01", end: "2026-01-31", note: "Cierre Domingos Cena" }); render(); markDirty(); }
             else if (currentTab === 'RteEspecial') { if (!fullConfig.restauranteEspecial) fullConfig.restauranteEspecial = []; fullConfig.restauranteEspecial.push({ date: new Date().toISOString().split('T')[0], lunchMax: 130, dinnerMax: 130, cafLunchMax: 50, cafDinnerMax: 50 }); render(); markDirty(); }
             else if (currentTab !== 'General') { fullConfig[currentTab].push({ name: "Nuevo", pax: 0, m2: 0, active: true, capacities: {} }); render(); markDirty(); }
         }
@@ -759,6 +826,7 @@
                 else if (currentTab === 'Extras') fullConfig.extras.splice(i, 1);
                 else if (currentTab === 'Festivos') fullConfig.festivos.splice(i, 1);
                 else if (currentTab === 'Bloqueos') fullConfig.bloqueos.splice(i, 1);
+                else if (currentTab === 'RteCierres') fullConfig.restauranteCierres.splice(i, 1);
                 else if (currentTab === 'RteEspecial') fullConfig.restauranteEspecial.splice(i, 1);
                 else fullConfig[currentTab].splice(i, 1);
                 render(); markDirty();

@@ -94,6 +94,7 @@
 
   let restaurantConfig = {}; // Global Config
   let specialDatesConfig = []; // [NEW] Special Capacity Dates
+  let closureRules = []; // [NEW] Automatic Closure Rules
   let whatsappTemplate = ''; // WhatsApp message template
 
   async function loadRestaurantConfig() {
@@ -107,8 +108,9 @@
         const specialKey = 'restauranteEspecial' + hotel;
         const whatsappKey = 'whatsappTemplate' + hotel;
         specialDatesConfig = data[specialKey] || [];
+        closureRules = data.restauranteCierres || []; // [NEW]
         whatsappTemplate = data[whatsappKey] || '';
-        console.log("DEBUG: Restaurant Config Loaded", restaurantConfig, "Special Dates (" + hotel + "):", specialDatesConfig, "WhatsApp Template:", whatsappTemplate ? "✓" : "✗");
+        console.log("DEBUG: Restaurant Config Loaded", restaurantConfig, "Special Dates (" + hotel + "):", specialDatesConfig, "Closure Rules:", closureRules.length, "WhatsApp Template:", whatsappTemplate ? "✓" : "✗");
       }
     } catch (e) { console.error("Config Load Error", e); }
   }
@@ -125,6 +127,81 @@
 
     field.value = time;
   }
+
+  // [NEW] Check if a shift is closed by rule or override
+  function getShiftStatus(hotel, space, turno, dateStr) {
+    // 1. Check Especial Capacity (OVERRIDE)
+    const specialEntry = specialDatesConfig.find(d => d.date === dateStr);
+    if (specialEntry) {
+      const isLunch = turno === 'almuerzo';
+      const key = space === 'Cafeteria' ? (isLunch ? 'cafLunchMax' : 'cafDinnerMax') : (isLunch ? 'lunchMax' : 'dinnerMax');
+      const max = specialEntry[key];
+
+      // If we have an entry with max > 0, it is FORCED OPEN
+      if (typeof max === 'number' && max > 0) return { closed: false, override: true, max: max };
+      // If we have an entry with max === 0, it is FORCED CLOSED
+      if (max === 0) return { closed: true, override: true, reason: 'Aforo 0 (Especial)' };
+    }
+
+    // 2. Check General Closure Rules
+    const date = new Date(dateStr);
+    const dow = date.getDay(); // 0=Sun, 1=Mon...
+
+    for (const r of closureRules) {
+      // Match Hotel
+      if (r.hotel !== 'AMBOS' && r.hotel !== hotel) continue;
+      // Match Turno
+      if (r.turno !== 'AMBOS' && r.turno.toLowerCase() !== turno.toLowerCase()) continue;
+      // Match Day of Week
+      if (r.dow !== 'ALL' && parseInt(r.dow) !== dow) continue;
+      // Match Date Range
+      if (r.start && dateStr < r.start) continue;
+      if (r.end && dateStr > r.end) continue;
+
+      return { closed: true, reason: r.note || 'Cerrado por admin' };
+    }
+
+    return { closed: false };
+  }
+
+  // [NEW] Open a closed shift punctually
+  window.openPunctually = async function (space, dateStr, turno) {
+    const hotel = localStorage.getItem(STORAGE_KEY) || "Guadiana";
+    if (!confirm(`¿Deseas ABRIR PUNTUALMENTE el turno de ${turno} para el ${dateStr}?\n\n(Esto creará un aforo especial para este día anulando las reglas de cierre general)`)) return;
+
+    try {
+      const docRef = db.collection("master_data").doc("CONFIG_SALONES");
+      const snap = await docRef.get();
+      if (!snap.exists) return;
+
+      const data = snap.data();
+      const specialKey = 'restauranteEspecial' + hotel;
+      const list = data[specialKey] || [];
+
+      // Find or Create entry
+      let entry = list.find(d => d.date === dateStr);
+      if (!entry) {
+        entry = { date: dateStr, lunchMax: 130, dinnerMax: 130, cafLunchMax: 50, cafDinnerMax: 50 };
+        list.push(entry);
+      }
+
+      // Set positive capacity for this specific shift
+      const isLunch = turno === 'almuerzo';
+      if (space === 'Cafeteria') {
+        if (isLunch) entry.cafLunchMax = 50;
+        else entry.cafDinnerMax = 50;
+      } else {
+        if (isLunch) entry.lunchMax = 130;
+        else entry.dinnerMax = 130;
+      }
+
+      await docRef.update({ [specialKey]: list });
+      alert("✅ Turno abierto correctamente. Recargando...");
+      location.reload();
+    } catch (e) {
+      alert("Error: " + e.message);
+    }
+  };
 
   async function startApp() {
     console.log("Restaurante v7: Starting...");
@@ -187,14 +264,27 @@
 
     // SERVICE INCLUDED TOGGLE
     document.getElementById("checkServicioIncluido").addEventListener("change", function () {
+      const container = document.getElementById("containerDetalleIncluido");
       if (this.checked) {
         document.getElementById("campoPrecio").value = "0,00"; // [MODIFIED] ES Format
         document.getElementById("campoPrecio").disabled = true;
+        if (container) container.classList.remove("hidden");
       } else {
         document.getElementById("campoPrecio").disabled = false;
+        if (container) container.classList.add("hidden");
       }
       updateTotalDisplay();
     });
+
+    // TIPO INCLUIDO TOGGLE
+    const tipoIncluido = document.getElementById("tipoIncluido");
+    if (tipoIncluido) {
+      tipoIncluido.addEventListener("change", function () {
+        const isHotel = this.value === 'hotel';
+        document.getElementById("wrapperHabitacion").classList.toggle("hidden", !isHotel);
+        document.getElementById("wrapperBono").classList.toggle("hidden", isHotel);
+      });
+    }
 
     // PHONE MASK
     if (document.getElementById("campoTelefono")) {
@@ -381,12 +471,22 @@
             }
 
             const isPast = dateStr < todayIso || istimeBlocked;
-            const shadeClass = isPast && !isLocked ? "bg-slate-100 text-slate-400" : ""; // Added text-slate-400 for better "disabled" look
+            const currentHotel = localStorage.getItem(STORAGE_KEY) || "Guadiana"; // Ensure it's inside or accessible
+            const status = getShiftStatus(currentHotel, space, turno, dateStr);
+
+            const shadeClass = (isPast || status.closed) && !isLocked ? "bg-slate-100 text-slate-400" : "";
             const bgClass = isLocked ? "bg-slate-50 border-red-100" : shadeClass;
 
-            const addBtn = isLocked || isPast
-              ? (isLocked ? `<span class="text-[10px] font-bold text-red-500 bg-red-50 px-1.5 rounded border border-red-100">COMPLETO</span>` : ``)
-              : `<button onclick="openBooking('${space}', '${dateStr}', '${turno}')" class="opacity-0 group-hover:opacity-100 text-blue-600 font-bold bg-blue-50 px-1.5 rounded text-[10px] transition">+</button>`;
+            let addBtn = "";
+            if (isLocked) {
+              addBtn = `<span class="text-[10px] font-bold text-red-500 bg-red-50 px-1.5 rounded border border-red-100 uppercase">Completo</span>`;
+            } else if (status.closed) {
+              addBtn = `<button onclick="openPunctually('${space}', '${dateStr}', '${turno}')" class="text-[9px] font-bold text-red-600 bg-red-50 hover:bg-red-100 px-1.5 rounded border border-red-200 transition">ABRIR 🔓</button>`;
+            } else if (!isPast) {
+              addBtn = `<button onclick="openBooking('${space}', '${dateStr}', '${turno}')" class="opacity-0 group-hover:opacity-100 text-blue-600 font-bold bg-blue-50 px-1.5 rounded text-[10px] transition">+</button>`;
+            }
+
+            const closureReason = status.closed ? `<div class="text-[9px] font-bold text-red-500/70 italic mt-0.5">${status.reason}</div>` : '';
 
             return `
                             <div class="turn-cell group ${bgClass} relative">
@@ -398,7 +498,8 @@
                                     </div>
                                     ${addBtn}
                                 </div>
-                                <div id="zone_${space}_${dateStr}_${turno}" class="flex flex-col gap-2 ${isLocked ? 'opacity-75 blur-[0.5px]' : ''}"></div>
+                                ${closureReason}
+                                <div id="zone_${space}_${dateStr}_${turno}" class="flex flex-col gap-2 ${isLocked || status.closed ? 'opacity-75 blur-[0.5px]' : ''}"></div>
                             </div>`;
           };
 
@@ -565,7 +666,19 @@
 
         let priceDisplay = "";
         if (r.servicioIncluido) {
-          priceDisplay = '<span class="text-xs font-bold text-blue-600 bg-blue-50 px-1 rounded">Incluido</span>';
+          let detailStr = "";
+          let symbol = "";
+          if (r.tipoIncluido === 'hotel') {
+            symbol = "🏨 ";
+            if (r.campoHabitacion) detailStr = `: ${r.campoHabitacion}`;
+          } else if (r.tipoIncluido === 'spa') {
+            // Stylized Lotus Logo (Gold) matching the reference
+            symbol = `<svg class="inline-block w-3.5 h-3.5 mr-0.5" viewBox="0 0 24 24" style="color: #b8860b; vertical-align: -3px;" fill="currentColor">
+                <path d="M12,22c0,0-5-2-5-7s2-8,5-10c3,2,5,5,5,10S12,22,12,22z M12,14c1.1,0,2-0.9,2-2s-0.9-2-2-2s-2,0.9-2,2S10.9,14,12,14z M2,12 c0,0,3-1,5,3c2,4,0,7,0,7s-4-1-5-6C1.5,14,2,12,2,12z M22,12c0,0-3-1-5,3c-2,4,0,7,0,7s4-1,5-6C22.5,14,22,12,22,12z"></path>
+            </svg>`;
+            if (r.campoBono) detailStr = `: ${r.campoBono}`;
+          }
+          priceDisplay = `<span class="text-[9px] font-bold text-blue-600 bg-blue-50 px-1 rounded border border-blue-100 italic" title="${r.tipoIncluido || ''}${detailStr}">${symbol}Incl${detailStr}</span>`;
         } else if (precio) {
           priceDisplay = precio + '€';
         }
@@ -708,6 +821,11 @@
               notesText = Object.values(r.notas).filter(v => v && typeof v === 'string').join(". ");
             }
           }
+          if (r.servicioIncluido) {
+            const incType = (r.tipoIncluido === 'spa') ? 'SPA' : 'HOTEL';
+            const incVal = (r.tipoIncluido === 'spa') ? (r.campoBono || '?') : (r.campoHabitacion || '?');
+            notesText = `[INC ${incType}: ${incVal}] ` + (notesText ? " - " + notesText : "");
+          }
           let type = "Esp.";
           let typeFull = "Especial";
           const mesa = r.mesa || "-"; // [NEW] Get mesa
@@ -839,6 +957,16 @@
       currentReserva: data || null
     };
 
+    // [NEW] Check closure rules
+    const currentHotel = localStorage.getItem(STORAGE_KEY) || "Guadiana";
+    if (!data) {
+      const status = getShiftStatus(currentHotel, space || 'Restaurante', turno || 'almuerzo', dateStr || utils.toIsoDate(new Date()));
+      if (status.closed) {
+        alert(`⛔ ESTE TURNO ESTÁ CERRADO.\nMotivo: ${status.reason}\n\nSi necesitas abrirlo puntualmente, haz clic en "ABRIR 🔓" desde el calendario.`);
+        return;
+      }
+    }
+
     if (!data) {
       const isLocked = loadedReservations.some(r =>
         r.type === 'lock' &&
@@ -869,7 +997,18 @@
     window.scrollTo({ top: 0, behavior: 'smooth' });
 
     const checkServicio = document.getElementById("checkServicioIncluido");
-    if (checkServicio) checkServicio.checked = false;
+    if (checkServicio) {
+      checkServicio.checked = false;
+      const detailContainer = document.getElementById("containerDetalleIncluido");
+      if (detailContainer) detailContainer.classList.add("hidden");
+    }
+
+    // Reset details
+    document.getElementById("tipoIncluido").value = "hotel";
+    document.getElementById("campoHabitacion").value = "";
+    document.getElementById("campoBono").value = "";
+    document.getElementById("wrapperHabitacion").classList.remove("hidden");
+    document.getElementById("wrapperBono").classList.add("hidden");
 
     document.getElementById("campoEstado").value = "confirmada";
     const btnAnular = document.getElementById("btnAnular");
@@ -909,6 +1048,18 @@
       if (data.servicioIncluido) {
         checkServicio.checked = true;
         document.getElementById("campoPrecio").disabled = true;
+        const detailContainer = document.getElementById("containerDetalleIncluido");
+        if (detailContainer) detailContainer.classList.remove("hidden");
+
+        if (data.tipoIncluido) {
+          document.getElementById("tipoIncluido").value = data.tipoIncluido;
+          const isHotel = data.tipoIncluido === 'hotel';
+          document.getElementById("wrapperHabitacion").classList.toggle("hidden", !isHotel);
+          document.getElementById("wrapperBono").classList.toggle("hidden", isHotel);
+        }
+        document.getElementById("campoHabitacion").value = data.campoHabitacion || "";
+        document.getElementById("campoBono").value = data.campoBono || "";
+
       } else {
         checkServicio.checked = false;
         document.getElementById("campoPrecio").disabled = false;
@@ -964,7 +1115,8 @@
       "campoNombre", "campoTelefono", "campoHora", "campoPrecio",
       "campoPax", "campoNinos", "campoPrecioNinos", "campoNotas",
       "campoNotaCliente", "campoEstado", "campoEspacio", "campoTurno", "campoMesa",
-      "btnAnular", "btnGuardar", "checkServicioIncluido"
+      "btnAnular", "btnGuardar", "checkServicioIncluido",
+      "tipoIncluido", "campoHabitacion", "campoBono"
     ];
 
     readOnlyElements.forEach(id => {
@@ -1217,6 +1369,9 @@
       notas: document.getElementById("campoNotas").value,
       notaCliente: document.getElementById("campoNotaCliente").value,
       servicioIncluido: isServiceIncluded,
+      tipoIncluido: isServiceIncluded ? document.getElementById("tipoIncluido").value : null,
+      campoHabitacion: isServiceIncluded ? document.getElementById("campoHabitacion").value.trim() : null,
+      campoBono: isServiceIncluded ? document.getElementById("campoBono").value.trim() : null,
       updatedAt: firebase.firestore.FieldValue.serverTimestamp()
     };
 
