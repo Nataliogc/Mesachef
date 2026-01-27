@@ -25,7 +25,71 @@
       appId: "1:43170330072:web:bcdd09e39930ad08bf2ead"
     };
     if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-    callback();
+
+    const auth = firebase.auth();
+    window.auth = auth; // Expose globally
+
+    // --- UI AUTH HANDLERS ---
+    const modalLogin = document.getElementById("modalLogin");
+    const formLogin = document.getElementById("formLogin");
+    const btnLogout = document.getElementById("btnLogout");
+
+    if (formLogin) {
+      formLogin.addEventListener("submit", (e) => {
+        e.preventDefault();
+        const email = document.getElementById("loginEmail").value;
+        const pass = document.getElementById("loginPass").value;
+        const errDiv = document.getElementById("loginError");
+        const btn = document.getElementById("btnLoginSubmit");
+
+        if (errDiv) errDiv.classList.add("hidden");
+        if (btn) { btn.disabled = true; btn.innerText = "Verificando..."; }
+
+        auth.signInWithEmailAndPassword(email, pass).catch(err => {
+          console.error("Auth Error:", err);
+          if (btn) { btn.disabled = false; btn.innerText = "ENTRAR"; }
+          if (errDiv) {
+            // Friendly error messages
+            let msg = "Error desconocido";
+            if (err.code === 'auth/wrong-password') msg = "Contraseña incorrecta";
+            else if (err.code === 'auth/user-not-found') msg = "Usuario no encontrado";
+            else if (err.code === 'auth/invalid-email') msg = "Email inválido";
+            else msg = err.message;
+
+            errDiv.innerText = msg;
+            errDiv.classList.remove("hidden");
+          }
+        });
+      });
+    }
+
+    if (btnLogout) {
+      btnLogout.addEventListener("click", () => {
+        if (confirm("¿Cerrar sesión de Chef?")) {
+          auth.signOut().then(() => window.location.reload());
+        }
+      });
+    }
+
+    // --- AUTH STATE MONITOR ---
+    // Only loads data (callback) if authenticated
+    auth.onAuthStateChanged((user) => {
+      if (user) {
+        console.log("[AUTH] Chef Logged In:", user.email);
+        if (modalLogin) modalLogin.classList.add("hidden");
+        if (btnLogout) btnLogout.classList.remove("hidden");
+
+        // Prevent double init
+        if (!window.appStarted) {
+          window.appStarted = true;
+          callback();
+        }
+      } else {
+        console.log("[AUTH] No User. Locking UI.");
+        if (modalLogin) modalLogin.classList.remove("hidden");
+        if (btnLogout) btnLogout.classList.add("hidden");
+      }
+    });
   }
 
   let db;
@@ -560,7 +624,7 @@
 
     console.log(`DEBUG: Querying ${hotel} from ${start} to ${end}`);
 
-    unsubscribe = db.collection("reservas_restaurante")
+    unsubscribe = db.collection("reservas")
       .where("hotel", "==", hotel)
       // Removed date filter to avoid 'Requires Index' error. 
       // Filtering is done client-side in paintReservations.
@@ -1315,7 +1379,7 @@
 
       // 2. Robust Async Date Check (Server Side - Simplified to avoid Index Error)
       try {
-        const lockSnap = await db.collection("reservas_restaurante")
+        const lockSnap = await db.collection("reservas")
           .where("hotel", "==", currentHotel)
           .where("espacio", "==", targetSpace)
           .where("turno", "==", targetTurn)
@@ -1397,14 +1461,14 @@
       const id = document.getElementById("campoId").value;
       if (id) {
         finalId = id;
-        await db.collection("reservas_restaurante").doc(id).update(payload);
+        await db.collection("reservas").doc(id).update(payload);
         // [NEW] 2-Way Sync
         if (window.state && window.state.currentReserva && window.state.currentReserva.presupuestoId) {
           payload.presupuestoId = window.state.currentReserva.presupuestoId;
           await syncPresupuestoFromRestaurante(payload);
         }
       } else {
-        const ref = await db.collection("reservas_restaurante").add(payload);
+        const ref = await db.collection("reservas").add(payload);
         finalId = ref.id;
       }
 
@@ -1503,11 +1567,11 @@
     try {
       // 1. Fetch the reservation first to see if it has a linked budget
       // We need to do this BEFORE updating because we need the presupuestoId
-      const resDoc = await db.collection("reservas_restaurante").doc(id).get();
+      const resDoc = await db.collection("reservas").doc(id).get();
       const resData = resDoc.exists ? resDoc.data() : null;
 
       // 2. Update Reservation Status
-      await db.collection("reservas_restaurante").doc(id).update({
+      await db.collection("reservas").doc(id).update({
         estado: 'anulada',
         cancelledAt: firebase.firestore.FieldValue.serverTimestamp(),
         updatedAt: firebase.firestore.FieldValue.serverTimestamp()
@@ -1569,9 +1633,9 @@
 
     try {
       if (existingLockId) {
-        await db.collection("reservas_restaurante").doc(existingLockId).delete();
+        await db.collection("reservas").doc(existingLockId).delete();
       } else {
-        await db.collection("reservas_restaurante").add({
+        await db.collection("reservas").add({
           hotel: currentHotel,
           espacio: space,
           fecha: firebase.firestore.Timestamp.fromDate(new Date(dateStr)),
