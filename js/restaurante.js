@@ -29,6 +29,10 @@
     const auth = firebase.auth();
     window.auth = auth; // Expose globally
 
+    // [MODIFIED] Force Persistence to LOCAL (Remember session)
+    auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL)
+      .catch(error => console.error("Persistence Error:", error));
+
     // --- UI AUTH HANDLERS ---
     const modalLogin = document.getElementById("modalLogin");
     const formLogin = document.getElementById("formLogin");
