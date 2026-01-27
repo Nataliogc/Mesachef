@@ -639,7 +639,7 @@
         const connStatus = document.getElementById("connStatus");
         if (connStatus) {
           const span = connStatus.querySelector("span");
-          if (span) span.innerText = `Online (${loadedReservations.length} res.)`;
+          if (span) span.innerText = "Online";
         }
 
         // Re-render grid structure (totals) AND paint cards
