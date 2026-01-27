@@ -7,6 +7,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#2563eb" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <link rel="manifest" href="manifest.json" />
     <link rel="icon" type="image/png" href="Img/mesa-chef-192.png" />
@@ -328,18 +329,18 @@
                 <p class="text-slate-500 text-xs font-medium">Identifícate con tus credenciales de Chef</p>
             </div>
 
-            <form id="formLogin" class="space-y-4">
+            <form id="formLogin" class="space-y-4" autocomplete="on">
                 <div>
                     <label
                         class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Email</label>
-                    <input type="email" id="loginEmail"
+                    <input type="email" id="loginEmail" autocomplete="username"
                         class="block w-full rounded border-slate-300 bg-slate-50 text-slate-800 text-sm py-2 px-3 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition"
                         placeholder="usuario@hotel.com" required>
                 </div>
                 <div>
                     <label
                         class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Contraseña</label>
-                    <input type="password" id="loginPass"
+                    <input type="password" id="loginPass" autocomplete="current-password"
                         class="block w-full rounded border-slate-300 bg-slate-50 text-slate-800 text-sm py-2 px-3 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition"
                         placeholder="••••••" required>
                 </div>
@@ -606,25 +607,20 @@
         </div>
     </div>
 
-    <!-- Scripts -->
-    <!-- Scripts -->
-    <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-firestore-compat.js"></script>
-    <script src="js/app-common.js"></script>
+    <!-- Firebase Init (Compat Mode) -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
-    <!-- INLINE RESTAURANTE JS v14 (Fixed & Clean) -->
-    <!-- External Logic (v15) -->
-    <script src="js/restaurante.js?v=9.8"></script>
+    <!-- App Scripts -->
+    <script src="js/app-common.js"></script>
+    <script src="js/restaurante.js?v=9.9"></script>
 
     <script>
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('sw.js').catch(err => console.log('SW Registration skipped:', err));
         }
     </script>
-
-    <!-- Bridge script for Spa voucher integration -->
-    <script src="file:///C:/Users/comun/Documents/GitHub/Gest-Spa/temp_restaurante_v6.js"></script>
 </body>
 
 </html>

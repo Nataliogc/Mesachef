@@ -3,16 +3,11 @@
 (function () {
   // --- FIREBASE INIT ---
   function ensureFirebase(callback) {
-    if (window.firebase && window.firebase.apps.length) { callback(); return; }
-    const s1 = document.createElement("script");
-    s1.src = "https://www.gstatic.com/firebasejs/9.6.7/firebase-app-compat.js";
-    s1.onload = function () {
-      const s2 = document.createElement("script");
-      s2.src = "https://www.gstatic.com/firebasejs/9.6.7/firebase-firestore-compat.js";
-      s2.onload = function () { initFirebase(callback); };
-      document.head.appendChild(s2);
-    };
-    document.head.appendChild(s1);
+    if (window.firebase && window.firebase.auth && window.firebase.firestore) {
+      initFirebase(callback);
+    } else {
+      console.error("Firebase libraries not loaded. Check internet connection.");
+    }
   }
 
   function initFirebase(callback) {
