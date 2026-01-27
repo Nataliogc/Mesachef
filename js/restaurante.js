@@ -623,7 +623,7 @@
 
     console.log(`DEBUG: Querying ${hotel} from ${start} to ${end}`);
 
-    unsubscribe = db.collection("reservas")
+    unsubscribe = db.collection("reservas_restaurante")
       .where("hotel", "==", hotel)
       // Removed date filter to avoid 'Requires Index' error. 
       // Filtering is done client-side in paintReservations.
@@ -632,7 +632,15 @@
         snapshot.forEach(doc => {
           loadedReservations.push({ id: doc.id, ...doc.data() });
         });
+
         console.log("DEBUG: Loaded", loadedReservations.length, "reservations");
+
+        // [UX] Feedback to User
+        const connStatus = document.getElementById("connStatus");
+        if (connStatus) {
+          const span = connStatus.querySelector("span");
+          if (span) span.innerText = `Online (${loadedReservations.length} res.)`;
+        }
 
         // Re-render grid structure (totals) AND paint cards
         renderGridStructure();
@@ -1378,7 +1386,7 @@
 
       // 2. Robust Async Date Check (Server Side - Simplified to avoid Index Error)
       try {
-        const lockSnap = await db.collection("reservas")
+        const lockSnap = await db.collection("reservas_restaurante")
           .where("hotel", "==", currentHotel)
           .where("espacio", "==", targetSpace)
           .where("turno", "==", targetTurn)
@@ -1460,14 +1468,14 @@
       const id = document.getElementById("campoId").value;
       if (id) {
         finalId = id;
-        await db.collection("reservas").doc(id).update(payload);
+        await db.collection("reservas_restaurante").doc(id).update(payload);
         // [NEW] 2-Way Sync
         if (window.state && window.state.currentReserva && window.state.currentReserva.presupuestoId) {
           payload.presupuestoId = window.state.currentReserva.presupuestoId;
           await syncPresupuestoFromRestaurante(payload);
         }
       } else {
-        const ref = await db.collection("reservas").add(payload);
+        const ref = await db.collection("reservas_restaurante").add(payload);
         finalId = ref.id;
       }
 
@@ -1566,11 +1574,11 @@
     try {
       // 1. Fetch the reservation first to see if it has a linked budget
       // We need to do this BEFORE updating because we need the presupuestoId
-      const resDoc = await db.collection("reservas").doc(id).get();
+      const resDoc = await db.collection("reservas_restaurante").doc(id).get();
       const resData = resDoc.exists ? resDoc.data() : null;
 
       // 2. Update Reservation Status
-      await db.collection("reservas").doc(id).update({
+      await db.collection("reservas_restaurante").doc(id).update({
         estado: 'anulada',
         cancelledAt: firebase.firestore.FieldValue.serverTimestamp(),
         updatedAt: firebase.firestore.FieldValue.serverTimestamp()
@@ -1632,9 +1640,9 @@
 
     try {
       if (existingLockId) {
-        await db.collection("reservas").doc(existingLockId).delete();
+        await db.collection("reservas_restaurante").doc(existingLockId).delete();
       } else {
-        await db.collection("reservas").add({
+        await db.collection("reservas_restaurante").add({
           hotel: currentHotel,
           espacio: space,
           fecha: firebase.firestore.Timestamp.fromDate(new Date(dateStr)),
