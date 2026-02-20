@@ -11,15 +11,11 @@
   }
 
   function initFirebase(callback) {
-    const firebaseConfig = {
-      apiKey: "AIzaSyAXv_wKD48EFDe8FBQ-6m0XGUNoxSRiTJY",
-      authDomain: "mesa-chef-prod.firebaseapp.com",
-      projectId: "mesa-chef-prod",
-      storageBucket: "mesa-chef-prod.firebasestorage.app",
-      messagingSenderId: "43170330072",
-      appId: "1:43170330072:web:bcdd09e39930ad08bf2ead"
-    };
-    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+    console.log("Restaurante: Using central Firebase initialization...");
+    if (!firebase.apps.length) {
+      console.error("Firebase not initialized. Ensure firebase-init.js is loaded.");
+      return;
+    }
 
     const auth = firebase.auth();
     window.auth = auth; // Expose globally

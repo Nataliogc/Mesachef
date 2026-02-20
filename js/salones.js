@@ -6,50 +6,18 @@
     let appStarted = false;
 
     function ensureFirebase(callback) {
-        if (!document.querySelector('script[src*="firebase-app-compat"]')) {
-            const s1 = document.createElement("script");
-            s1.src = "https://www.gstatic.com/firebasejs/9.6.7/firebase-app-compat.js";
-            s1.onload = function () {
-                const s2 = document.createElement("script");
-                s2.src = "https://www.gstatic.com/firebasejs/9.6.7/firebase-auth-compat.js";
-                s2.onload = function () {
-                    const s3 = document.createElement("script");
-                    s3.src = "https://www.gstatic.com/firebasejs/9.6.7/firebase-firestore-compat.js";
-                    s3.onload = function () { initFirebase(callback); };
-                    document.head.appendChild(s3);
-                };
-                document.head.appendChild(s2);
-            };
-            document.head.appendChild(s1);
-        } else {
-            const checkInterval = setInterval(() => {
-                if (window.firebase && window.firebase.auth && window.firebase.firestore) {
-                    clearInterval(checkInterval);
-                    initFirebase(callback);
-                }
-            }, 100);
-        }
+        // Assume Firebase initialized by firebase-init.js
+        const checkInterval = setInterval(() => {
+            if (window.firebase && window.firebase.auth && window.firebase.firestore) {
+                clearInterval(checkInterval);
+                initFirebase(callback);
+            }
+        }, 100);
     }
 
     function initFirebase(callback) {
-        console.log("Salones: Initializing Firebase...");
+        console.log("Salones: Using central Firebase initialization...");
         try {
-            const firebaseConfig = {
-                apiKey: "AIzaSyAXv_wKD48EFDe8FBQ-6m0XGUNoxSRiTJY",
-                authDomain: "mesa-chef-prod.firebaseapp.com",
-                projectId: "mesa-chef-prod",
-                storageBucket: "mesa-chef-prod.firebasestorage.app",
-                messagingSenderId: "43170330072",
-                appId: "1:43170330072:web:bcdd09e39930ad08bf2ead"
-            };
-
-            if (!firebase.apps.length) {
-                console.log("Salones: Firebase.initializeApp...");
-                firebase.initializeApp(firebaseConfig);
-            } else {
-                console.log("Salones: Firebase already initialized.");
-            }
-
             // AUTH LISTENER
             firebase.auth().onAuthStateChanged((user) => {
                 if (user) {
@@ -831,7 +799,7 @@
 
             if (existing.detalles) {
                 document.getElementById("evt-jornada").value = existing.detalles.jornada || "todo";
-                mSel.value = existing.detalles.montaje || "";
+                mInput.value = existing.detalles.montaje || "";
                 document.getElementById("evt-hora").value = existing.detalles.hora || "";
                 document.getElementById("evt-pax-a").value = existing.detalles.pax_adultos || "";
                 document.getElementById("evt-pax-n").value = existing.detalles.pax_ninos || "";

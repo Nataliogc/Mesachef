@@ -251,6 +251,10 @@
     </div>
 
     <!-- COMMON APP LOGIC (Formatters, etc) -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-firestore-compat.js"></script>
+    <script src="js/firebase-init.js"></script>
     <script src="js/app-common.js"></script>
 
     <!-- LOGIC -->
@@ -264,7 +268,7 @@
                 setTimeout(() => {
                     document.getElementById("loginScreen").classList.add("hidden");
                     document.getElementById("dashboard").classList.remove("hidden");
-                    loadFirebase();
+                    initApp();
                 }, 500);
             } else {
                 document.getElementById("errorMsg").style.display = "block";
@@ -276,48 +280,9 @@
         var fullConfig = { Guadiana: [], Cumbria: [], montajes: [], horarios: {}, aiOptions: {}, textoLegal: "", mantenimiento: false };
         var currentTab = "General";
 
-        function loadFirebase() {
-            // Check if already loaded
-            if (window.firebase && window.firebase.apps && window.firebase.apps.length && window.firebase.auth) {
-                initApp();
-                return;
-            }
-
-            // Load Dynamically if not present
-            var s1 = document.createElement("script");
-            s1.src = "https://www.gstatic.com/firebasejs/9.6.7/firebase-app-compat.js";
-            s1.onload = function () {
-                var s2 = document.createElement("script");
-                s2.src = "https://www.gstatic.com/firebasejs/9.6.7/firebase-auth-compat.js";
-                s2.onload = function () {
-                    var s3 = document.createElement("script");
-                    s3.src = "https://www.gstatic.com/firebasejs/9.6.7/firebase-firestore-compat.js";
-                    s3.onload = initApp;
-                    s3.onerror = function () { alert("Error loading Firestore"); };
-                    document.head.appendChild(s3);
-                };
-                s2.onerror = function () { alert("Error loading Auth"); };
-                document.head.appendChild(s2);
-            };
-            s1.onerror = function () { alert("Error loading Firebase App"); };
-            document.head.appendChild(s1);
-        }
-
         function initApp() {
             try {
-                // ** CREDENTIALS (Mesa Chef Prod) **
-                const firebaseConfig = {
-                    apiKey: "AIzaSyAXv_wKD48EFDe8FBQ-6m0XGUNoxSRiTJY",
-                    authDomain: "mesa-chef-prod.firebaseapp.com",
-                    projectId: "mesa-chef-prod",
-                    storageBucket: "mesa-chef-prod.firebasestorage.app",
-                    messagingSenderId: "43170330072",
-                    appId: "1:43170330072:web:bcdd09e39930ad08bf2ead"
-                };
-
-                if (!firebase.apps.length) {
-                    firebase.initializeApp(firebaseConfig);
-                }
+                console.log("Admin: Using central Firebase initialization...");
 
                 // AUTHENTICATE
                 firebase.auth().onAuthStateChanged((user) => {
