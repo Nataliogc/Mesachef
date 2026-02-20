@@ -9,7 +9,7 @@ const firebaseConfig = {
 };
 
 firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
+var db = firebase.firestore();
 
 // Habilitar persistencia offline para carga instantánea de datos
 db.enablePersistence({ synchronizeTabs: true }).catch(err => {

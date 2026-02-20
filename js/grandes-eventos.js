@@ -7,7 +7,7 @@
 
     // Firestore References
     // Use local variable to avoid collision with global 'db' from firebase-init.js
-    const db = firebase.firestore();
+    db = firebase.firestore();
     const eventosRef = db.collection("grandes_eventos");
     const participantesRef = db.collection("participantes_eventos");
 

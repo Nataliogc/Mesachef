@@ -2,7 +2,7 @@
  * Logic for Seating Plan Window (v2 + Smart AI + Split Logic)
  */
 (function () {
-    const db = firebase.firestore();
+    db = firebase.firestore(); // Use global db or assign it
     const eventosRef = db.collection("grandes_eventos");
     const participantesRef = db.collection("participantes_eventos");
 
