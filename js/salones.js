@@ -94,7 +94,12 @@
             }
             return dates;
         },
-        toIsoDate: (d) => d.toISOString().split('T')[0],
+        toIsoDate: (d) => {
+            const year = d.getFullYear();
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        },
         formatDateES: (d) => d.toLocaleDateString('es-ES', { weekday: 'short', day: 'numeric', month: 'short' })
     };
 
@@ -511,7 +516,7 @@
             <div class="flex justify-between items-end mt-1 text-[11px]">
                 <div class="flex flex-col min-w-0 pr-1">
                      <span class="text-[10px] font-extrabold uppercase tracking-tight leading-none mb-0.5 px-1 rounded w-fit ${jClass}">${jText}</span>
-                     <span class="truncate opacity-90">${res.detalles?.montaje || '-'}</span>
+                     <span class="truncate opacity-90"><b class="opacity-70">Montaje:</b> ${res.detalles?.montaje || '-'}</span>
                 </div>
                  <div class="flex items-center space-x-1 shrink-0">
                     ${timeStr}
@@ -729,10 +734,12 @@
 
 
         const sSel = document.getElementById("evt-salon");
-        const mSel = document.getElementById("evt-montaje");
+        const mInput = document.getElementById("evt-montaje");
+        const mList = document.getElementById("montaje-options");
 
         sSel.innerHTML = "";
-        mSel.innerHTML = "";
+        if (mList) mList.innerHTML = "";
+        if (mInput) mInput.value = "";
 
         // Filter Autocomplete on Salon Change
         sSel.onchange = function () {
@@ -750,12 +757,11 @@
             sSel.appendChild(op);
         });
 
-        if (globalConfig.montajes) {
+        if (globalConfig.montajes && mList) {
             globalConfig.montajes.forEach(m => {
                 const op = document.createElement("option");
                 op.value = m;
-                op.text = m;
-                mSel.appendChild(op);
+                mList.appendChild(op);
             });
         }
 
@@ -1317,7 +1323,7 @@
 
             // 2. Status Check (Case Insensitive)
             const st = (r.estado || 'pendiente').toLowerCase();
-            const validStatuses = ['pendiente', 'confirmada', 'pending', 'confirmed'];
+            const validStatuses = ['pendiente', 'confirmada', 'provisional', 'presupuesto', 'pending', 'confirmed'];
 
             if (filterFn(r) && validStatuses.includes(st)) {
                 rows.push({ ...r, ts: new Date(r.fecha + 'T' + (r.detalles?.hora || '00:00')) });
@@ -1332,15 +1338,20 @@
             groups[r.fecha].push(r);
         });
 
-        const sortedDates = Object.keys(groups).sort();
+        // 2. Build HTML per Day (Always show all 7 days of the week)
+        const weekDates = mode === 'dia' ? [new Date(utils.toIsoDate(currentWeekStart))] : dates;
 
-        // 2. Build HTML per Date
-        sortedDates.forEach(dateStr => {
-            const dateObj = new Date(dateStr);
+        weekDates.forEach(dateObj => {
+            const dateStr = utils.toIsoDate(dateObj);
             const dayName = dateObj.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' });
             const dayNameCap = dayName.charAt(0).toUpperCase() + dayName.slice(1);
 
             html += `<h3 style="font-size: 16px; font-weight: bold; margin-top: 20px; margin-bottom: 5px; color: #2c3e50; border-bottom: 2px solid #ddd; padding-bottom: 5px;">📅 ${dayNameCap}</h3>`;
+
+            if (!groups[dateStr] || groups[dateStr].length === 0) {
+                html += `<p style="font-size: 11px; color: #94a3b8; font-style: italic; margin-bottom: 20px;">No hay eventos programados.</p>`;
+                return;
+            }
 
             // Table Header
             html += `<table style="width: 100%; border-collapse: collapse; font-size: 11px; margin-bottom: 20px;">
@@ -1393,19 +1404,36 @@
                 // Notes Row
                 if (notesText) {
                     html += `<tr>
-                                <td colspan="7" style="padding: 2px 6px 8px 6px; color:#666; font-style:italic; font-size:10px;">
+                                <td colspan="7" style="padding: 2px 6px 4px 6px; color:#666; font-style:italic; font-size:10px;">
                                     📝 ${notesText}
                                 </td>
                              </tr>`;
-                } else {
-                    // Empty row to keep spacing consistent if no notes? Or just omit.
-                    // Omitting assumes the top border of next row handles separation.
+                }
+
+                // [NEW] Services Sub-row
+                if (r.servicios && r.servicios.length > 0) {
+                    // Filter services to show only those on the same date we are printing
+                    const dailyServices = r.servicios.filter(s => s.fecha === dateStr);
+                    if (dailyServices.length > 0) {
+                        html += `<tr>
+                                    <td colspan="7" style="padding: 0 6px 8px 30px;">
+                                        <div style="display: flex; flex-wrap: wrap; gap: 8px; font-size: 10px; color: #475569;">
+                                            <span style="font-weight: bold; color: #1e293b;">📌 Servicios:</span>
+                                            ${dailyServices.map(s => `
+                                                <span style="background: #f1f5f9; padding: 1px 6px; border-radius: 4px; border: 1px solid #e2e8f0;">
+                                                    ${s.concepto} (${s.uds})
+                                                </span>
+                                            `).join('')}
+                                        </div>
+                                    </td>
+                                 </tr>`;
+                    }
                 }
             });
 
             html += `</tbody></table>`;
 
-            html += `<div style="font-size: 13px; font-weight: bold; color: #333; margin-bottom: 30px; background: #fafafa; padding: 10px; border-left: 4px solid #666;">
+            html += `<div class="day-summary" style="font-size: 13px; font-weight: bold; color: #333; margin-bottom: 30px; background: #fafafa; padding: 10px; border-left: 4px solid #666; page-break-after: auto;">
                 Resumen día ${dateObj.getDate()}: Total ${dailyPax} personas (${eventCount} eventos)
             </div>`;
         });

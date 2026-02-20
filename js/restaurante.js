@@ -844,25 +844,28 @@
       groups[r.dateStr].push(r);
     });
 
-    const sortedDates = Object.keys(groups).sort();
+    // 2. Build HTML per Day (Always show all 7 days of the week)
+    const weekDates = mode === 'dia' ? [new Date(utils.toIsoDate(currentWeekStart))] : dates;
 
-    if (sortedDates.length === 0) {
-      html += `<p style="color:#666; font-style:italic;">No hay reservas para este periodo.</p>`;
-    } else {
-      sortedDates.forEach(dateStr => {
-        const dateObj = new Date(dateStr);
-        const dayName = dateObj.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' });
-        const dayNameCap = dayName.charAt(0).toUpperCase() + dayName.slice(1);
+    weekDates.forEach(dateObj => {
+      const dateStr = utils.toIsoDate(dateObj);
+      const dayName = utils.formatDateES(dateObj);
+      const dayNameCap = dayName.charAt(0).toUpperCase() + dayName.slice(1);
 
-        html += `<h3 style="font-size: 16px; font-weight: bold; margin-top: 20px; margin-bottom: 10px; color: #2c3e50; border-bottom: 1px solid #ddd; padding-bottom: 5px;">📅 ${dayNameCap}</h3>`;
-        html += `<ul style="list-style-type: none; padding-left: 0; margin-bottom: 15px;">`;
+      html += `<h3 style="font-size: 16px; font-weight: bold; margin-top: 20px; margin-bottom: 10px; color: #2c3e50; border-bottom: 1px solid #ddd; padding-bottom: 5px;">📅 ${dayNameCap}</h3>`;
 
-        let dailyPax = 0;
-        let countLunch = 0;
-        let countDinner = 0;
-        let countSpecial = 0;
+      if (!groups[dateStr] || groups[dateStr].length === 0) {
+        html += `<p style="font-size: 11px; color: #94a3b8; font-style: italic; margin-bottom: 20px;">No hay reservas programadas.</p>`;
+        return;
+      }
+      html += `<ul style="list-style-type: none; padding-left: 0; margin-bottom: 15px;">`;
 
-        html += `<table style="width: 100%; border-collapse: collapse; font-size: 11px; margin-bottom: 20px;">
+      let dailyPax = 0;
+      let countLunch = 0;
+      let countDinner = 0;
+      let countSpecial = 0;
+
+      html += `<table style="width: 100%; border-collapse: collapse; font-size: 11px; margin-bottom: 20px;">
                     <thead>
                         <tr style="background: #f1f5f9; color: #475569; text-align: left;">
                             <th style="padding: 6px; width: 40px; border-bottom: 2px solid #ddd;">Mesa</th>
@@ -876,38 +879,38 @@
                     </thead>
                     <tbody>`;
 
-        groups[dateStr].forEach(r => {
-          const pax = (parseInt(r.pax) || 0) + (parseInt(r.ninos) || 0);
-          dailyPax += pax;
-          const clientName = r.nombre || r.cliente || "Sin Nombre";
-          const time = r.hora || "00:00";
-          const space = r.espacio || "Restaurante";
-          let statusFull = r.estado || "confirmada";
-          let statusAbbr = (statusFull === 'confirmada' || statusFull === 'confirmed') ? 'Conf' : 'Pend';
-          const spaceAbbr = space.substring(0, 8) + (space.length > 8 ? '.' : '');
-          let notesText = "";
-          if (r.notas) {
-            if (typeof r.notas === 'string') notesText = r.notas;
-            else if (typeof r.notas === 'object') {
-              notesText = Object.values(r.notas).filter(v => v && typeof v === 'string').join(". ");
-            }
+      groups[dateStr].forEach(r => {
+        const pax = (parseInt(r.pax) || 0) + (parseInt(r.ninos) || 0);
+        dailyPax += pax;
+        const clientName = r.nombre || r.cliente || "Sin Nombre";
+        const time = r.hora || "00:00";
+        const space = r.espacio || "Restaurante";
+        let statusFull = r.estado || "confirmada";
+        let statusAbbr = (statusFull === 'confirmada' || statusFull === 'confirmed') ? 'Conf' : 'Pend';
+        const spaceAbbr = space.substring(0, 8) + (space.length > 8 ? '.' : '');
+        let notesText = "";
+        if (r.notas) {
+          if (typeof r.notas === 'string') notesText = r.notas;
+          else if (typeof r.notas === 'object') {
+            notesText = Object.values(r.notas).filter(v => v && typeof v === 'string').join(". ");
           }
-          if (r.servicioIncluido) {
-            const incType = (r.tipoIncluido === 'spa') ? 'SPA' : 'HOTEL';
-            const incVal = (r.tipoIncluido === 'spa') ? (r.campoBono || '?') : (r.campoHabitacion || '?');
-            notesText = `[INC ${incType}: ${incVal}] ` + (notesText ? " - " + notesText : "");
-          }
-          let type = "Esp.";
-          let typeFull = "Especial";
-          const mesa = r.mesa || "-"; // [NEW] Get mesa
-          const hour = parseInt(time.split(':')[0]);
-          if (hour >= 12 && hour <= 15) { type = "Alm."; typeFull = "Almuerzo"; }
-          else if (hour >= 20) { type = "Cena"; typeFull = "Cena"; }
-          if (typeFull === "Almuerzo") countLunch += pax;
-          else if (typeFull === "Cena") countDinner += pax;
-          else countSpecial += pax;
+        }
+        if (r.servicioIncluido) {
+          const incType = (r.tipoIncluido === 'spa') ? 'SPA' : 'HOTEL';
+          const incVal = (r.tipoIncluido === 'spa') ? (r.campoBono || '?') : (r.campoHabitacion || '?');
+          notesText = `[INC ${incType}: ${incVal}] ` + (notesText ? " - " + notesText : "");
+        }
+        let type = "Esp.";
+        let typeFull = "Especial";
+        const mesa = r.mesa || "-"; // [NEW] Get mesa
+        const hour = parseInt(time.split(':')[0]);
+        if (hour >= 12 && hour <= 15) { type = "Alm."; typeFull = "Almuerzo"; }
+        else if (hour >= 20) { type = "Cena"; typeFull = "Cena"; }
+        if (typeFull === "Almuerzo") countLunch += pax;
+        else if (typeFull === "Cena") countDinner += pax;
+        else countSpecial += pax;
 
-          html += `<tr style="border-bottom: 1px solid #eee;">
+        html += `<tr style="border-bottom: 1px solid #eee;">
                     <td style="padding: 6px; font-weight:bold; color: #000;">${mesa}</td>
                     <td style="padding: 6px; font-weight:bold;">${time}</td>
                     <td style="padding: 6px; font-weight:600; color:#333;">${clientName.substring(0, 20)}</td>
@@ -916,21 +919,20 @@
                     <td style="padding: 6px;">${statusAbbr}</td>
                     <td style="padding: 6px;">${type}</td>
                    </tr>`;
-        });
+      });
 
-        html += `</tbody></table>`;
+      html += `</tbody></table>`;
 
-        let parts = [];
-        if (countLunch > 0) parts.push(`${countLunch} almuerzo${countLunch > 1 ? 's' : ''}`);
-        if (countDinner > 0) parts.push(`${countDinner} cena${countDinner > 1 ? 's' : ''}`);
-        if (countSpecial > 0) parts.push(`${countSpecial} especial${countSpecial > 1 ? 'es' : ''}`);
-        const breakdown = parts.length > 0 ? `(${parts.join(', ')})` : "";
+      let parts = [];
+      if (countLunch > 0) parts.push(`${countLunch} almuerzo${countLunch > 1 ? 's' : ''}`);
+      if (countDinner > 0) parts.push(`${countDinner} cena${countDinner > 1 ? 's' : ''}`);
+      if (countSpecial > 0) parts.push(`${countSpecial} especial${countSpecial > 1 ? 'es' : ''}`);
+      const breakdown = parts.length > 0 ? `(${parts.join(', ')})` : "";
 
-        html += `<div style="font-size: 13px; font-weight: bold; color: #333; margin-bottom: 30px; background: #fafafa; padding: 10px; border-left: 4px solid #666;">
+      html += `<div style="font-size: 13px; font-weight: bold; color: #333; margin-bottom: 30px; background: #fafafa; padding: 10px; border-left: 4px solid #666;">
                     Resumen día ${dateObj.getDate()}: Total ${dailyPax} personas ${breakdown}
                  </div>`;
-      });
-    }
+    });
 
     html += `
               <div style="margin-top: 20px; font-size: 10px; color: #999; border-top: 1px solid #ddd; padding-top: 5px;">
@@ -951,9 +953,11 @@
   // RESTORED FUNCTIONS
 
   function updateTotalDisplay() {
-    const price = window.MesaChef.parseEuroInput(document.getElementById("campoPrecio")?.value);
+    const priceField = document.getElementById("campoPrecio");
+    const price = priceField ? window.MesaChef.parseEuroInput(priceField.value) : 0;
     const pax = parseInt(document.getElementById("campoPax").value) || 0;
-    const priceKids = window.MesaChef.parseEuroInput(document.getElementById("campoPrecioNinos")?.value);
+    const priceKidsField = document.getElementById("campoPrecioNinos");
+    const priceKids = priceKidsField ? window.MesaChef.parseEuroInput(priceKidsField.value) : 0;
     const kids = parseInt(document.getElementById("campoNinos").value) || 0;
 
     const total = (price * pax) + (priceKids * kids);

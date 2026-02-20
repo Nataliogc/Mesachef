@@ -67,6 +67,59 @@
             margin-bottom: 0.25rem;
             display: block;
         }
+
+        /* [NEW] Print Optimizations */
+        @media print {
+
+            html,
+            body {
+                background: white !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                height: auto !important;
+                overflow: visible !important;
+            }
+
+            .no-print,
+            nav,
+            #appToolbar,
+            #calendarGrid {
+                display: none !important;
+            }
+
+            #printArea {
+                display: block !important;
+                position: relative !important;
+                width: 100% !important;
+                height: auto !important;
+                padding: 0 !important;
+                overflow: visible !important;
+            }
+
+            h3 {
+                page-break-after: avoid;
+                page-break-inside: avoid;
+            }
+
+            table {
+                page-break-inside: auto;
+                width: 100% !important;
+            }
+
+            tr {
+                page-break-inside: avoid;
+                page-break-after: auto;
+            }
+
+            thead {
+                display: table-header-group;
+            }
+
+            .day-summary {
+                page-break-before: auto;
+                page-break-after: auto;
+            }
+        }
     </style>
 </head>
 
@@ -74,7 +127,7 @@
 
     <!-- NAV -->
     <!-- NAV COMPACT & PREMIUM -->
-    <nav class="bg-white shadow-sm sticky top-0 z-30 border-b border-gray-200 h-14">
+    <nav class="bg-white shadow-sm sticky top-0 z-30 border-b border-gray-200 h-14 no-print">
         <div class="max-w-[98%] mx-auto px-4 h-full">
             <div class="flex justify-between items-center h-full">
 
@@ -170,8 +223,8 @@
     <div class="w-full px-4 lg:px-6 py-6" id="app">
 
         <!-- Toolbar (Unified Design) -->
-        <div
-            class="bg-white border-b border-gray-200 px-4 py-3 flex flex-col md:flex-row justify-between items-center gap-4 shadow-sm mb-6 rounded-lg">
+        <div id="appToolbar"
+            class="bg-white border-b border-gray-200 px-4 py-3 flex flex-col md:flex-row justify-between items-center gap-4 shadow-sm mb-6 rounded-lg no-print">
             <!-- LEFT: Date & Actions -->
             <div class="flex items-center gap-3">
                 <!-- Navigation -->
@@ -250,7 +303,7 @@
 
                 <!-- Filter -->
                 <select id="filterStatus" onchange="renderGrid()"
-                    class="pl-3 pr-8 py-1.5 border border-slate-300 rounded-md text-sm text-slate-700 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition shadow-sm h-9 bg-white cursor-pointer hover:border-slate-400">
+                    class="pl-3 pr-8 py-1.5 border border-slate-300 rounded-md text-sm text-slate-700 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition shadow-sm h-9 bg-white cursor-pointer hover:border-slate-400 no-print">
                     <option value="activos" selected>Activos</option>
                     <option value="todos">Todos</option>
                     <option value="confirmada">Confirmados</option>
@@ -258,9 +311,6 @@
                     <option value="cancelada">Cancelados</option>
                 </select>
             </div>
-
-            <!-- Print Area -->
-            <div id="printArea" class="hidden print:block fixed inset-0 bg-white z-[9999] p-8"></div>
         </div>
     </div>
 
@@ -337,7 +387,6 @@
                             </div>
                         </div>
 
-                        <!-- ROW 3: OPERATIONS (Jornada, Montaje, Pax) -->
                         <div class="grid grid-cols-12 gap-3">
                             <div class="col-span-3">
                                 <label class="text-[10px] uppercase font-bold text-gray-500">Jornada</label>
@@ -350,7 +399,9 @@
                             </div>
                             <div class="col-span-5">
                                 <label class="text-[10px] uppercase font-bold text-gray-500">Montaje</label>
-                                <select id="evt-montaje" class="w-full text-xs border-gray-200 rounded h-9"></select>
+                                <input type="text" id="evt-montaje" list="montaje-options"
+                                    class="w-full text-xs border-gray-200 rounded h-9">
+                                <datalist id="montaje-options"></datalist>
                             </div>
                             <div class="col-span-2">
                                 <label class="text-[10px] uppercase font-bold text-gray-500">Pax Adultos</label>
@@ -444,6 +495,8 @@
 
     <!-- Datalist for Concepts -->
     <datalist id="charge-options"></datalist>
+
+    <div id="printArea" class="hidden print:block"></div>
 
     <script src="js/app-common.js"></script>
     <script src="js/salones.js?v=9.6"></script>
