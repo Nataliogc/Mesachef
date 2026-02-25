@@ -1187,7 +1187,7 @@
       "campoPax", "campoNinos", "campoPrecioNinos", "campoNotas",
       "campoNotaCliente", "campoEstado", "campoEspacio", "campoTurno", "campoMesa",
       "btnAnular", "btnGuardar", "checkServicioIncluido",
-      "tipoIncluido", "campoHabitacion", "campoBono", "campoFecha", "campoReferencia"
+      "tipoIncluido", "campoHabitacion", "campoBono", "campoFecha"
     ];
 
     readOnlyElements.forEach(id => {
