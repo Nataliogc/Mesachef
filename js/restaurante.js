@@ -1187,7 +1187,7 @@
       "campoPax", "campoNinos", "campoPrecioNinos", "campoNotas",
       "campoNotaCliente", "campoEstado", "campoEspacio", "campoTurno", "campoMesa",
       "btnAnular", "btnGuardar", "checkServicioIncluido",
-      "tipoIncluido", "campoHabitacion", "campoBono"
+      "tipoIncluido", "campoHabitacion", "campoBono", "campoFecha", "campoReferencia"
     ];
 
     readOnlyElements.forEach(id => {
@@ -1211,10 +1211,9 @@
     // --- POPULATE FORM ---
     document.getElementById("modalReserva").classList.remove("hidden");
     document.getElementById("campoEspacio").value = space;
+    // Date & Turn population (follows isReadOnly logic for disabled status)
     document.getElementById("campoFecha").value = dateStr;
     document.getElementById("campoTurno").value = turno;
-    // Date is always locked in modal
-    document.getElementById("campoFecha").disabled = true;
 
     if (btnGuardar && isReadOnly) btnGuardar.style.display = 'none';
     else if (btnGuardar) btnGuardar.style.display = 'block';
