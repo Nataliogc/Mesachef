@@ -115,6 +115,36 @@
             border-radius: 6px;
             box-sizing: border-box;
         }
+
+        /* Drag & Drop Styles */
+        tr.dragging {
+            opacity: 0.4;
+            background-color: #f1f5f9;
+        }
+
+        .drag-handle {
+            cursor: grab;
+            color: #cbd5e1;
+            padding: 0 4px;
+            user-select: none;
+            font-size: 18px;
+            opacity: 0.3;
+            transition: opacity 0.2s, color 0.2s;
+        }
+
+        tr:hover .drag-handle {
+            opacity: 1;
+            color: #64748b;
+        }
+
+        .drag-handle:active {
+            cursor: grabbing;
+        }
+
+        tr.drag-over {
+            border-top: 3px solid #3b82f6;
+            background-color: #eff6ff;
+        }
     </style>
 </head>
 
@@ -506,6 +536,7 @@
                 <div class="overflow-x-auto"><table class="w-full text-left font-sm">
                 <thead class="bg-gray-50 text-gray-500 uppercase text-xs">
                     <tr>
+                        <th class="w-8"></th>
                         <th class="p-2">Nombre</th>
                         <th class="p-2 w-20">Pax</th>
                         <th class="p-2 w-20">M2</th>
@@ -519,7 +550,16 @@
                 <tbody class="divide-y divide-gray-100">`;
 
             list.forEach((s, i) => {
-                html += `<tr class="hover:bg-blue-50">
+                html += `<tr class="hover:bg-blue-50 group" 
+                            draggable="true" 
+                            ondragstart="handleDragStart(event, ${i})" 
+                            ondragover="handleDragOver(event, ${i})" 
+                            ondragleave="handleDragLeave(event)"
+                            ondrop="handleDrop(event, ${i})" 
+                            ondragend="handleDragEnd(event)">
+                    <td class="p-2 text-center">
+                        <div class="drag-handle">⋮⋮</div>
+                    </td>
                     <td class="p-2"><input value="${s.name}" onchange="updS(${i},'name',this.value)" class="w-full bg-transparent outline-none font-bold text-slate-700"></td>
                     <td class="p-2"><input type="number" value="${s.pax || 0}" onchange="updS(${i},'pax',this.value)" class="w-full bg-transparent outline-none text-center"></td>
                     <td class="p-2"><input type="number" value="${s.m2 || 0}" onchange="updS(${i},'m2',this.value)" class="w-full bg-transparent outline-none text-center"></td>
@@ -854,6 +894,50 @@
             markDirty();
             closeCapacities();
         }
+
+        // --- DRAG & DROP LOGIC ---
+        let dragSrcIndex = -1;
+
+        window.handleDragStart = (e, index) => {
+            dragSrcIndex = index;
+            e.dataTransfer.effectAllowed = 'move';
+            e.target.classList.add('dragging');
+        };
+
+        window.handleDragOver = (e, index) => {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+            const tr = e.target.closest('tr');
+            if (tr && dragSrcIndex !== index) {
+                tr.classList.add('drag-over');
+            }
+            return false;
+        };
+
+        window.handleDragLeave = (e) => {
+            const tr = e.target.closest('tr');
+            if (tr) tr.classList.remove('drag-over');
+        };
+
+        window.handleDrop = (e, index) => {
+            e.stopPropagation();
+            const tr = e.target.closest('tr');
+            if (tr) tr.classList.remove('drag-over');
+
+            if (dragSrcIndex !== index) {
+                const list = fullConfig[currentTab];
+                const item = list.splice(dragSrcIndex, 1)[0];
+                list.splice(index, 0, item);
+                render();
+                markDirty();
+            }
+            return false;
+        };
+
+        window.handleDragEnd = (e) => {
+            e.target.classList.remove('dragging');
+            document.querySelectorAll('tr.drag-over').forEach(tr => tr.classList.remove('drag-over'));
+        };
 
     </script>
 
