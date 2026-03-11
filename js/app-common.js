@@ -46,25 +46,16 @@
     // 💡 Este es el texto que sale en las cabeceras del planning
     // Ejemplo: "Lun 8 Dic"
     function formatDayHeader(date) {
-        const dias = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
+        const dias = ["Do", "Lu", "Ma", "Mi", "Ju", "Vi", "Sa"];
         const meses = [
-            "Ene",
-            "Feb",
-            "Mar",
-            "Abr",
-            "May",
-            "Jun",
-            "Jul",
-            "Ago",
-            "Sep",
-            "Oct",
-            "Nov",
-            "Dic"
+            "Ene", "Feb", "Mar", "Abr", "May", "Jun",
+            "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"
         ];
         const diaNombre = dias[date.getDay()];
-        const diaNum = date.getDate(); // sin 0 delante
+        const diaNum = date.getDate();
         const mesTxt = meses[date.getMonth()];
-        return `${diaNombre} ${diaNum} ${mesTxt}`;
+        const yearStr = String(date.getFullYear()).slice(-2);
+        return `${diaNombre} ${diaNum} ${mesTxt} ${yearStr}`;
     }
 
     // Para rangos tipo 01/12/25 → 07/12/25

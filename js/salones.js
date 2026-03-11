@@ -177,10 +177,13 @@
         const datePicker = document.getElementById("currentDate");
         if (dateLabel && datePicker && datePicker.value) {
             const d = new Date(datePicker.value);
-            const dayName = d.toLocaleDateString("es-ES", { weekday: "short" }).replace(".", "");
+            const dias = ["Do", "Lu", "Ma", "Mi", "Ju", "Vi", "Sa"];
+            const meses = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
+            const dayName = dias[d.getDay()];
             const dayNum = d.getDate();
-            const monthName = d.toLocaleDateString("es-ES", { month: "short" }).replace(".", "");
-            dateLabel.innerText = `${dayName} ${dayNum} ${monthName}`;
+            const monthName = meses[d.getMonth()];
+            const yearStr = String(d.getFullYear()).slice(-2);
+            dateLabel.innerText = `${dayName} ${dayNum} ${monthName} ${yearStr}`;
         }
 
         // TABLE LAYOUT
@@ -189,12 +192,15 @@
             <div style="display: grid; grid-template-columns: 200px repeat(7, 1fr); background: #f8fafc; border-bottom: 2px solid #e2e8f0;">
                 <div class="py-2 px-2 font-bold text-slate-500 text-xs tracking-wide uppercase flex items-center justify-center border-r border-slate-200">SALA</div>
                 ${dates.map(d => {
-            const dayName = d.toLocaleDateString('es-ES', { weekday: 'short' }).replace('.', '').toUpperCase();
-            const dayNum = d.getDate().toString().padStart(2, '0');
-            const monthName = d.toLocaleDateString('es-ES', { month: 'short' }).replace('.', '').charAt(0).toUpperCase() + d.toLocaleDateString('es-ES', { month: 'short' }).replace('.', '').slice(1);
+            const dias = ["Do", "Lu", "Ma", "Mi", "Ju", "Vi", "Sa"];
+            const meses = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
+            const dayName = dias[d.getDay()];
+            const dayNum = d.getDate();
+            const monthName = meses[d.getMonth()];
+            const yearStr = String(d.getFullYear()).slice(-2);
             return `
                     <div class="py-1 px-1 font-bold text-center text-xs text-slate-500 border-r border-slate-100 last:border-r-0 flex items-center justify-center bg-[#f8fafc]">
-                        ${dayName} ${dayNum} ${monthName}
+                        ${dayName} ${dayNum} ${monthName} ${yearStr}
                     </div>
                 `}).join('')}
             </div>

@@ -103,9 +103,10 @@
   }
 
   function formatCabeceraDia(date) {
-    return `${DIAS[date.getDay()]} ${date.getDate()} ${
-      MESES[date.getMonth()]
-    }`;
+    const DIAS_CORTOS = ["Do", "Lu", "Ma", "Mi", "Ju", "Vi", "Sa"];
+    const MESES_CORTOS = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
+    const yearStr = String(date.getFullYear()).slice(-2);
+    return `${DIAS_CORTOS[date.getDay()]} ${date.getDate()} ${MESES_CORTOS[date.getMonth()]} ${yearStr}`;
   }
 
   function escapeHtml(str) {

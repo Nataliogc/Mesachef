@@ -134,7 +134,11 @@
       return `${year}-${month}-${day}`;
     },
     formatDateES: (d) => d.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }),
-    formatDateShort: (d) => d.toLocaleDateString("es-ES", { day: "2-digit", month: "2-digit" }),
+    formatDateShort: (d) => {
+      const dias = ["Do", "Lu", "Ma", "Mi", "Ju", "Vi", "Sa"];
+      const meses = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
+      return `${dias[d.getDay()]} ${d.getDate()} ${meses[d.getMonth()]} ${String(d.getFullYear()).slice(-2)}`;
+    },
     formatDateTime: (ts) => {
       if (!ts) return "-";
       let d;
