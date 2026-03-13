@@ -1,10 +1,45 @@
-/**
- * Presupuestos Module - Matrix v5
- */
 // js/presupuestos.js
 (function () {
-    const { getCurrentHotel, toIsoDate, formatDateES } = window.MesaChef;
-    const hotelId = getCurrentHotel();
+    // --- ROBUST FIREBASE INIT ---
+    let appStarted = false;
+
+    function ensureFirebase(callback) {
+        const checkInterval = setInterval(() => {
+            if (window.firebase && window.firebase.auth && window.firebase.firestore) {
+                clearInterval(checkInterval);
+                initFirebase(callback);
+            }
+        }, 100);
+    }
+
+    function initFirebase(callback) {
+        console.log("Presupuestos: Using central Firebase initialization...");
+        try {
+            firebase.auth().onAuthStateChanged((user) => {
+                if (user) {
+                    if (!appStarted) {
+                        console.log("Presupuestos: Auth Ready", user.uid);
+                        appStarted = true;
+                        callback();
+                    }
+                } else {
+                    console.log("Presupuestos: Signing in anonymously...");
+                    firebase.auth().signInAnonymously().catch((error) => {
+                        console.error("Auth Error", error);
+                    });
+                }
+            });
+        } catch (e) {
+            console.error("Firebase Init Error:", e);
+        }
+    }
+
+    function startApp() {
+        const { getCurrentHotel, toIsoDate, formatDateES } = window.MesaChef;
+        const hotelId = getCurrentHotel();
+        const db = firebase.firestore();
+        const colPresupuestos = db.collection("presupuestos");
+        const docCounter = db.collection("counters").doc(`presupuestos_${hotelId}`);
 
     // State
     const state = {
@@ -150,9 +185,7 @@
         }
     }
 
-    // --- FIRESTORE ---
-    const colPresupuestos = db.collection("presupuestos");
-    const docCounter = db.collection("counters").doc(`presupuestos_${hotelId}`);
+    // --- FIRESTORE defined in startApp ---
 
     // --- CONFIG LOADING ---
     async function loadConfig() {
@@ -1819,5 +1852,9 @@
 
     // Init Logic
     escucharPresupuestos();
+
+    } // End startApp
+
+    ensureFirebase(startApp);
 
 })();
