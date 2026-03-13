@@ -45,6 +45,13 @@
         state.modalPagos = [];
     }
 
+    function checkSecurity() {
+        const key = prompt("Introduce la clave de seguridad (Mreserva):");
+        if (key === "Mreserva") return true;
+        if (key !== null) alert("Clave incorrecta (v5)");
+        return false;
+    }
+
     // --- UTILS.JS ---
     function formatCurrency(amount) {
         if (amount === undefined || amount === null) return "0,00 €";
@@ -987,6 +994,7 @@
         const currentCap = parseInt($('inputCapacity').value) || 0;
         if (currentCap > 0) {
             const pId = $('pId').value;
+            if (pId && !checkSecurity()) return; // Protection for editing
 
             // DEBUG: Log current state
             console.log('=== CAPACITY CHECK DEBUG ===');
@@ -1075,6 +1083,8 @@
 
         if (!id) return alert("No se puede identificar al participante.");
         if (!reason) return alert("Indica un motivo.");
+        
+        if (!checkSecurity()) return;
         if (!confirm("¿Confirmar anulación del participante?")) return;
 
         const newState = action === 'keep' ? 'anulado-con-cargos' : 'anulado-sin-cargos';
@@ -1129,6 +1139,7 @@
 
 
     async function handleRecover(id) {
+        if (!checkSecurity()) return;
         if (!confirm("¿Recuperar?")) return;
         await API.recoverParticipant(id);
         closeParticipantModal();
@@ -1299,6 +1310,9 @@
     async function saveConfig() {
         const id = state.currentEventId;
         if (!id) return;
+
+        if (!checkSecurity()) return;
+
         const updates = {
             nombre: $('inputName').value,
             fecha: $('inputDate').value,
@@ -1338,6 +1352,8 @@
 
         const currentStatus = state.currentEvent.estado || 'abierto';
         const newStatus = currentStatus === 'completo' ? 'abierto' : 'completo';
+
+        if (!checkSecurity()) return;
 
         try {
             await API.updateEvent(state.currentEventId, { estado: newStatus });
@@ -1398,6 +1414,7 @@
         const eventName = state.currentEvent.nombre || 'este evento';
         const confirmMessage = `⚠️ ANULAR EVENTO\n\n¿Estás seguro de que deseas anular "${eventName}"?\n\nEsta acción:\n- Marcará el evento como ANULADO\n- Liberará la reserva del salón\n- NO eliminará ningún dato\n\n¿Deseas continuar?`;
 
+        if (!checkSecurity()) return;
         if (!confirm(confirmMessage)) {
             return;
         }

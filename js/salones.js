@@ -41,7 +41,9 @@
             alert("Error crítico iniciando Firebase: " + e.message);
         }
     }
-
+/**
+ * Salones Module - Matrix v5
+ */
     let db;
     let globalConfig = null;
     let currentWeekStart = new Date();
@@ -1052,12 +1054,14 @@
     };
 
     window.saveBooking = async function () {
-        const btn = document.querySelector("button[onclick='saveBooking()']");
-        const originalText = btn.innerText;
-
-        // Security check for modification
-        if (currentBookingId) {
-            const key = prompt("Introduce la clave de seguridad para MODIFICAR (Mreserva):");
+        const btn = document.querySelector("button[onclick='saveBooking()']");            if (currentBookingId) {
+                const key = prompt("Introduce la clave de seguridad (Mreserva):");
+                if (key !== "Mreserva") {
+                    if (key !== null) alert("Clave incorrecta (v5)");
+                    return;
+                }
+            }
+      const key = prompt("Introduce la clave de seguridad para MODIFICAR (Mreserva):");
             if (key === null) return; // User cancelled prompt
             if (key !== "Mreserva") {
                 alert("Clave de seguridad incorrecta.");
