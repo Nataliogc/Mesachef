@@ -4,7 +4,9 @@ service cloud.firestore {
     // Regla global: Permitir todo a usuarios autenticados
     // (Incluye collection "reservas", "master_data", etc.)
     match /{document=**} {
-      allow read, write: if request.auth != null;
+      // PERMITIR ACCESO PÚBLICO TEMPORAL (v5)
+      // Útil para desarrollo local con file:// donde Auth falla
+      allow read, write: if true;
     }
   }
 }

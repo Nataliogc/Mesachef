@@ -1054,23 +1054,21 @@
     };
 
     window.saveBooking = async function () {
-        const btn = document.querySelector("button[onclick='saveBooking()']");            if (currentBookingId) {
-                const key = prompt("Introduce la clave de seguridad (Mreserva):");
-                if (key !== "Mreserva") {
-                    if (key !== null) alert("Clave incorrecta (v5)");
-                    return;
-                }
-            }
-      const key = prompt("Introduce la clave de seguridad para MODIFICAR (Mreserva):");
-            if (key === null) return; // User cancelled prompt
+        const btn = document.querySelector("button[onclick='saveBooking()']");
+        
+        if (currentBookingId) {
+            const key = prompt("Introduce la clave de seguridad (Mreserva):");
+            if (key === null) return; 
             if (key !== "Mreserva") {
-                alert("Clave de seguridad incorrecta.");
+                alert("Clave incorrecta (v5)");
                 return;
             }
         }
 
-        btn.innerText = "Guardando...";
-        btn.disabled = true;
+        if (btn) {
+            btn.innerText = "Guardando...";
+            btn.disabled = true;
+        }
 
         const payload = {
             hotel: localStorage.getItem(STORAGE_KEY) || "Guadiana",

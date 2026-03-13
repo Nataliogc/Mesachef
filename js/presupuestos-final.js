@@ -1,3 +1,6 @@
+/**
+ * Presupuestos Module - Matrix v5
+ */
 // js/presupuestos.js
 (function () {
     const { getCurrentHotel, toIsoDate, formatDateES } = window.MesaChef;
