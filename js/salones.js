@@ -1054,6 +1054,17 @@
     window.saveBooking = async function () {
         const btn = document.querySelector("button[onclick='saveBooking()']");
         const originalText = btn.innerText;
+
+        // Security check for modification
+        if (currentBookingId) {
+            const key = prompt("Introduce la clave de seguridad para MODIFICAR (Mreserva):");
+            if (key === null) return; // User cancelled prompt
+            if (key !== "Mreserva") {
+                alert("Clave de seguridad incorrecta.");
+                return;
+            }
+        }
+
         btn.innerText = "Guardando...";
         btn.disabled = true;
 
@@ -1215,6 +1226,13 @@
 
     window.deleteBooking = async function () {
         if (!currentBookingId) return;
+
+        const key = prompt("Introduce la clave de seguridad para ANULAR (Mreserva):");
+        if (key === null) return; // User cancelled prompt
+        if (key !== "Mreserva") {
+            alert("Clave de seguridad incorrecta.");
+            return;
+        }
 
         if (!confirm("⚠️ ¿Estás seguro de que quieres ANULAR este evento?\nSe marcará como CANCELADO pero no se borrará del historial.")) {
             return;

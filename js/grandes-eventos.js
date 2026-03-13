@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Grandes Eventos Module
  * Handles large events (e.g., New Year's Eve), participant management, and payments.
  */
@@ -233,6 +233,13 @@
         };
     }
 
+    function checkSecurity() {
+        const key = prompt("Introduce la clave de seguridad (Mreserva):");
+        if (key === "Mreserva") return true;
+        if (key !== null) alert("Clave incorrecta");
+        return false;
+    }
+
     async function loadEventsList() {
         const tbody = document.getElementById("eventsListBody");
         tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;">Cargando...</td></tr>';
@@ -395,6 +402,8 @@
 
     async function toggleEventStatus() {
         if (!currentEventId) return;
+        if (!checkSecurity()) return;
+
         const newStatus = (currentEvent.estado === 'completo') ? 'abierto' : 'completo';
         try {
             await eventosRef.doc(currentEventId).update({ estado: newStatus });
@@ -496,6 +505,8 @@
 
             } else {
                 // Update
+                if (!checkSecurity()) return;
+
                 const oldRef = currentEvent.referencia;
                 await eventosRef.doc(currentEventId).update(payload);
                 currentEvent = { ...currentEvent, ...payload };
@@ -919,6 +930,8 @@
         const pId = document.getElementById("pId").value;
         if (!pId) return;
 
+        if (!checkSecurity()) return;
+
         if (!confirm("¿Recuperar esta participación? Volverá a estado ACTIVO.")) return;
 
         try {
@@ -1002,6 +1015,8 @@
             alert("Es necesario indicar un motivo de anulación.");
             return;
         }
+
+        if (!checkSecurity()) return;
 
         if (!confirm("¿Estás seguro de ANULAR esta participación? Esta acción es irreversible.")) return;
 
@@ -1088,6 +1103,7 @@
                 payload.createdAt = firebase.firestore.FieldValue.serverTimestamp();
                 await participantesRef.add(payload);
             } else {
+                if (!checkSecurity()) return;
                 await participantesRef.doc(pId).update(payload);
             }
             closeParticipantModal();
