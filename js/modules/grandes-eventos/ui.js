@@ -7,7 +7,7 @@ import { generateParticipantsReport } from './print.js'; // And others as needed
 const $ = id => document.getElementById(id);
 
 function checkSecurity() {
-    const key = prompt("Introduce la clave de seguridad (Mreserva):");
+    const key = prompt("Introduce la clave de seguridad:");
     if (key === "Mreserva") return true;
     if (key !== null) alert("Clave incorrecta");
     return false;

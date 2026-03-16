@@ -1057,7 +1057,7 @@
         const btn = document.querySelector("button[onclick='saveBooking()']");
         
         if (currentBookingId) {
-            const key = prompt("Introduce la clave de seguridad (Mreserva):");
+            const key = prompt("Introduce la clave de seguridad:");
             if (key === null) return; 
             if (key !== "Mreserva") {
                 alert("Clave incorrecta (v5)");
@@ -1066,8 +1066,13 @@
         }
 
         if (btn) {
-            btn.innerText = "Guardando...";
-            btn.disabled = true;
+            // No cambiamos el texto aquí todavía para evitar confusión con los diálogos de validación
+        }
+
+        const cliente = document.getElementById("evt-nombre").value.trim();
+        if (!cliente) {
+            alert("⚠️ Por favor, introduce el NOMBRE del cliente o evento.");
+            return;
         }
 
         const payload = {
@@ -1075,7 +1080,7 @@
             created_at: new Date().toISOString(),
             fecha: document.getElementById("evt-fecha").value,
             salon: document.getElementById("evt-salon").value,
-            cliente: document.getElementById("evt-nombre").value,
+            cliente: cliente,
             contact: {
                 tel: document.getElementById("evt-telefono").value,
                 email: document.getElementById("evt-email").value
@@ -1196,6 +1201,11 @@
                 }
             }
 
+            if (btn) {
+                btn.innerText = "Guardando...";
+                btn.disabled = true;
+            }
+
             if (currentBookingId) {
                 // Update existing
                 await db.collection("reservas_salones").doc(currentBookingId).set(payload, { merge: true });
@@ -1229,7 +1239,7 @@
     window.deleteBooking = async function () {
         if (!currentBookingId) return;
 
-        const key = prompt("Introduce la clave de seguridad para ANULAR (Mreserva):");
+        const key = prompt("Introduce la clave de seguridad para ANULAR:");
         if (key === null) return; // User cancelled prompt
         if (key !== "Mreserva") {
             alert("Clave de seguridad incorrecta.");
