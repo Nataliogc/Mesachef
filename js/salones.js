@@ -222,10 +222,9 @@
                 const isRteRow = (salon.name || "").toLowerCase().includes("restaurante");
 
                 html += `<div style="display: grid; grid-template-columns: 200px repeat(7, 1fr); ${isLast ? '' : 'border-bottom: 1px solid #f1f5f9;'}">
-                    <div class="${isRteRow ? 'bg-indigo-50/80 border-l-4 border-indigo-600' : 'bg-white'} p-2 font-bold text-slate-700 flex flex-col justify-center border-r border-slate-100 relative group">
-                        <span class="text-xs text-slate-800">${isRteRow ? '🍽️ ' : ''}${salon.name}</span>
-                        <span class="text-slate-400 font-normal mt-0.5 uppercase tracking-wider text-[9px]">Cap: ${salon.pax}</span>
-                        <div class="absolute left-0 top-0 bottom-0 w-1 ${isRteRow ? 'bg-indigo-600' : 'bg-blue-500'} opacity-0 group-hover:opacity-100 transition"></div>
+                    <div class="${isRteRow ? 'bg-indigo-600 text-white' : 'bg-white text-slate-700'} p-2 font-bold flex flex-col justify-center border-r border-slate-100 relative group transition-colors">
+                        <span class="text-xs ${isRteRow ? 'text-white' : 'text-slate-800'}">${isRteRow ? '🍽️ ' : ''}${salon.name}</span>
+                        <span class="${isRteRow ? 'text-indigo-100' : 'text-slate-400'} font-normal mt-0.5 uppercase tracking-wider text-[9px]">Cap: ${salon.pax}</span>
                     </div>`;
 
                 dates.forEach(d => {
@@ -254,7 +253,7 @@
                         // Past check
                         const isPast = dateStr < utils.toIsoDate(new Date());
                         let cellBg = isPast ? "bg-slate-100" : "bg-white";
-                        if (isRteRow && !isPast) cellBg = "bg-indigo-50/40";
+                        if (isRteRow && !isPast) cellBg = "bg-indigo-50/30 bg-gradient-to-b from-indigo-100/20 to-transparent";
 
                         // Interaction Classes
                         let interactionClass = isPast
@@ -517,15 +516,15 @@
         // [DISTINCT FORMAT] Custom style for Restaurant
         if (isRte) {
             // Determine border color based on status
-            let statusBorder = 'border-indigo-400';
-            if (res.estado === 'confirmada') statusBorder = 'border-green-500';
-            else if (res.estado === 'provisional') statusBorder = 'border-yellow-500';
-            else if (res.estado === 'presupuesto') statusBorder = 'border-orange-500';
-            else if (res.estado === 'cancelada') statusBorder = 'border-red-500 opacity-60';
+            let statusColor = 'indigo-600';
+            if (res.estado === 'confirmada') statusColor = 'green-600';
+            else if (res.estado === 'provisional') statusColor = 'amber-500';
+            else if (res.estado === 'presupuesto') statusColor = 'orange-500';
+            else if (res.estado === 'cancelada') statusColor = 'slate-400';
 
             // Override colorClass with a unique Indigo/Violet theme
-            colorClass = `bg-violet-50 text-indigo-900 ${statusBorder} border-l-[10px] shadow-sm`;
-            extraClasses += " ring-1 ring-violet-200/50 shadow-md rounded-md";
+            colorClass = `bg-white text-slate-800 border-${statusColor} border-l-[6px] shadow-sm hover:ring-2 hover:ring-indigo-100`;
+            extraClasses += " ring-1 ring-slate-200/50 shadow-md rounded-lg overflow-hidden";
         }
 
         const timeStr = res.detalles?.hora ? `<span class="opacity-75"> ${res.detalles.hora}</span>` : '';
