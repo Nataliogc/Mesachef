@@ -272,8 +272,10 @@
                                         +
                                     </button>`;
 
-                        const slotMaText = isPast ? '-' : (isRteRow ? 'AÑADIR SERVICIO' : 'LIBRE');
-                        const slotTaText = isPast ? '-' : (isRteRow ? 'AÑADIR SERVICIO' : 'LIBRE');
+                        const slotMaText = isPast ? '-' : (isRteRow ? '<span class="text-xl filter drop-shadow-sm">☀️</span>' : 'LIBRE');
+                        const slotTaText = isPast ? '-' : (isRteRow ? '<span class="text-lg filter drop-shadow-sm">🌙</span>' : 'LIBRE');
+
+                        let slotRteClass = isRteRow && !isPast ? "m-1 rounded-xl bg-indigo-50/60 border border-indigo-100 shadow-sm hover:bg-white hover:border-indigo-300 hover:shadow-md" : "";
 
                         // DATA ATTRIBUTES for easy reset
                         html += `<div id="${getCellId(hotel, salon.name, dateStr)}"
@@ -282,13 +284,13 @@
                                     
                                     <!-- Slot Mañana -->
                                     <div ${maOnClick}
-                                         class="relative flex items-center justify-center text-[9px] font-bold uppercase tracking-tight transition border-b border-transparent hover:border-slate-100 ${interactionClass}">
+                                         class="relative flex items-center justify-center text-[9px] font-bold uppercase tracking-tight transition ${interactionClass} ${slotRteClass}">
                                          ${slotMaText}
                                     </div>
 
                                     <!-- Slot Tarde -->
                                     <div ${taOnClick}
-                                         class="relative flex items-center justify-center text-[9px] font-bold uppercase tracking-tight transition ${interactionClass}">
+                                         class="relative flex items-center justify-center text-[9px] font-bold uppercase tracking-tight transition ${interactionClass} ${slotRteClass}">
                                          ${slotTaText}
                                     </div>
                                     
@@ -343,15 +345,28 @@
             if (cell.getAttribute("data-salon")) {
                 const s = cell.getAttribute("data-salon");
                 const d = cell.getAttribute("data-date");
+                const isRte = s.toLowerCase().includes("restaurante");
+                const isPast = d < utils.toIsoDate(new Date());
                 
                 // [NEW] Reset layout classes for multi-service support
                 cell.classList.remove('flex', 'flex-col', 'gap-1', 'p-0.5', 'overflow-y-auto');
                 cell.classList.add('grid', 'grid-rows-2', 'gap-[1px]');
 
-                // Use raw string for onclick to match renderGrid exactly
+                const interactionClass = isPast
+                    ? "cursor-default text-slate-300"
+                    : (isRte ? "cursor-pointer hover:bg-white text-indigo-300 hover:text-indigo-600" : "cursor-pointer hover:bg-slate-50 text-slate-200 hover:text-slate-400");
+                
+                const slotRteClass = isRte && !isPast ? "m-1 rounded-xl bg-indigo-50/60 border border-indigo-100 shadow-sm hover:bg-white hover:border-indigo-300 hover:shadow-md" : (isRte ? "" : "relative border-b border-transparent hover:border-slate-100");
+                const slotMaText = isPast ? '-' : (isRte ? '<span class="text-xl filter drop-shadow-sm">☀️</span>' : 'LIBRE');
+                const slotTaText = isPast ? '-' : (isRte ? '<span class="text-lg filter drop-shadow-sm">🌙</span>' : 'LIBRE');
+
                 cell.innerHTML = `
-                    <div onclick="window.openBooking('${s}', '${d}', null, 'mañana')" class="relative flex items-center justify-center text-[10px] text-slate-200 hover:text-slate-400 font-bold uppercase tracking-widest cursor-pointer hover:bg-slate-50 transition border-b border-transparent hover:border-slate-100">LIBRE</div>
-                    <div onclick="window.openBooking('${s}', '${d}', null, 'tarde')" class="relative flex items-center justify-center text-[10px] text-slate-200 hover:text-slate-400 font-bold uppercase tracking-widest cursor-pointer hover:bg-slate-50 transition">LIBRE</div>
+                    <div onclick="window.openBooking('${s}', '${d}', null, 'mañana')" class="flex items-center justify-center text-[9px] font-bold uppercase tracking-tight transition ${interactionClass} ${slotRteClass}">
+                        ${slotMaText}
+                    </div>
+                    <div onclick="window.openBooking('${s}', '${d}', null, 'tarde')" class="flex items-center justify-center text-[9px] font-bold uppercase tracking-tight transition ${interactionClass} ${isRte && !isPast ? slotRteClass : ''}">
+                        ${slotTaText}
+                    </div>
                     <button onclick="window.openBooking('${s}', '${d}')" class="absolute top-1 right-1 w-6 h-6 flex items-center justify-center bg-blue-50 text-blue-600 rounded-full shadow-sm opacity-0 group-hover:opacity-100 transition z-30 hover:bg-blue-600 hover:text-white font-bold pb-0.5" title="Añadir evento">+</button>
                  `;
             }
