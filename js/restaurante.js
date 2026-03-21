@@ -929,9 +929,7 @@
       if (countSpecial > 0) parts.push(`${countSpecial} especial${countSpecial > 1 ? 'es' : ''}`);
       const breakdown = parts.length > 0 ? `(${parts.join(', ')})` : "";
 
-      html += `<div style="font-size: 13px; font-weight: bold; color: #333; margin-bottom: 30px; background: #fafafa; padding: 10px; border-left: 4px solid #666;">
-                    Resumen día ${dateObj.getDate()}: Total ${dailyPax} personas ${breakdown}
-                 </div>`;
+      html += `<div style="margin-bottom: 30px;"></div>`; // Spacer replaced summary
     });
 
     html += `
