@@ -477,7 +477,7 @@
     function createCardHTML(res, extraClasses = "") {
         window._resRegistry[res.id] = res; // Register for click
 
-        const isRte = (res.salon || "").toLowerCase().includes("restaurante");
+        const isRte = (res.salon || res._canonicalSalon || "").toLowerCase().includes("restaurante");
         const jornada = res._displayJornada || res.detalles?.jornada || "todo";
         let colorClass = 'bg-blue-100 border-blue-500 text-blue-800';
 
@@ -493,9 +493,16 @@
 
         // [DISTINCT FORMAT] Custom style for Restaurant
         if (isRte) {
-            colorClass = colorClass + ' border-l-8 shadow-indigo-100'; 
-            if (res.estado !== 'cancelada') colorClass = colorClass.replace('bg-', 'soft-bg-').replace('bg-green-100', 'bg-indigo-50/50').replace('bg-blue-100', 'bg-indigo-50/50');
-            extraClasses += " ring-1 ring-indigo-200 shadow-md";
+            // Determine border color based on status
+            let statusBorder = 'border-indigo-400';
+            if (res.estado === 'confirmada') statusBorder = 'border-green-500';
+            else if (res.estado === 'provisional') statusBorder = 'border-yellow-500';
+            else if (res.estado === 'presupuesto') statusBorder = 'border-orange-500';
+            else if (res.estado === 'cancelada') statusBorder = 'border-red-500 opacity-60';
+
+            // Override colorClass with a unique Indigo/Violet theme
+            colorClass = `bg-violet-50 text-indigo-900 ${statusBorder} border-l-[10px] shadow-sm`;
+            extraClasses += " ring-1 ring-violet-200/50 shadow-md rounded-md";
         }
 
         const timeStr = res.detalles?.hora ? `<span class="opacity-75"> ${res.detalles.hora}</span>` : '';
