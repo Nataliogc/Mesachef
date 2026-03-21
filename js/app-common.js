@@ -82,6 +82,9 @@
             // - New "Tarde" -> Conflicts with Existing "Tarde" OR "Todo"
 
             try {
+                // [NEW] MULTI-SERVICE EXCEPTION: Eventos Restaurante (Ignore conflicts)
+                if ((salon || "").toLowerCase().includes("restaurante")) return { available: true };
+
                 const snapshot = await db.collection("reservas_salones")
                     .where("hotel", "==", hotel)
                     .where("salon", "==", salon)

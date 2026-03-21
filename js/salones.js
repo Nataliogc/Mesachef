@@ -335,6 +335,11 @@
             if (cell.getAttribute("data-salon")) {
                 const s = cell.getAttribute("data-salon");
                 const d = cell.getAttribute("data-date");
+                
+                // [NEW] Reset layout classes for multi-service support
+                cell.classList.remove('flex', 'flex-col', 'gap-1', 'p-0.5', 'overflow-y-auto');
+                cell.classList.add('grid', 'grid-rows-2', 'gap-[1px]');
+
                 // Use raw string for onclick to match renderGrid exactly
                 cell.innerHTML = `
                     <div onclick="window.openBooking('${s}', '${d}', null, 'mañana')" class="relative flex items-center justify-center text-[10px] text-slate-200 hover:text-slate-400 font-bold uppercase tracking-widest cursor-pointer hover:bg-slate-50 transition border-b border-transparent hover:border-slate-100">LIBRE</div>
@@ -427,22 +432,40 @@
 
             let htmlFinal = "";
 
-            // Relaxed 'Todo' check: matches 'todo', 'dia', 'completo' or if it's not half-day
-            const evTodo = group.find(r => {
-                const j = (r._displayJornada || 'todo').toLowerCase();
-                return j === 'todo' || j.includes('todo') || j.includes('dia') || j.includes('completo');
-            });
+            // [NEW] MULTI-SERVICE EXCEPTION: Eventos Restaurante
+            const isMultiService = (sample._canonicalSalon || '').toLowerCase().includes('restaurante');
 
-            if (evTodo) {
-                htmlFinal += createCardHTML(evTodo, "row-span-2 h-full");
+            if (isMultiService) {
+                // Change card container to flex for stacking
+                cell.classList.remove('grid', 'grid-rows-2', 'gap-[1px]');
+                cell.classList.add('flex', 'flex-col', 'gap-1', 'p-0.5', 'overflow-y-auto');
+                
+                group.forEach(r => {
+                    htmlFinal += createCardHTML(r, "min-h-[48px] shrink-0");
+                });
+                // Always show "Add" capability implicitly via the static button, 
+                // but we can also show the 'LIBRE' indicators if empty for consistency
+                if (group.length === 0) {
+                    htmlFinal += slotMañana + slotTarde;
+                }
             } else {
-                const evMañana = group.find(r => (r._displayJornada || '').toLowerCase().includes('mañana'));
-                if (evMañana) htmlFinal += createCardHTML(evMañana, "h-full");
-                else htmlFinal += slotMañana;
+                // Relaxed 'Todo' check: matches 'todo', 'dia', 'completo' or if it's not half-day
+                const evTodo = group.find(r => {
+                    const j = (r._displayJornada || 'todo').toLowerCase();
+                    return j === 'todo' || j.includes('todo') || j.includes('dia') || j.includes('completo');
+                });
 
-                const evTarde = group.find(r => (r._displayJornada || '').toLowerCase().includes('tarde'));
-                if (evTarde) htmlFinal += createCardHTML(evTarde, "h-full");
-                else htmlFinal += slotTarde;
+                if (evTodo) {
+                    htmlFinal += createCardHTML(evTodo, "row-span-2 h-full");
+                } else {
+                    const evMañana = group.find(r => (r._displayJornada || '').toLowerCase().includes('mañana'));
+                    if (evMañana) htmlFinal += createCardHTML(evMañana, "h-full");
+                    else htmlFinal += slotMañana;
+
+                    const evTarde = group.find(r => (r._displayJornada || '').toLowerCase().includes('tarde'));
+                    if (evTarde) htmlFinal += createCardHTML(evTarde, "h-full");
+                    else htmlFinal += slotTarde;
+                }
             }
 
             htmlFinal += staticAddBtn;
@@ -454,6 +477,7 @@
     function createCardHTML(res, extraClasses = "") {
         window._resRegistry[res.id] = res; // Register for click
 
+        const isRte = (res.salon || "").toLowerCase().includes("restaurante");
         const jornada = res._displayJornada || res.detalles?.jornada || "todo";
         let colorClass = 'bg-blue-100 border-blue-500 text-blue-800';
 
@@ -467,6 +491,13 @@
         else if (res.estado === 'presupuesto') colorClass = 'bg-orange-100 border-orange-500 text-orange-800';
         else if (res.estado === 'cancelada') colorClass = 'bg-red-100 border-red-500 text-red-800 opacity-60';
 
+        // [DISTINCT FORMAT] Custom style for Restaurant
+        if (isRte) {
+            colorClass = colorClass + ' border-l-8 shadow-indigo-100'; 
+            if (res.estado !== 'cancelada') colorClass = colorClass.replace('bg-', 'soft-bg-').replace('bg-green-100', 'bg-indigo-50/50').replace('bg-blue-100', 'bg-indigo-50/50');
+            extraClasses += " ring-1 ring-indigo-200 shadow-md";
+        }
+
         const timeStr = res.detalles?.hora ? `<span class="opacity-75"> ${res.detalles.hora}</span>` : '';
         const paxTotal = (res.detalles?.pax_adultos || 0) + (res.detalles?.pax_ninos || 0);
         const paxStr = paxTotal > 0 ? `<span class="text-[11px] bg-white/50 px-1 rounded ml-1">👤${paxTotal}</span>` : '';
@@ -476,17 +507,18 @@
         const noteStr = hasNote ? `<span title="Nota Interna: ${res.notas.interna.replace(/"/g, '&quot;')}" class="cursor-help ml-1">📝</span>` : '';
 
         let jText = (jornada || "").toUpperCase();
-        let jClass = "text-slate-600";
-        if (jText.includes("MAÑANA")) { jText = "1/2 MAÑ"; jClass = "text-sky-700 bg-sky-100/50"; }
-        else if (jText.includes("TARDE")) { jText = "1/2 TARD"; jClass = "text-orange-700 bg-orange-100/50"; }
-        else if (jText.includes("TODO")) { jText = "COMP"; jClass = "text-indigo-700 bg-indigo-100/50"; }
+        let jClass = isRte ? "text-indigo-700 bg-indigo-100/80" : "text-slate-600";
+        
+        if (jText.includes("MAÑANA")) { jText = "1/2 MAÑ"; if (!isRte) jClass = "text-sky-700 bg-sky-100/50"; }
+        else if (jText.includes("TARDE")) { jText = "1/2 TARD"; if (!isRte) jClass = "text-orange-700 bg-orange-100/50"; }
+        else if (jText.includes("TODO")) { jText = "COMP"; if (!isRte) jClass = "text-indigo-700 bg-indigo-100/50"; }
 
         return `
         <div onclick="window.handleCardClick('${res.id}', event)" 
              class="booking-card w-full rounded border-l-4 ${colorClass} shadow-sm px-1 py-1 text-xs flex flex-col justify-between relative box-border hover:z-20 hover:shadow-md transition cursor-pointer overflow-hidden ${extraClasses}">
             ${redDot}
             <div class="flex items-center justify-between">
-                <div class="font-bold truncate leading-tight flex-1" title="${res.cliente}">${res.cliente}</div>
+                <div class="font-bold truncate leading-tight flex-1" title="${res.cliente}">${isRte ? '🍽️ ' : ''}${res.cliente}</div>
                 <div class="text-[11px]">${noteStr}</div>
             </div>
             <div class="flex justify-between items-end mt-1 text-[11px]">
@@ -690,21 +722,28 @@
             const hasMorning = conflictCandidates.some(r => (r.detalles?.jornada || 'todo') === 'mañana');
             const hasAfternoon = conflictCandidates.some(r => (r.detalles?.jornada || 'todo') === 'tarde');
 
-            if (hasTodo) {
-                alert("⛔ SALÓN OCUPADO: Ya existe un evento de día completo.");
-                return; // Block opening
+            // [NEW] MULTI-SERVICE EXCEPTION: Eventos Restaurante (Ignore conflicts)
+            const isMultiService = (salonName || "").toLowerCase().includes("restaurante");
+
+            if (!isMultiService) {
+                if (hasTodo) {
+                    alert("⛔ SALÓN OCUPADO: Ya existe un evento de día completo.");
+                    return; // Block opening
+                }
+
+                if (hasMorning && hasAfternoon) {
+                    alert("⛔ SALÓN OCUPADO: Mañana y Tarde ya están reservadas.");
+                    return; // Block opening
+                }
             }
 
-            if (hasMorning && hasAfternoon) {
-                alert("⛔ SALÓN OCUPADO: Mañana y Tarde ya están reservadas.");
-                return; // Block opening
-            }
-
-            if (hasMorning) {
-                defaultJornada = 'tarde';
-                // Ideally we could warn the user: "Mañana ocupada, seleccionando Tarde"
-            } else if (hasAfternoon) {
-                defaultJornada = 'mañana';
+            if (!isMultiService) {
+                if (hasMorning) {
+                    defaultJornada = 'tarde';
+                    // Ideally we could warn the user: "Mañana ocupada, seleccionando Tarde"
+                } else if (hasAfternoon) {
+                    defaultJornada = 'mañana';
+                }
             }
         }
 

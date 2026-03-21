@@ -1612,7 +1612,7 @@
             // If updating existing, exclude self from conflict check
             // --- VALIDATION: Check Salon Availability if Confirming ---
             // If updating existing, exclude self from conflict check
-            if (payload.estado === 'confirmada' && campoSalon.value !== 'Restaurante') {
+            if (payload.estado === 'confirmada' && !campoSalon.value.toLowerCase().includes('restaurante')) {
                 let excludeResId = null;
                 if (state.editingId) {
                     const snapRes = await db.collection("reservas_salones")
