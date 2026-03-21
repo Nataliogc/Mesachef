@@ -1506,9 +1506,7 @@
 
             html += `</tbody></table>`;
 
-            html += `<div class="day-summary" style="font-size: 13px; font-weight: bold; color: #333; margin-bottom: 30px; background: #fafafa; padding: 10px; border-left: 4px solid #666; page-break-after: auto;">
-                Resumen día ${dateObj.getDate()}: Total ${dailyPax} personas (${eventCount} eventos)
-            </div>`;
+            html += `<div style="margin-bottom: 30px;"></div>`; // Spacer replaced summary
         });
 
         html += `
