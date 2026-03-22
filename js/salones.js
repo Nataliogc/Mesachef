@@ -325,10 +325,13 @@
             .where("fecha", ">=", start)
             .where("fecha", "<=", end)
             .onSnapshot(snapshot => {
+                const normalize = (s) => (s || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s/g, "").toLowerCase();
+                const hLocal = normalize(hotel);
+
                 loadedReservations = [];
                 snapshot.forEach(doc => {
                     const data = doc.data();
-                    if (data.hotel === hotel) {
+                    if (normalize(data.hotel) === hLocal) {
                         loadedReservations.push({ id: doc.id, ...data });
                     }
                 });
@@ -376,11 +379,12 @@
 
         console.log("Painting Reservations. Hotel:", hotel, "Filter:", filterVal, "Total Loaded:", loadedReservations.length, loadedReservations);
 
-        // Group by cell
         const salonMap = {};
+        const normalize = (s) => (s || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s/g, '').toLowerCase();
+
         if (globalConfig[hotel]) {
             globalConfig[hotel].forEach(s => {
-                salonMap[s.name.replace(/\s/g, '').toLowerCase()] = s.name;
+                salonMap[normalize(s.name)] = s.name;
             });
         }
 
@@ -403,10 +407,13 @@
             }
             if (relevantDates.size === 0) relevantDates.add(res.fecha);
 
-            const rawName = (res.salon || "").replace(/\s/g, '').toLowerCase();
+            const rawName = normalize(res.salon);
             const canonicalName = salonMap[rawName];
 
-            if (!canonicalName) return;
+            if (!canonicalName) {
+                console.warn(`Salon mismatch: "${res.salon}" (Normalized: "${rawName}") not found in configuration for ${hotel}. List of available:`, Object.keys(salonMap));
+                return;
+            }
 
             relevantDates.forEach(date => {
                 const key = `${res.hotel}_${canonicalName}_${date}`;
