@@ -154,9 +154,9 @@
     };
 
     function getCellId(hotel, salonName, dateStr) {
-        // ID SAFE GENERATION: Lowercase, underscores only
-        const h = (hotel || "").toLowerCase().replace(/[^a-z0-9]/g, '_');
-        const s = (salonName || "").toLowerCase().replace(/[^a-z0-9]/g, '_');
+        const normalize = (s) => (s || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s/g, '').toLowerCase();
+        const h = normalize(hotel);
+        const s = normalize(salonName);
         return `cell_${h}_${s}_${dateStr}`;
     }
 
@@ -1218,7 +1218,7 @@
                 interna: document.getElementById("evt-nota-interna").value,
                 cliente: document.getElementById("evt-nota-cliente").value
             },
-            presupuestoId: window.currentEventBudgetID || (currentBookingId ? window._resRegistry[currentBookingId]?.presupuestoId : null),
+            presupuestoId: window.currentEventBudgetID || (currentBookingId ? (window._resRegistry[currentBookingId]?.presupuestoId || null) : null) || null,
             servicios: []
         };
 
