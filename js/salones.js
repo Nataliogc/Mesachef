@@ -331,9 +331,12 @@
                 loadedReservations = [];
                 snapshot.forEach(doc => {
                     const data = doc.data();
-                    if (normalize(data.hotel) === hLocal) {
-                        loadedReservations.push({ id: doc.id, ...data });
-                    }
+                    const hDoc = normalize(data.hotel);
+                    // LANIENT FILTER: Match printReport logic - if hotel is set and doesn't match, skip.
+                    // If hotel is missing, we allow it to proceed to Salon mapping.
+                    if (hDoc && hDoc !== hLocal) return;
+                    
+                    loadedReservations.push({ id: doc.id, ...data });
                 });
                 paintReservations(hotel);
             }, error => {
