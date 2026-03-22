@@ -389,6 +389,8 @@
         }
 
         const cellGroups = {};
+        const unmappedEvents = [];
+
         loadedReservations.forEach(res => {
             const st = (res.estado || "").toLowerCase();
             const isConfirmed = st === 'confirmada' || st === 'confirmed';
@@ -411,7 +413,8 @@
             const canonicalName = salonMap[rawName];
 
             if (!canonicalName) {
-                console.warn(`Salon mismatch: "${res.salon}" (Normalized: "${rawName}") not found in configuration for ${hotel}. List of available:`, Object.keys(salonMap));
+                console.warn(`Salon mismatch: "${res.salon}" (Normalized: "${rawName}") not found in configuration for ${hotel}.`, Object.keys(salonMap));
+                unmappedEvents.push(res);
                 return;
             }
 
@@ -420,8 +423,6 @@
                 if (!cellGroups[key]) cellGroups[key] = [];
 
                 let dailyJornada = res.detalles?.jornada || "todo";
-                // Removed client-side override to trust DB value (synced correctly from Budget)
-
                 cellGroups[key].push({ ...res, fecha: date, _displayJornada: dailyJornada, _canonicalSalon: canonicalName });
             });
         });
@@ -500,6 +501,47 @@
             htmlFinal += staticAddBtn;
             cell.innerHTML = htmlFinal;
         });
+
+        // --- UNMAPPED NOTIFICATION ---
+        const footerAreaId = "footer-unmapped-area";
+        let footerArea = document.getElementById(footerAreaId);
+        if (!footerArea) {
+            footerArea = document.createElement("div");
+            footerArea.id = footerAreaId;
+            footerArea.className = "mt-6 max-w-7xl mx-auto px-4";
+            document.getElementById("calendarGrid").parentNode.appendChild(footerArea);
+        }
+
+        if (unmappedEvents.length > 0) {
+            // Deduplicate unmapped events
+            const uniqueUnmapped = Array.from(new Set(unmappedEvents.map(e => e.id)))
+                .map(id => unmappedEvents.find(e => e.id === id));
+            
+            let orphanHtml = `
+                <div class="bg-amber-50 border-l-4 border-amber-400 p-4 rounded-r-lg shadow-sm">
+                    <div class="flex items-center gap-3 mb-2">
+                        <span class="text-xl">⚠️</span>
+                        <div class="flex flex-col">
+                            <span class="text-amber-800 font-bold text-sm">Hay ${uniqueUnmapped.length} reserva(s) que no se pudieron ubicar en el planning.</span>
+                            <span class="text-amber-600 text-[10px] uppercase font-bold tracking-wider">Posible causa: nombre de salón modificado o antiguo test "pillado".</span>
+                        </div>
+                    </div>
+                    <div class="flex flex-wrap gap-2">
+                        ${uniqueUnmapped.map(e => `
+                            <button onclick="window.openBooking('${e.salon.replace(/'/g, "\\'")}', '${e.fecha}', window._resRegistry['${e.id}'])" 
+                                class="bg-white border border-amber-200 text-amber-900 px-3 py-1.5 rounded-md text-xs font-bold hover:bg-amber-100 transition shadow-sm flex items-center gap-2">
+                                📌 ${e.cliente} (${e.salon}) - ${e.fecha}
+                            </button>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+            // Register them in registry for opening
+            uniqueUnmapped.forEach(e => { window._resRegistry[e.id] = e; });
+            footerArea.innerHTML = orphanHtml;
+        } else {
+            footerArea.innerHTML = "";
+        }
     }
 
     // Helper for Card HTML
