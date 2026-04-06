@@ -79,11 +79,9 @@
             // Conflict Rules:
             // - New "TODO" -> Conflicts with ANY existing (Mañana, Tarde, Todo)
             // - New "Mañana" -> Conflicts with Existing "Mañana" OR "Todo"
-            // - New "Tarde" -> Conflicts with Existing "Tarde" OR "Todo"
-
             try {
-                // [NEW] MULTI-SERVICE EXCEPTION: Eventos Restaurante (Ignore conflicts)
-                if ((salon || "").toLowerCase().includes("restaurante")) return { available: true };
+                // [NEW] MULTI-SERVICE EXCEPTION: Eventos Restaurante / Grupos Alarcos (Ignore conflicts)
+                if (window.MesaChef.isRestauranteStyle(salon)) return { available: true };
 
                 const snapshot = await db.collection("reservas_salones")
                     .where("hotel", "==", hotel)
@@ -164,6 +162,10 @@
             if (num === 0 && val === "") return;
             // Editing format: Use Comma for decimal, No dots
             input.value = num.toString().replace('.', ',');
+        },
+        isRestauranteStyle: (name) => {
+            const n = (name || "").toLowerCase();
+            return n.includes("restaurante") || n.includes("grupos") || n.includes("alarcos");
         }
     };
 })();

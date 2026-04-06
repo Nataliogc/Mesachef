@@ -73,10 +73,7 @@
         formatDateES: (d) => d.toLocaleDateString('es-ES', { weekday: 'short', day: 'numeric', month: 'short' })
     };
 
-    const isRestauranteStyle = (name) => {
-        const n = (name || "").toLowerCase();
-        return n.includes("restaurante") || n.includes("grupos alarcos");
-    };
+    const isRestauranteStyle = (name) => window.MesaChef.isRestauranteStyle(name);
 
     function startApp() {
         console.log("Salones: Iniciando aplicación...");
@@ -778,14 +775,6 @@
             const salonRaw = salonName.replace(/\s/g, '').toLowerCase();
 
             // Find existing for this salon/date
-            // --- CONFIRMATION FOR LINKED BUDGETS ---
-            if (window.currentEventBudgetID && payload.estado !== 'cancelada') {
-                if (!confirm(`⚠️ ATENCIÓN:\nEste evento está vinculado a un Presupuesto.\n\nCualquier cambio que guardes aquí se sincronizará automáticamente con el presupuesto, modificando sus líneas y totales.\n\n¿Estás seguro de que quieres continuar?`)) {
-                    btn.innerText = originalText;
-                    btn.disabled = false;
-                    return;
-                }
-            }
 
             const conflictCandidates = loadedReservations.filter(r => {
                 if (r.hotel !== currentHotel) return false;
@@ -1180,12 +1169,13 @@
 
     window.saveBooking = async function () {
         const btn = document.querySelector("button[onclick='saveBooking()']");
+        const originalText = btn ? btn.innerText : "GUARDAR";
         
         if (currentBookingId) {
             const key = prompt("Introduce la clave de seguridad:");
             if (key === null) return; 
             if (key !== "Mreserva") {
-                alert("Clave incorrecta (v5)");
+                alert("Clave incorrecta (v5.5)");
                 return;
             }
         }
