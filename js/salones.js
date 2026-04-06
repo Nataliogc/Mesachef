@@ -73,6 +73,11 @@
         formatDateES: (d) => d.toLocaleDateString('es-ES', { weekday: 'short', day: 'numeric', month: 'short' })
     };
 
+    const isRestauranteStyle = (name) => {
+        const n = (name || "").toLowerCase();
+        return n.includes("restaurante") || n.includes("grupos alarcos");
+    };
+
     function startApp() {
         console.log("Salones: Iniciando aplicación...");
         db = firebase.firestore();
@@ -219,7 +224,7 @@
 
             salons.forEach((salon, index) => {
                 const isLast = index === salons.length - 1;
-                const isRteRow = (salon.name || "").toLowerCase().includes("restaurante");
+                const isRteRow = isRestauranteStyle(salon.name);
 
                 html += `<div style="display: grid; grid-template-columns: 200px repeat(7, 1fr); ${isLast ? '' : 'border-bottom: 1px solid #f1f5f9;'}">
                     <div class="${isRteRow ? 'bg-indigo-600 text-white' : 'bg-white text-slate-700'} p-2 font-bold flex flex-col justify-center border-r border-slate-100 relative group transition-colors">
@@ -350,7 +355,7 @@
             if (cell.getAttribute("data-salon")) {
                 const s = cell.getAttribute("data-salon");
                 const d = cell.getAttribute("data-date");
-                const isRte = s.toLowerCase().includes("restaurante");
+                const isRte = isRestauranteStyle(s);
                 const isPast = d < utils.toIsoDate(new Date());
                 
                 // [NEW] Reset layout classes for multi-service support
@@ -466,7 +471,7 @@
             let htmlFinal = "";
 
             // [NEW] MULTI-SERVICE EXCEPTION: Eventos Restaurante
-            const isMultiService = (sample._canonicalSalon || '').toLowerCase().includes('restaurante');
+            const isMultiService = isRestauranteStyle(sample._canonicalSalon);
 
             if (isMultiService) {
                 // Change card container to flex for stacking
@@ -551,7 +556,7 @@
     function createCardHTML(res, extraClasses = "") {
         window._resRegistry[res.id] = res; // Register for click
 
-        const isRte = (res.salon || res._canonicalSalon || "").toLowerCase().includes("restaurante");
+        const isRte = isRestauranteStyle(res.salon || res._canonicalSalon);
         const jornada = res._displayJornada || res.detalles?.jornada || "todo";
         let colorClass = 'bg-blue-100 border-blue-500 text-blue-800';
 
@@ -804,7 +809,7 @@
             const hasAfternoon = conflictCandidates.some(r => (r.detalles?.jornada || 'todo') === 'tarde');
 
             // [NEW] MULTI-SERVICE EXCEPTION: Eventos Restaurante (Ignore conflicts)
-            const isMultiService = (salonName || "").toLowerCase().includes("restaurante");
+            const isMultiService = isRestauranteStyle(salonName);
 
             if (!isMultiService) {
                 if (hasTodo) {
