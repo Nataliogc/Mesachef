@@ -165,7 +165,7 @@
         },
         isRestauranteStyle: (name) => {
             const n = (name || "").toLowerCase();
-            return n.includes("restaurante") || n.includes("grupos") || n.includes("alarcos");
+            return n.includes("restaurante") || n.includes("grupos");
         }
     };
 })();
