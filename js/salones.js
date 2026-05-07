@@ -364,15 +364,17 @@
                     : (isRte ? "cursor-pointer hover:bg-white text-indigo-300 hover:text-indigo-600" : "cursor-pointer hover:bg-slate-50 text-slate-200 hover:text-slate-400");
                 
                 const slotRteClass = isRte && !isPast ? "m-1 rounded-xl bg-indigo-50/60 border border-indigo-100 shadow-sm hover:bg-white hover:border-indigo-300 hover:shadow-md" : (isRte ? "" : "relative border-b border-transparent hover:border-slate-100");
-                const slotMaText = isPast ? '-' : (isRte ? '<span class="text-xl filter drop-shadow-sm">☀️</span>' : 'LIBRE');
-                const slotTaText = isPast ? '-' : (isRte ? '<span class="text-lg filter drop-shadow-sm">🌙</span>' : 'LIBRE');
+                const slotMaText = isRte ? '☀️' : 'LIBRE';
+                const slotTaText = isRte ? '🌙' : 'LIBRE';
+                const opacityClass = isPast ? "opacity-20 grayscale" : "filter drop-shadow-sm";
+                const iconSize = isRte ? "text-lg" : "text-[10px]";
 
                 cell.innerHTML = `
-                    <div onclick="window.openBooking('${s}', '${d}', null, 'mañana')" class="flex items-center justify-center text-[9px] font-bold uppercase tracking-tight transition ${interactionClass} ${slotRteClass}">
-                        ${slotMaText}
+                    <div onclick="${isPast ? '' : `window.openBooking('${s}', '${d}', null, 'mañana')`}" class="flex items-center justify-center font-bold uppercase tracking-tight transition ${interactionClass} ${slotRteClass}">
+                        <span class="${iconSize} ${opacityClass}">${slotMaText}</span>
                     </div>
-                    <div onclick="window.openBooking('${s}', '${d}', null, 'tarde')" class="flex items-center justify-center text-[9px] font-bold uppercase tracking-tight transition ${interactionClass} ${isRte && !isPast ? slotRteClass : ''}">
-                        ${slotTaText}
+                    <div onclick="${isPast ? '' : `window.openBooking('${s}', '${d}', null, 'tarde')`}" class="flex items-center justify-center font-bold uppercase tracking-tight transition ${interactionClass} ${isRte && !isPast ? slotRteClass : ''}">
+                        <span class="${iconSize} ${opacityClass}">${slotTaText}</span>
                     </div>
                     <button onclick="window.openBooking('${s}', '${d}')" class="absolute top-1 right-1 w-6 h-6 flex items-center justify-center bg-blue-50 text-blue-600 rounded-full shadow-sm opacity-0 group-hover:opacity-100 transition z-30 hover:bg-blue-600 hover:text-white font-bold pb-0.5" title="Añadir evento">+</button>
                  `;
@@ -459,11 +461,13 @@
             const taOnClick = isPast ? "" : `onclick="window.openBooking('${safeName}', '${dateStr}', null, 'tarde')"`;
 
             const isRte = isRestauranteStyle(sample._canonicalSalon);
-            const slotMaText = isPast ? '-' : (isRte ? '<span class="text-xl filter drop-shadow-sm">☀️</span>' : 'LIBRE');
-            const slotTaText = isPast ? '-' : (isRte ? '<span class="text-lg filter drop-shadow-sm">🌙</span>' : 'LIBRE');
+            const slotMaText = isRte ? '☀️' : 'LIBRE';
+            const slotTaText = isRte ? '🌙' : 'LIBRE';
+            const opacityClass = isPast ? "opacity-20 grayscale" : "filter drop-shadow-sm";
+            const iconSize = isRte ? "text-lg" : "text-[10px]";
 
-            const slotMañana = `<div ${maOnClick} class="relative flex items-center justify-center text-[10px] font-bold uppercase tracking-widest transition border-b border-transparent hover:border-slate-100 ${interactionClass}">${slotMaText}</div>`;
-            const slotTarde = `<div ${taOnClick} class="relative flex items-center justify-center text-[10px] font-bold uppercase tracking-widest transition ${interactionClass}">${slotTaText}</div>`;
+            const slotMañana = `<div ${maOnClick} class="relative flex items-center justify-center font-bold uppercase tracking-widest transition border-b border-transparent hover:border-slate-100 ${interactionClass}"><span class="${iconSize} ${opacityClass}">${slotMaText}</span></div>`;
+            const slotTarde = `<div ${taOnClick} class="relative flex items-center justify-center font-bold uppercase tracking-widest transition ${interactionClass}"><span class="${iconSize} ${opacityClass}">${slotTaText}</span></div>`;
 
             const staticAddBtn = isPast ? "" : `<button onclick="window.openBooking('${safeName}', '${dateStr}')" class="absolute top-1 right-1 w-6 h-6 flex items-center justify-center bg-blue-50 text-blue-600 rounded-full shadow-sm opacity-0 group-hover:opacity-100 transition z-30 hover:bg-blue-600 hover:text-white font-bold pb-0.5" title="Añadir evento">+</button>`;
 
@@ -481,20 +485,15 @@
                     htmlFinal += createCardHTML(r, "min-h-[48px] shrink-0");
                 });
 
-                // [FIX] Always show explicit "Add" buttons for Morning/Afternoon in MultiService
-                // This prevents the UX issue where icons disappear when a card is present.
-                htmlFinal += `
-                    <div class="mt-auto flex flex-col gap-1 border-t border-slate-100 pt-1 no-print">
-                        <button onclick="window.openBooking('${safeName}', '${dateStr}', null, 'mañana')" 
-                                class="flex items-center justify-center gap-1 text-[9px] font-bold text-blue-500 hover:bg-blue-50 py-1 rounded transition border border-dashed border-blue-200">
-                            ☀️ + ALMUERZO
-                        </button>
-                        <button onclick="window.openBooking('${safeName}', '${dateStr}', null, 'tarde')" 
-                                class="flex items-center justify-center gap-1 text-[9px] font-bold text-orange-500 hover:bg-orange-50 py-1 rounded transition border border-dashed border-orange-200">
-                            🌙 + CENA
-                        </button>
-                    </div>
-                `;
+                // [FIX] Subtle Add Buttons for MultiService
+                if (!isPast) {
+                    htmlFinal += `
+                        <div class="mt-auto flex justify-center gap-4 py-1 border-t border-slate-50 no-print">
+                            <button onclick="window.openBooking('${safeName}', '${dateStr}', null, 'mañana')" class="text-lg hover:scale-125 transition filter grayscale hover:grayscale-0" title="Añadir Almuerzo">☀️</button>
+                            <button onclick="window.openBooking('${safeName}', '${dateStr}', null, 'tarde')" class="text-lg hover:scale-125 transition filter grayscale hover:grayscale-0" title="Añadir Cena">🌙</button>
+                        </div>
+                    `;
+                }
             } else {
                 // Relaxed 'Todo' check: matches 'todo', 'dia', 'completo' or if it's not half-day
                 const evTodo = group.find(r => {
