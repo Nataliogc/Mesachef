@@ -1171,6 +1171,9 @@
         });
         // Recalculate totals after update
         calcTotal();
+
+        // [NEW] Trigger line creation/removal if needed (for restaurant groups)
+        updateRentalPrice();
     };
 
     window.toggleIncluido = function () {

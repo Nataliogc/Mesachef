@@ -333,8 +333,13 @@
                             <h3 class="text-lg font-bold text-slate-800">Evento</h3>
                             <div id="evt-budget-label"></div>
                         </div>
-                        <button onclick="closeModal()"
-                            class="text-slate-400 hover:text-slate-600 font-bold text-xl">&times;</button>
+                        <div class="flex items-center gap-3">
+                            <button onclick="duplicateBooking()" id="btnDuplicar" class="hidden text-xs bg-indigo-50 text-indigo-600 px-3 py-1 rounded-full font-bold hover:bg-indigo-600 hover:text-white transition">
+                                👯 Duplicar
+                            </button>
+                            <button onclick="closeModal()"
+                                class="text-slate-400 hover:text-slate-600 font-bold text-xl">&times;</button>
+                        </div>
                     </div>
 
                     <div class="px-4 py-3 space-y-3 bg-white">
