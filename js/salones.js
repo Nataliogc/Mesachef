@@ -450,9 +450,7 @@
             const safeName = sample._canonicalSalon.replace(/'/g, "\\'");
             const dateStr = sample.fecha;
 
-            // Re-generate "Libre" slots with Past Logic
             const isPast = dateStr < utils.toIsoDate(new Date());
-
             const interactionClass = isPast
                 ? "cursor-default text-slate-300"
                 : "cursor-pointer hover:bg-slate-50 text-slate-200 hover:text-slate-400";
@@ -460,8 +458,12 @@
             const maOnClick = isPast ? "" : `onclick="window.openBooking('${safeName}', '${dateStr}', null, 'mañana')"`;
             const taOnClick = isPast ? "" : `onclick="window.openBooking('${safeName}', '${dateStr}', null, 'tarde')"`;
 
-            const slotMañana = `<div ${maOnClick} class="relative flex items-center justify-center text-[10px] font-bold uppercase tracking-widest transition border-b border-transparent hover:border-slate-100 ${interactionClass}">${isPast ? '-' : 'LIBRE'}</div>`;
-            const slotTarde = `<div ${taOnClick} class="relative flex items-center justify-center text-[10px] font-bold uppercase tracking-widest transition ${interactionClass}">${isPast ? '-' : 'LIBRE'}</div>`;
+            const isRte = isRestauranteStyle(sample._canonicalSalon);
+            const slotMaText = isPast ? '-' : (isRte ? '<span class="text-xl filter drop-shadow-sm">☀️</span>' : 'LIBRE');
+            const slotTaText = isPast ? '-' : (isRte ? '<span class="text-lg filter drop-shadow-sm">🌙</span>' : 'LIBRE');
+
+            const slotMañana = `<div ${maOnClick} class="relative flex items-center justify-center text-[10px] font-bold uppercase tracking-widest transition border-b border-transparent hover:border-slate-100 ${interactionClass}">${slotMaText}</div>`;
+            const slotTarde = `<div ${taOnClick} class="relative flex items-center justify-center text-[10px] font-bold uppercase tracking-widest transition ${interactionClass}">${slotTaText}</div>`;
 
             const staticAddBtn = isPast ? "" : `<button onclick="window.openBooking('${safeName}', '${dateStr}')" class="absolute top-1 right-1 w-6 h-6 flex items-center justify-center bg-blue-50 text-blue-600 rounded-full shadow-sm opacity-0 group-hover:opacity-100 transition z-30 hover:bg-blue-600 hover:text-white font-bold pb-0.5" title="Añadir evento">+</button>`;
 
@@ -473,16 +475,26 @@
             if (isMultiService) {
                 // Change card container to flex for stacking
                 cell.classList.remove('grid', 'grid-rows-2', 'gap-[1px]');
-                cell.classList.add('flex', 'flex-col', 'gap-1', 'p-0.5', 'overflow-y-auto');
+                cell.classList.add('flex', 'flex-col', 'gap-1', 'p-1', 'overflow-y-auto');
                 
                 group.forEach(r => {
                     htmlFinal += createCardHTML(r, "min-h-[48px] shrink-0");
                 });
-                // Always show "Add" capability implicitly via the static button, 
-                // but we can also show the 'LIBRE' indicators if empty for consistency
-                if (group.length === 0) {
-                    htmlFinal += slotMañana + slotTarde;
-                }
+
+                // [FIX] Always show explicit "Add" buttons for Morning/Afternoon in MultiService
+                // This prevents the UX issue where icons disappear when a card is present.
+                htmlFinal += `
+                    <div class="mt-auto flex flex-col gap-1 border-t border-slate-100 pt-1 no-print">
+                        <button onclick="window.openBooking('${safeName}', '${dateStr}', null, 'mañana')" 
+                                class="flex items-center justify-center gap-1 text-[9px] font-bold text-blue-500 hover:bg-blue-50 py-1 rounded transition border border-dashed border-blue-200">
+                            ☀️ + ALMUERZO
+                        </button>
+                        <button onclick="window.openBooking('${safeName}', '${dateStr}', null, 'tarde')" 
+                                class="flex items-center justify-center gap-1 text-[9px] font-bold text-orange-500 hover:bg-orange-50 py-1 rounded transition border border-dashed border-orange-200">
+                            🌙 + CENA
+                        </button>
+                    </div>
+                `;
             } else {
                 // Relaxed 'Todo' check: matches 'todo', 'dia', 'completo' or if it's not half-day
                 const evTodo = group.find(r => {
