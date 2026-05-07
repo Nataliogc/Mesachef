@@ -328,12 +328,25 @@
     // SERVICE INCLUDED TOGGLE
     document.getElementById("checkServicioIncluido").addEventListener("change", function () {
       const container = document.getElementById("containerDetalleIncluido");
+      const pricioAdl = document.getElementById("campoPrecio");
+      const precioNin = document.getElementById("campoPrecioNinos");
+      // Locate the € spans next to each price input
+      const euroAdl = pricioAdl ? pricioAdl.nextElementSibling : null;
+      const euroNin = precioNin ? precioNin.nextElementSibling : null;
+
       if (this.checked) {
-        document.getElementById("campoPrecio").value = "0,00"; // [MODIFIED] ES Format
-        document.getElementById("campoPrecio").disabled = true;
+        // Clear & hide price inputs
+        if (pricioAdl) { pricioAdl.value = "0,00"; pricioAdl.disabled = true; pricioAdl.style.display = "none"; }
+        if (precioNin) { precioNin.value = "0,00"; precioNin.disabled = true; precioNin.style.display = "none"; }
+        if (euroAdl) euroAdl.style.display = "none";
+        if (euroNin) euroNin.style.display = "none";
         if (container) container.classList.remove("hidden");
       } else {
-        document.getElementById("campoPrecio").disabled = false;
+        // Restore price inputs
+        if (pricioAdl) { pricioAdl.disabled = false; pricioAdl.style.display = ""; }
+        if (precioNin) { precioNin.disabled = false; precioNin.style.display = ""; }
+        if (euroAdl) euroAdl.style.display = "";
+        if (euroNin) euroNin.style.display = "";
         if (container) container.classList.add("hidden");
       }
       updateTotalDisplay();
