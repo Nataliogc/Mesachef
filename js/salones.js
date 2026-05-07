@@ -457,10 +457,11 @@
                 ? "cursor-default text-slate-300"
                 : "cursor-pointer hover:bg-slate-50 text-slate-200 hover:text-slate-400";
 
+            const isRte = isRestauranteStyle(sample._canonicalSalon);
             const maOnClick = isPast ? "" : `onclick="window.openBooking('${safeName}', '${dateStr}', null, '${isRte ? 'almuerzo' : 'mañana'}')"`;
             const taOnClick = isPast ? "" : `onclick="window.openBooking('${safeName}', '${dateStr}', null, '${isRte ? 'cena' : 'tarde'}')"`;
+            const cellOnClick = isPast ? "" : `onclick="window.openBooking('${safeName}', '${dateStr}', null, '${isRte ? 'almuerzo' : 'todo'}')"`;
 
-            const isRte = isRestauranteStyle(sample._canonicalSalon);
             const slotMaText = isRte ? '☀️' : 'LIBRE';
             const slotTaText = isRte ? '🌙' : 'LIBRE';
             const opacityClass = isPast ? "opacity-20 grayscale" : "filter drop-shadow-sm";
@@ -469,7 +470,7 @@
             const slotMañana = `<div ${maOnClick} class="relative flex items-center justify-center font-bold uppercase tracking-widest transition border-b border-transparent hover:border-slate-100 ${interactionClass}"><span class="${iconSize} ${opacityClass}">${slotMaText}</span></div>`;
             const slotTarde = `<div ${taOnClick} class="relative flex items-center justify-center font-bold uppercase tracking-widest transition ${interactionClass}"><span class="${iconSize} ${opacityClass}">${slotTaText}</span></div>`;
 
-            const staticAddBtn = isPast ? "" : `<button onclick="window.openBooking('${safeName}', '${dateStr}')" class="absolute top-1 right-1 w-6 h-6 flex items-center justify-center bg-blue-50 text-blue-600 rounded-full shadow-sm opacity-0 group-hover:opacity-100 transition z-30 hover:bg-blue-600 hover:text-white font-bold pb-0.5" title="Añadir evento">+</button>`;
+            const staticAddBtn = isPast ? "" : `<button ${cellOnClick} class="absolute top-1 right-1 w-6 h-6 flex items-center justify-center bg-blue-50 text-blue-600 rounded-full shadow-sm opacity-0 group-hover:opacity-100 transition z-30 hover:bg-blue-600 hover:text-white font-bold pb-0.5" title="Añadir evento">+</button>`;
 
             let htmlFinal = "";
 
@@ -826,10 +827,16 @@
             if (!isMultiService) {
                 if (hasMorning) {
                     defaultJornada = 'tarde';
-                    // Ideally we could warn the user: "Mañana ocupada, seleccionando Tarde"
                 } else if (hasAfternoon) {
                     defaultJornada = 'mañana';
                 }
+            } else {
+                // [NEW] Default for Restaurant: if no specific slot but clicked general area
+                if (defaultJornada === 'todo' || !defaultJornada) defaultJornada = 'almuerzo';
+                
+                // Map terminology
+                if (defaultJornada === 'mañana') defaultJornada = 'almuerzo';
+                if (defaultJornada === 'tarde') defaultJornada = 'cena';
             }
         }
 
@@ -1146,7 +1153,9 @@
 
             // Only update "Menu" lines to match Pax
             // Heuristic must be safe
-            if (concept.includes("grupo restaurante")) {
+            // Only update "Menu" or "Grupo" lines to match Pax
+            // Heuristic must be safe
+            if (concept.includes("grupo")) {
                 if (concept.includes("niño") || concept.includes("infantil")) {
                     inputs[2].value = paxN;
                 } else {
@@ -1209,23 +1218,25 @@
 
         let price = (jornada === 'todo') ? (sObj.priceFull || 0) : (sObj.priceHalf || 0);
 
-        const isRte = isRestauranteStyle(salonName);
         const jName = jornada.charAt(0).toUpperCase() + jornada.slice(1);
-        const defaultConcept = isRte ? `Grupo Restaurante - ${jName}` : `Alquiler Salón ${salonName} - ${jornada}`;
+        
+        // Dynamic Concept: "Grupo [Nombre]" instead of "Alquiler Salón [Nombre]"
+        const cleanSalon = salonName.replace(/^(Eventos|Grupos|Eventos Grupos)\s+/i, '');
+        const defaultConcept = isRte ? `Grupo ${cleanSalon} - ${jName}` : `Alquiler Salón ${salonName} - ${jornada}`;
 
         const paxA = parseFloat(document.getElementById("evt-pax-a").value) || 0;
         const paxN = parseFloat(document.getElementById("evt-pax-n").value) || 0;
 
-        // Find existing 'Alquiler Salón' or 'Grupo Restaurante' rows
+        // Find existing 'Alquiler Salón' or 'Grupo' rows
         let rows = Array.from(document.querySelectorAll("#services-list tr"));
         let mainRow = rows.find(row => {
             const inp = row.querySelector("input[type='text']");
-            return inp && (inp.value.startsWith("Alquiler Salón") || (inp.value.startsWith("Grupo Restaurante") && !inp.value.toLowerCase().includes("niño")));
+            return inp && (inp.value.startsWith("Alquiler Salón") || (inp.value.toLowerCase().includes("grupo") && !inp.value.toLowerCase().includes("niño")));
         });
         
         let childRow = rows.find(row => {
             const inp = row.querySelector("input[type='text']");
-            return inp && inp.value.startsWith("Grupo Restaurante") && inp.value.toLowerCase().includes("niño");
+            return inp && inp.value.toLowerCase().includes("grupo") && inp.value.toLowerCase().includes("niño");
         });
 
         if (mainRow) {
@@ -1239,7 +1250,7 @@
         if (isRte && paxN > 0) {
             if (childRow) {
                 const inp = childRow.querySelector("input[type='text']");
-                inp.value = `Grupo Restaurante - ${jName} (Niños)`;
+                inp.value = `Grupo ${cleanSalon} - ${jName} (Niños)`;
                 const inputs = childRow.querySelectorAll("input");
                 inputs[2].value = paxN;
                 inputs[3].value = window.MesaChef.formatEuroValue(price);
@@ -1249,7 +1260,7 @@
                 const date = window.currentViewDate || document.getElementById("evt-fecha").value;
                 row.innerHTML = `
                     <td class="p-2 border-b"><input type="date" value="${date}" class="text-xs bg-gray-50 w-24 rounded border-gray-200"></td>
-                    <td class="p-2 border-b"><input type="text" value="Grupo Restaurante - ${jName} (Niños)" list="charge-options" onchange="updateRowPrice(this)" class="text-xs font-bold w-full rounded border-gray-200"></td>
+                    <td class="p-2 border-b"><input type="text" value="Grupo ${cleanSalon} - ${jName} (Niños)" list="charge-options" onchange="updateRowPrice(this)" class="text-xs font-bold w-full rounded border-gray-200"></td>
                     <td class="p-2 border-b"><input type="number" onchange="calcTotal()" value="${paxN}" class="text-xs text-center row-uds w-full rounded border-gray-200"></td>
                     <td class="p-2 border-b">
                         <div class="relative w-full">
@@ -1265,7 +1276,6 @@
                 document.getElementById("services-list").appendChild(row);
             }
         } else if (childRow) {
-            // Remove child row if no children anymore
             childRow.remove();
         }
 
