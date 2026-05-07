@@ -457,8 +457,8 @@
                 ? "cursor-default text-slate-300"
                 : "cursor-pointer hover:bg-slate-50 text-slate-200 hover:text-slate-400";
 
-            const maOnClick = isPast ? "" : `onclick="window.openBooking('${safeName}', '${dateStr}', null, 'mañana')"`;
-            const taOnClick = isPast ? "" : `onclick="window.openBooking('${safeName}', '${dateStr}', null, 'tarde')"`;
+            const maOnClick = isPast ? "" : `onclick="window.openBooking('${safeName}', '${dateStr}', null, '${isRte ? 'almuerzo' : 'mañana'}')"`;
+            const taOnClick = isPast ? "" : `onclick="window.openBooking('${safeName}', '${dateStr}', null, '${isRte ? 'cena' : 'tarde'}')"`;
 
             const isRte = isRestauranteStyle(sample._canonicalSalon);
             const slotMaText = isRte ? '☀️' : 'LIBRE';
@@ -489,8 +489,8 @@
                 if (!isPast) {
                     htmlFinal += `
                         <div class="mt-auto flex justify-center gap-4 py-1 border-t border-slate-50 no-print">
-                            <button onclick="window.openBooking('${safeName}', '${dateStr}', null, 'mañana')" class="text-lg hover:scale-125 transition filter grayscale hover:grayscale-0" title="Añadir Almuerzo">☀️</button>
-                            <button onclick="window.openBooking('${safeName}', '${dateStr}', null, 'tarde')" class="text-lg hover:scale-125 transition filter grayscale hover:grayscale-0" title="Añadir Cena">🌙</button>
+                            <button onclick="window.openBooking('${safeName}', '${dateStr}', null, 'almuerzo')" class="text-lg hover:scale-125 transition filter grayscale hover:grayscale-0" title="Añadir Almuerzo">☀️</button>
+                            <button onclick="window.openBooking('${safeName}', '${dateStr}', null, 'cena')" class="text-lg hover:scale-125 transition filter grayscale hover:grayscale-0" title="Añadir Cena">🌙</button>
                         </div>
                     `;
                 }
@@ -603,8 +603,8 @@
         let jText = (jornada || "").toUpperCase();
         let jClass = isRte ? "text-indigo-700 bg-indigo-100/80" : "text-slate-600";
         
-        if (jText.includes("MAÑANA")) { jText = "1/2 MAÑ"; if (!isRte) jClass = "text-sky-700 bg-sky-100/50"; }
-        else if (jText.includes("TARDE")) { jText = "1/2 TARD"; if (!isRte) jClass = "text-orange-700 bg-orange-100/50"; }
+        if (jText.includes("MAÑANA") || jText.includes("ALMUERZO")) { jText = isRte ? "ALMUERZO" : "1/2 MAÑ"; if (!isRte) jClass = "text-sky-700 bg-sky-100/50"; }
+        else if (jText.includes("TARDE") || jText.includes("CENA")) { jText = isRte ? "CENA" : "1/2 TARD"; if (!isRte) jClass = "text-orange-700 bg-orange-100/50"; }
         else if (jText.includes("TODO")) { jText = "COMP"; if (!isRte) jClass = "text-indigo-700 bg-indigo-100/50"; }
 
         return `
@@ -943,6 +943,10 @@
                 document.getElementById("evt-nota-cliente").value = existing.notas.cliente || "";
             }
 
+            // [NEW] Load Incluido
+            document.getElementById("evt-incluido").checked = existing.detalles?.incluido === true;
+            toggleIncluido();
+
             // READ ONLY CHECK (Salones)
             const isPast = (dateStr || existing.fecha) < utils.toIsoDate(new Date());
             if (isPast) {
@@ -1023,6 +1027,10 @@
             }
             // Auto-add rental price for new events
             setTimeout(updateRentalPrice, 100);
+
+            // [NEW] Reset Incluido
+            document.getElementById("evt-incluido").checked = false;
+            toggleIncluido();
         }
 
         document.getElementById("modal-evt").classList.remove("hidden");
@@ -1051,6 +1059,7 @@
             <td class="p-2 border-b text-center"><button onclick="this.closest('tr').remove(); calcTotal()" class="text-red-400 hover:text-red-600 font-bold">&times;</button></td>
                 `;
         document.getElementById("services-list").appendChild(row);
+        toggleIncluido();
     };
 
     window.calcTotal = function () {
@@ -1108,7 +1117,10 @@
 
             // Only update "Menu" lines to match Pax
             // Heuristic must be safe
-            if ((concept.includes("menú") || concept.includes("menu")) && concept.includes("adulto")) {
+            if (concept.includes("grupo restaurante")) {
+                inputs[2].value = paxA + paxN; // SUM for Restaurant Group
+            }
+            else if ((concept.includes("menú") || concept.includes("menu")) && concept.includes("adulto")) {
                 inputs[2].value = paxA;
             }
             else if ((concept.includes("menú") || concept.includes("menu")) && (concept.includes("niño") || concept.includes("infantil"))) {
@@ -1119,49 +1131,80 @@
         calcTotal();
     };
 
+    window.toggleIncluido = function () {
+        const isIncluido = document.getElementById("evt-incluido").checked;
+        const table = document.querySelector(".services-table-container table");
+        const totalContainer = document.getElementById("evt-total").parentElement;
+
+        if (isIncluido) {
+            // Set all prices to 0
+            document.querySelectorAll("#services-list tr").forEach(row => {
+                const inputs = row.querySelectorAll("input");
+                if (inputs[3]) {
+                    inputs[3].value = "0,00";
+                }
+            });
+            calcTotal();
+
+            // Hide Price and Total columns
+            document.querySelectorAll(".services-table-container th:nth-child(4), .services-table-container th:nth-child(5)").forEach(el => el.classList.add("hidden"));
+            document.querySelectorAll("#services-list td:nth-child(4), #services-list td:nth-child(5)").forEach(el => el.classList.add("hidden"));
+            if (totalContainer) totalContainer.classList.add("invisible");
+        } else {
+            // Show Price and Total columns
+            document.querySelectorAll(".services-table-container th:nth-child(4), .services-table-container th:nth-child(5)").forEach(el => el.classList.remove("hidden"));
+            document.querySelectorAll("#services-list td:nth-child(4), #services-list td:nth-child(5)").forEach(el => el.classList.remove("hidden"));
+            if (totalContainer) totalContainer.classList.remove("invisible");
+        }
+    };
+
     window.updateRentalPrice = function () {
         const hotel = localStorage.getItem(STORAGE_KEY) || "Guadiana";
         const salonName = document.getElementById("evt-salon").value;
         const jornada = document.getElementById("evt-jornada").value;
 
-        // Debug scope
-        console.log("updateRentalPrice Triggered:", { hotel, salonName, jornada, configLoaded: !!globalConfig });
-
-        if (!globalConfig || !globalConfig[hotel]) {
-            console.warn("Global Config not ready or hotel missing");
-            return;
-        }
+        if (!globalConfig || !globalConfig[hotel]) return;
 
         const sObj = globalConfig[hotel].find(s => s.name === salonName);
-        if (!sObj) {
-            console.warn("Salon not found in config:", salonName);
-            return;
-        }
+        if (!sObj) return;
 
         let price = (jornada === 'todo') ? (sObj.priceFull || 0) : (sObj.priceHalf || 0);
-        console.log("Price Calculated:", price);
 
-        // Find existing 'Alquiler Salón' row
+        const isRte = isRestauranteStyle(salonName);
+        const defaultConcept = isRte ? `Grupo Restaurante - ${jornada.charAt(0).toUpperCase() + jornada.slice(1)}` : `Alquiler Salón ${salonName} - ${jornada}`;
+
+        // Find existing 'Alquiler Salón' or 'Grupo Restaurante' row
         let found = false;
         document.querySelectorAll("#services-list tr").forEach(row => {
             const inp = row.querySelector("input[type='text']");
-            // Check if it looks like a rental line (starts with Alquiler Salón)
-            if (inp && inp.value.startsWith("Alquiler Salón")) {
+            // Check if it looks like a rental line or restaurant group line
+            if (inp && (inp.value.startsWith("Alquiler Salón") || inp.value.startsWith("Grupo Restaurante"))) {
                 found = true;
-                row.querySelector(".row-price").value = window.MesaChef.formatEuroValue(price);
-                inp.value = `Alquiler Salón ${salonName} - ${jornada}`;
-                calcTotal(); // Update totals
+                inp.value = defaultConcept;
+                const inputs = row.querySelectorAll("input");
+                // Update price if we are changing salon/jornada
+                inputs[3].value = window.MesaChef.formatEuroValue(price);
+                // [NEW] For restaurants, sync quantity with pax header sum
+                if (isRte) {
+                    const paxA = parseFloat(document.getElementById("evt-pax-a").value) || 0;
+                    const paxN = parseFloat(document.getElementById("evt-pax-n").value) || 0;
+                    inputs[2].value = paxA + paxN;
+                }
             }
         });
 
         if (!found) {
-            console.log("Creating new rental row...");
+            // Add new row
             const row = document.createElement("tr");
-            const dateStr = window.currentViewDate || document.getElementById("evt-fecha").value;
+            const date = window.currentViewDate || document.getElementById("evt-fecha").value;
+            const paxA = parseFloat(document.getElementById("evt-pax-a").value) || 0;
+            const paxN = parseFloat(document.getElementById("evt-pax-n").value) || 0;
+            const qty = isRte ? (paxA + paxN) : 1;
+
             row.innerHTML = `
-                <td class="p-2 border-b"><input type="date" value="${dateStr}" class="text-xs bg-gray-50 w-24 rounded border-gray-200"></td>
-                <td class="p-2 border-b"><input type="text" value="Alquiler Salón ${salonName} - ${jornada}" list="charge-options" onchange="updateRowPrice(this)" class="text-xs font-bold w-full rounded border-gray-200"></td>
-                <td class="p-2 border-b"><input type="number" onchange="calcTotal()" value="1" class="text-xs text-center row-uds w-full rounded border-gray-200"></td>
+            <td class="p-2 border-b"><input type="date" value="${date}" class="text-xs bg-gray-50 w-24 rounded border-gray-200"></td>
+                <td class="p-2 border-b"><input type="text" value="${defaultConcept}" list="charge-options" onchange="updateRowPrice(this)" class="text-xs font-bold w-full rounded border-gray-200"></td>
+                <td class="p-2 border-b"><input type="number" onchange="calcTotal()" value="${qty}" class="text-xs text-center row-uds w-full rounded border-gray-200"></td>
                 <td class="p-2 border-b">
                     <div class="relative w-full">
                         <input type="text" onchange="calcTotal()" value="${window.MesaChef.formatEuroValue(price)}" 
@@ -1170,12 +1213,12 @@
                         <span class="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] font-bold text-slate-400">€</span>
                     </div>
                 </td>
-                <td class="p-2 border-b text-right font-bold text-xs row-total text-slate-600">${window.MesaChef.formatEuroValue(price)} €</td>
+                <td class="p-2 border-b text-right font-bold text-xs row-total text-slate-600">${window.MesaChef.formatEuroValue(price * qty)} €</td>
                 <td class="p-2 border-b text-center"><button onclick="this.closest('tr').remove(); calcTotal()" class="text-red-400 hover:text-red-600 font-bold">&times;</button></td>
-            `;
-            document.getElementById("services-list").prepend(row);
-            calcTotal();
+        `;
+            document.getElementById("services-list").appendChild(row);
         }
+        calcTotal();
     };
 
     window.saveBooking = async function () {
@@ -1218,7 +1261,8 @@
                 montaje: document.getElementById("evt-montaje").value,
                 hora: document.getElementById("evt-hora").value,
                 pax_adultos: parseInt(document.getElementById("evt-pax-a").value) || 0,
-                pax_ninos: parseInt(document.getElementById("evt-pax-n").value) || 0
+                pax_ninos: parseInt(document.getElementById("evt-pax-n").value) || 0,
+                incluido: document.getElementById("evt-incluido").checked
             },
             notas: {
                 interna: document.getElementById("evt-nota-interna").value,

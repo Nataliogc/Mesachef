@@ -395,6 +395,8 @@
                                     <option value="todo">Todo el día</option>
                                     <option value="mañana">Mañana</option>
                                     <option value="tarde">Tarde</option>
+                                    <option value="almuerzo">Almuerzo</option>
+                                    <option value="cena">Cena</option>
                                 </select>
                             </div>
                             <div class="col-span-5">
@@ -411,7 +413,11 @@
                             <div class="col-span-2">
                                 <label class="text-[10px] uppercase font-bold text-gray-500">Pax Niños</label>
                                 <input type="number" id="evt-pax-n" placeholder="0" oninput="syncPaxFromHeaderToLines()"
-                                    class="w-full text-xs border-gray-200 rounded h-9 text-center">
+                                    class="w-full text-xs border-gray-200 rounded h-9">
+                            </div>
+                            <div class="col-span-4 flex items-center gap-2 pt-4">
+                                <input type="checkbox" id="evt-incluido" onchange="toggleIncluido()" class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-600">
+                                <label for="evt-incluido" class="text-[10px] uppercase font-bold text-indigo-600 cursor-pointer">Servicios Incluidos</label>
                             </div>
                         </div>
 
