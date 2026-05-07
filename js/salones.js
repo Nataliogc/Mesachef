@@ -1058,13 +1058,50 @@
     window.duplicateBooking = function () {
         if (!currentBookingId) return;
 
+        let currentDate = document.getElementById("evt-fecha").value;
+        let newDateStr = prompt("📅 Introduce la NUEVA FECHA para la copia (AAAA-MM-DD o DD/MM/AAAA):", currentDate);
+        if (!newDateStr) return; // Cancelado
+
+        let newDate = newDateStr;
+        if (newDateStr.includes("/")) {
+            let parts = newDateStr.split("/");
+            if (parts.length === 3) {
+                if (parts[2].length === 2) parts[2] = "20" + parts[2];
+                newDate = `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
+            }
+        }
+
+        let currentJornada = document.getElementById("evt-jornada").value;
+        let newJornada = prompt("⏱️ Introduce la NUEVA JORNADA para la copia:\n(todo, mañana, tarde, almuerzo, cena)", currentJornada);
+        if (!newJornada) return; // Cancelado
+        
+        newJornada = newJornada.toLowerCase().trim();
+        const validJornadas = ['todo', 'mañana', 'tarde', 'almuerzo', 'cena'];
+        if (!validJornadas.includes(newJornada)) {
+            alert("Jornada no válida. Se mantendrá la actual.");
+            newJornada = currentJornada;
+        }
+
+        // Apply new values
+        document.getElementById("evt-fecha").value = newDate;
+        document.getElementById("evt-jornada").value = newJornada;
+
+        // Update all service rows to match the new date
+        document.querySelectorAll("#services-list tr").forEach(row => {
+            const dateInput = row.querySelector("input[type='date']");
+            if (dateInput) dateInput.value = newDate;
+        });
+
+        // Recalculate default concepts/prices based on new jornada
+        updateRentalPrice();
+
         // Reset ID and metadata to turn current view into a NEW booking
         currentBookingId = null;
         window.currentEventBudgetID = null;
 
         // Update UI to reflect "New" state
-        const mt = document.getElementById("modalTitle");
-        if (mt) mt.innerText = "Duplicar Evento (Copia)";
+        const h3 = document.querySelector("#modal-evt h3");
+        if (h3) h3.innerText = "Duplicar Evento (Copia)";
 
         const btnDup = document.getElementById("btnDuplicar");
         if (btnDup) btnDup.classList.add("hidden");
@@ -1072,8 +1109,7 @@
         const btnAnular = document.getElementById("btnAnular");
         if (btnAnular) btnAnular.style.display = 'none';
 
-        // Notify User
-        alert("📋 Se ha creado una copia. Cambia la fecha o jornada si es necesario y pulsa GUARDAR para finalizar.");
+        alert(`📋 Se ha preparado la copia para el ${newDate} (${newJornada}). Revisa los datos y pulsa GUARDAR para finalizar.`);
     };
 
     window.addServiceRow = function () {
