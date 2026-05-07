@@ -905,6 +905,10 @@
         // Default Jornada
         document.getElementById("evt-jornada").value = defaultJornada;
 
+        // [NEW] Duplicar Button Visibility
+        const btnDup = document.getElementById("btnDuplicar");
+        if (btnDup) btnDup.classList.add("hidden");
+
         window.currentEventBudgetID = null; // [RESET] Ensure we don't carry over IDs from previous opens
 
         // POPULATE
@@ -977,6 +981,10 @@
                 const btnAnular = document.getElementById("btnAnular");
                 if (btnGuardar) btnGuardar.style.display = 'inline-block'; // Or block/flex
                 if (btnAnular) btnAnular.style.display = 'block';
+
+                // [NEW] Show Duplicar Button when editing
+                const btnDup = document.getElementById("btnDuplicar");
+                if (btnDup) btnDup.classList.remove("hidden");
             }
 
 
@@ -1038,6 +1046,27 @@
 
     window.closeModal = function () {
         document.getElementById("modal-evt").classList.add("hidden");
+    };
+
+    window.duplicateBooking = function () {
+        if (!currentBookingId) return;
+
+        // Reset ID and metadata to turn current view into a NEW booking
+        currentBookingId = null;
+        window.currentEventBudgetID = null;
+
+        // Update UI to reflect "New" state
+        const mt = document.getElementById("modalTitle");
+        if (mt) mt.innerText = "Duplicar Evento (Copia)";
+
+        const btnDup = document.getElementById("btnDuplicar");
+        if (btnDup) btnDup.classList.add("hidden");
+
+        const btnAnular = document.getElementById("btnAnular");
+        if (btnAnular) btnAnular.style.display = 'none';
+
+        // Notify User
+        alert("📋 Se ha creado una copia. Cambia la fecha o jornada si es necesario y pulsa GUARDAR para finalizar.");
     };
 
     window.addServiceRow = function () {
@@ -1118,7 +1147,11 @@
             // Only update "Menu" lines to match Pax
             // Heuristic must be safe
             if (concept.includes("grupo restaurante")) {
-                inputs[2].value = paxA + paxN; // SUM for Restaurant Group
+                if (concept.includes("niño") || concept.includes("infantil")) {
+                    inputs[2].value = paxN;
+                } else {
+                    inputs[2].value = paxA;
+                }
             }
             else if ((concept.includes("menú") || concept.includes("menu")) && concept.includes("adulto")) {
                 inputs[2].value = paxA;
@@ -1163,6 +1196,12 @@
         const salonName = document.getElementById("evt-salon").value;
         const jornada = document.getElementById("evt-jornada").value;
 
+        const isRte = isRestauranteStyle(salonName);
+        if (isRte) {
+            const mInput = document.getElementById("evt-montaje");
+            if (mInput && !mInput.value) mInput.value = "Grupo";
+        }
+
         if (!globalConfig || !globalConfig[hotel]) return;
 
         const sObj = globalConfig[hotel].find(s => s.name === salonName);
@@ -1171,35 +1210,70 @@
         let price = (jornada === 'todo') ? (sObj.priceFull || 0) : (sObj.priceHalf || 0);
 
         const isRte = isRestauranteStyle(salonName);
-        const defaultConcept = isRte ? `Grupo Restaurante - ${jornada.charAt(0).toUpperCase() + jornada.slice(1)}` : `Alquiler Salón ${salonName} - ${jornada}`;
+        const jName = jornada.charAt(0).toUpperCase() + jornada.slice(1);
+        const defaultConcept = isRte ? `Grupo Restaurante - ${jName}` : `Alquiler Salón ${salonName} - ${jornada}`;
 
-        // Find existing 'Alquiler Salón' or 'Grupo Restaurante' row
-        let found = false;
-        document.querySelectorAll("#services-list tr").forEach(row => {
+        const paxA = parseFloat(document.getElementById("evt-pax-a").value) || 0;
+        const paxN = parseFloat(document.getElementById("evt-pax-n").value) || 0;
+
+        // Find existing 'Alquiler Salón' or 'Grupo Restaurante' rows
+        let rows = Array.from(document.querySelectorAll("#services-list tr"));
+        let mainRow = rows.find(row => {
             const inp = row.querySelector("input[type='text']");
-            // Check if it looks like a rental line or restaurant group line
-            if (inp && (inp.value.startsWith("Alquiler Salón") || inp.value.startsWith("Grupo Restaurante"))) {
-                found = true;
-                inp.value = defaultConcept;
-                const inputs = row.querySelectorAll("input");
-                // Update price if we are changing salon/jornada
-                inputs[3].value = window.MesaChef.formatEuroValue(price);
-                // [NEW] For restaurants, sync quantity with pax header sum
-                if (isRte) {
-                    const paxA = parseFloat(document.getElementById("evt-pax-a").value) || 0;
-                    const paxN = parseFloat(document.getElementById("evt-pax-n").value) || 0;
-                    inputs[2].value = paxA + paxN;
-                }
-            }
+            return inp && (inp.value.startsWith("Alquiler Salón") || (inp.value.startsWith("Grupo Restaurante") && !inp.value.toLowerCase().includes("niño")));
+        });
+        
+        let childRow = rows.find(row => {
+            const inp = row.querySelector("input[type='text']");
+            return inp && inp.value.startsWith("Grupo Restaurante") && inp.value.toLowerCase().includes("niño");
         });
 
-        if (!found) {
+        if (mainRow) {
+            const inp = mainRow.querySelector("input[type='text']");
+            inp.value = defaultConcept;
+            const inputs = mainRow.querySelectorAll("input");
+            inputs[3].value = window.MesaChef.formatEuroValue(price);
+            if (isRte) inputs[2].value = paxA;
+        }
+
+        if (isRte && paxN > 0) {
+            if (childRow) {
+                const inp = childRow.querySelector("input[type='text']");
+                inp.value = `Grupo Restaurante - ${jName} (Niños)`;
+                const inputs = childRow.querySelectorAll("input");
+                inputs[2].value = paxN;
+                inputs[3].value = window.MesaChef.formatEuroValue(price);
+            } else {
+                // Add new row for children
+                const row = document.createElement("tr");
+                const date = window.currentViewDate || document.getElementById("evt-fecha").value;
+                row.innerHTML = `
+                    <td class="p-2 border-b"><input type="date" value="${date}" class="text-xs bg-gray-50 w-24 rounded border-gray-200"></td>
+                    <td class="p-2 border-b"><input type="text" value="Grupo Restaurante - ${jName} (Niños)" list="charge-options" onchange="updateRowPrice(this)" class="text-xs font-bold w-full rounded border-gray-200"></td>
+                    <td class="p-2 border-b"><input type="number" onchange="calcTotal()" value="${paxN}" class="text-xs text-center row-uds w-full rounded border-gray-200"></td>
+                    <td class="p-2 border-b">
+                        <div class="relative w-full">
+                            <input type="text" onchange="calcTotal()" value="${window.MesaChef.formatEuroValue(price)}" 
+                                   onfocus="window.MesaChef.unformatEuroInput(this)" onblur="window.MesaChef.formatEuroInput(this)"
+                                   class="text-xs text-right row-price w-full rounded border-gray-200" style="padding-right: 30px !important;">
+                            <span class="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] font-bold text-slate-400">€</span>
+                        </div>
+                    </td>
+                    <td class="p-2 border-b text-right font-bold text-xs row-total text-slate-600">${window.MesaChef.formatEuroValue(price * paxN)} €</td>
+                    <td class="p-2 border-b text-center"><button onclick="this.closest('tr').remove(); calcTotal()" class="text-red-400 hover:text-red-600 font-bold">&times;</button></td>
+                `;
+                document.getElementById("services-list").appendChild(row);
+            }
+        } else if (childRow) {
+            // Remove child row if no children anymore
+            childRow.remove();
+        }
+
+        if (!mainRow) {
             // Add new row
             const row = document.createElement("tr");
             const date = window.currentViewDate || document.getElementById("evt-fecha").value;
-            const paxA = parseFloat(document.getElementById("evt-pax-a").value) || 0;
-            const paxN = parseFloat(document.getElementById("evt-pax-n").value) || 0;
-            const qty = isRte ? (paxA + paxN) : 1;
+            const qty = isRte ? paxA : 1;
 
             row.innerHTML = `
             <td class="p-2 border-b"><input type="date" value="${date}" class="text-xs bg-gray-50 w-24 rounded border-gray-200"></td>
@@ -1219,6 +1293,7 @@
             document.getElementById("services-list").appendChild(row);
         }
         calcTotal();
+        toggleIncluido();
     };
 
     window.saveBooking = async function () {
