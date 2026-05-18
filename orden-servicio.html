@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Orden de Servicio</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#f97316', // Orange
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #f1f5f9;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .a4-container {
+            background: white;
+            width: 210mm;
+            min-height: 297mm;
+            margin: 0 auto;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+            padding: 40px;
+            position: relative;
+            box-sizing: border-box;
+        }
+
+        .no-print {
+            display: flex;
+        }
+
+        @media print {
+            body {
+                background: white;
+                padding: 0;
+            }
+            .a4-container {
+                box-shadow: none;
+                width: 100%;
+                min-height: auto;
+                padding: 10px;
+                margin: 0;
+            }
+            .no-print {
+                display: none !important;
+            }
+            input, select, textarea {
+                border: none !important;
+                background: transparent !important;
+                appearance: none;
+                -webkit-appearance: none;
+                resize: none;
+                box-shadow: none !important;
+                outline: none !important;
+                padding: 0 !important;
+                margin: 0 !important;
+            }
+            input::placeholder, textarea::placeholder {
+                color: transparent !important;
+            }
+            .border-b-print {
+                border-bottom: 1px solid #000 !important;
+            }
+        }
+
+        .field-input {
+            border: 1px solid transparent;
+            border-bottom: 1px solid #e2e8f0;
+            outline: none;
+            width: 100%;
+            background: transparent;
+            font-size: inherit;
+            font-weight: inherit;
+            color: inherit;
+            transition: all 0.2s;
+            resize: none;
+            overflow: hidden;
+        }
+        .field-input:focus, .field-input:hover {
+            border: 1px dashed #cbd5e1;
+            background: #f8fafc;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 10px;
+        }
+
+        th {
+            text-align: left;
+            font-size: 11px;
+            text-transform: uppercase;
+            padding-bottom: 5px;
+            border-bottom: 2px solid #000;
+        }
+
+        td {
+            font-size: 13px;
+            padding: 5px 0;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .section-title {
+            font-size: 16px;
+            font-weight: 700;
+            margin-top: 30px;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            border-bottom: 1px solid transparent;
+        }
+
+        .btn-add {
+            font-size: 10px;
+            color: #d97706;
+            border: 1px solid #fcd34d;
+            background: #fffbeb;
+            padding: 2px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.2s;
+        }
+        .btn-add:hover {
+            background: #fef3c7;
+        }
+
+        .footer-logo {
+            background-color: #8b8f88;
+            color: white;
+            text-align: center;
+            padding: 15px;
+            margin-top: 50px;
+        }
+        .footer-logo h2 {
+            font-family: serif;
+            letter-spacing: 0.4em;
+            margin: 0 0 5px 0;
+            font-size: 18px;
+        }
+        .footer-logo p {
+            font-size: 9px;
+            margin: 0;
+            letter-spacing: 0.05em;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- TOOLBAR -->
+    <div class="max-w-[210mm] mx-auto mb-6 flex justify-between items-center no-print">
+        <button onclick="guardarYSalir()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold py-1.5 px-4 rounded text-sm transition">
+            &larr; Guardar y Volver
+        </button>
+        <div class="flex gap-3">
+            <button onclick="restaurarDatos()" class="bg-pink-100 hover:bg-pink-200 text-pink-700 border border-pink-200 font-bold py-1.5 px-4 rounded text-sm transition">
+                Restaurar Datos
+            </button>
+            <button onclick="guardarDatosOnly(false)" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-1.5 px-4 rounded text-sm transition shadow-sm flex items-center gap-1">
+                💾 Guardar
+            </button>
+            <button onclick="guardarEImprimir()" class="bg-orange-500 hover:bg-orange-600 text-white font-bold py-1.5 px-4 rounded text-sm transition shadow-sm">
+                Imprimir / PDF
+            </button>
+        </div>
+    </div>
+
+    <!-- A4 PAGE -->
+    <div class="a4-container" id="printable">
+        
+        <!-- HEADER -->
+        <div class="flex justify-between items-start mb-10">
+            <div>
+                <h1 class="text-xl font-serif text-slate-800 tracking-wide">ORDEN DE SERVICIO Nº <span id="lblId" class="font-mono text-lg font-bold">------</span></h1>
+                <p class="text-[11px] text-slate-500 mt-1 uppercase tracking-wider font-semibold">Fecha Impresión: <span id="lblFechaImpresion" class="font-mono text-slate-700">--/--/---- --:--</span></p>
+            </div>
+            <div class="text-right">
+                <h2 class="text-lg font-bold text-slate-800 tracking-widest uppercase" id="headerHotelName">HOTEL CUMBRIA</h2>
+                <p class="text-xs text-slate-500 uppercase tracking-widest">Ciudad Real</p>
+            </div>
+        </div>
+
+        <div class="h-px bg-black w-full mb-6"></div>
+
+        <!-- INFO GRID -->
+        <div class="grid grid-cols-2 gap-x-12 gap-y-4 mb-8 text-sm">
+            <div class="flex items-center">
+                <span class="font-bold w-24">Referencia:</span>
+                <span id="txtRef" class="font-medium text-slate-700">------</span>
+            </div>
+            <div class="flex items-center">
+                <span class="font-bold w-24">Grupo:</span>
+                <input type="text" id="txtGrupo" class="field-input font-medium text-slate-700" value="">
+            </div>
+            <div class="flex items-center">
+                <span class="font-bold w-24">Salón:</span>
+                <input type="text" id="txtSalon" class="field-input font-medium text-slate-700" value="">
+            </div>
+            <div class="flex items-center">
+                <span class="font-bold w-24">PAX:</span>
+                <input type="text" id="txtPax" class="field-input" value="">
+            </div>
+        </div>
+
+        <!-- PLAN DE SERVICIOS -->
+        <h3 class="section-title">PLAN DE SERVICIOS</h3>
+        <table id="tableServicios">
+            <thead>
+                <tr>
+                    <th style="width: 12%;">DÍA</th>
+                    <th style="width: 15%;">SERVICIO</th>
+                    <th style="width: 8%;">PAX</th>
+                    <th style="width: 55%;">MENÚ</th>
+                    <th style="width: 10%;">HORA</th>
+                    <th style="width: 3%;" class="no-print"></th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Rows will be injected by JS -->
+            </tbody>
+        </table>
+        <div class="text-right no-print mb-6">
+            <button onclick="addServicioRow()" class="btn-add">+ AÑADIR SERVICIO</button>
+        </div>
+
+        <!-- INCIDENCIAS -->
+        <h3 class="section-title">MENÚS ESPECIALES / INCIDENCIAS</h3>
+        <table id="tableIncidencias">
+            <thead>
+                <tr>
+                    <th style="width: 15%;">TIPO</th>
+                    <th style="width: 10%;">Nº PAX</th>
+                    <th style="width: 35%;">DETALLE</th>
+                    <th style="width: 37%;">SERVICIOS AFECTADOS</th>
+                    <th style="width: 3%;" class="no-print"></th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Rows will be injected by JS -->
+            </tbody>
+        </table>
+        <div class="text-right no-print mb-6">
+            <button onclick="addIncidenciaRow()" class="btn-add">+ AÑADIR INCIDENCIA</button>
+        </div>
+
+        <!-- NOTAS OPERATIVAS -->
+        <h3 class="section-title">NOTAS OPERATIVAS</h3>
+        <textarea id="txtNotas" class="w-full text-sm mt-2 outline-none p-2" rows="6" placeholder="Detalles operativos aquí..."></textarea>
+
+        <!-- FOOTER -->
+        <div class="footer-logo">
+            <h2 id="footerHotelName">C U M B R I A</h2>
+            <p id="footerAddress">Ctra. de Toledo, 26 | 13005 Ciudad Real | ESPAÑA</p>
+            <p id="footerPhone">Telf.: 926 25 04 04 www.encumbria.es</p>
+        </div>
+
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-firestore-compat.js"></script>
+    <script src="js/firebase-init.js"></script>
+    <script src="js/app-common.js?v=1.1"></script>
+    <script src="js/orden-servicio.js?v=1.1"></script>
+</body>
+</html>

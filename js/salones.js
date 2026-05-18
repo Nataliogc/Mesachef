@@ -140,19 +140,43 @@
         const val = input.value.trim();
         if (!val || !globalConfig) return;
 
+        const row = input.closest("tr");
+        if (!row) return;
+
+        const conceptLower = val.toLowerCase();
+        const udsInput = row.querySelector(".row-uds") || row.querySelectorAll("input")[2];
+        
+        // Detect if the concept is a technical equipment / single-unit item or configured extra
+        let isExtra = false;
+        if (globalConfig.extras) {
+            isExtra = globalConfig.extras.some(e => (e.name || "").toLowerCase().trim() === conceptLower.trim());
+        }
+        const singleUnitKeywords = ["proyector", "pantalla", "microfono", "altavoz", "atril", "sonido", "dj", "tv", "television", "televisión", "portatil", "ordenador", "laptop", "cable"];
+        const isSingleUnitItem = isExtra || singleUnitKeywords.some(kw => conceptLower.includes(kw));
+
+        if (udsInput && (!udsInput.value || parseFloat(udsInput.value) === 1 || parseFloat(udsInput.value) === 0)) {
+            if (conceptLower.includes("niño") || conceptLower.includes("nino") || conceptLower.includes("infantil")) {
+                const paxN = parseFloat(document.getElementById("evt-pax-n").value) || 0;
+                if (paxN > 0) {
+                    udsInput.value = paxN;
+                }
+            } else if (!conceptLower.includes("alquiler") && !conceptLower.includes("extra") && !isSingleUnitItem) {
+                const paxA = parseFloat(document.getElementById("evt-pax-a").value) || 0;
+                if (paxA > 0) {
+                    udsInput.value = paxA;
+                }
+            }
+        }
+
         // Check Extras
         if (globalConfig.extras) {
             const ext = globalConfig.extras.find(e => e.name === val);
             if (ext) {
-                // Find row price input
-                const row = input.closest("tr");
-                if (row) {
-                    row.querySelector(".row-price").value = ext.price;
-                    calcTotal();
-                }
-                return;
+                row.querySelector(".row-price").value = ext.price;
             }
         }
+
+        calcTotal();
     };
 
     function getCellId(hotel, salonName, dateStr) {
@@ -909,6 +933,14 @@
         document.getElementById("evt-hora").value = "";
         document.getElementById("evt-revisado").checked = false; // Default unreviewed
 
+        // Reset timestamps strip
+        const tsStrip = document.getElementById("evt-timestamps-strip");
+        if (tsStrip) {
+            tsStrip.classList.add("hidden");
+            document.getElementById("lblEvtCreated").innerText = "--/--/----";
+            document.getElementById("lblEvtUpdated").innerText = "--/--/---- --:--";
+        }
+
         // Default Jornada
         document.getElementById("evt-jornada").value = defaultJornada;
 
@@ -933,6 +965,62 @@
             if (existing.referenciaPresupuesto) {
                 const bl = document.getElementById("evt-budget-label");
                 if (bl) bl.innerHTML = `<span class="bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded text-[10px] font-bold">Presupuesto: ${existing.referenciaPresupuesto}</span>`;
+            }
+
+            // [NEW] Display creation/modification timestamps strip
+            const tsStrip = document.getElementById("evt-timestamps-strip");
+            if (tsStrip) {
+                let show = false;
+                
+                const formatDT = (isoStr) => {
+                    if (!isoStr) return "";
+                    const d = new Date(isoStr);
+                    if (isNaN(d.getTime())) return "";
+                    const day = String(d.getDate()).padStart(2, '0');
+                    const month = String(d.getMonth() + 1).padStart(2, '0');
+                    const year = d.getFullYear();
+                    const hours = String(d.getHours()).padStart(2, '0');
+                    const minutes = String(d.getMinutes()).padStart(2, '0');
+                    return `${day}/${month}/${year} ${hours}:${minutes}`;
+                };
+
+                const formatD = (isoStr) => {
+                    if (!isoStr) return "";
+                    const d = new Date(isoStr);
+                    if (isNaN(d.getTime())) return "";
+                    const day = String(d.getDate()).padStart(2, '0');
+                    const month = String(d.getMonth() + 1).padStart(2, '0');
+                    const year = d.getFullYear();
+                    return `${day}/${month}/${year}`;
+                };
+                
+                const createdVal = existing.created_at || existing.createdAt || "";
+                let updatedVal = "";
+                if (existing.updated_at) {
+                    updatedVal = existing.updated_at;
+                } else if (existing.updatedAt) {
+                    updatedVal = existing.updatedAt.toDate ? existing.updatedAt.toDate().toISOString() : existing.updatedAt;
+                }
+                
+                if (createdVal) {
+                    document.getElementById("lblEvtCreated").innerText = formatD(createdVal);
+                    show = true;
+                } else {
+                    document.getElementById("lblEvtCreated").innerText = "---";
+                }
+                
+                if (updatedVal) {
+                    document.getElementById("lblEvtUpdated").innerText = formatDT(updatedVal);
+                    show = true;
+                } else {
+                    document.getElementById("lblEvtUpdated").innerText = createdVal ? formatDT(createdVal) : "---";
+                }
+                
+                if (show) {
+                    tsStrip.classList.remove("hidden");
+                } else {
+                    tsStrip.classList.add("hidden");
+                }
             }
             if (existing.contact) {
                 document.getElementById("evt-telefono").value = existing.contact.tel || "";
@@ -1055,6 +1143,14 @@
         document.getElementById("modal-evt").classList.add("hidden");
     };
 
+    window.openOrdenServicio = function () {
+        if (!currentBookingId) {
+            alert("⚠️ Debes GUARDAR el evento primero antes de generar la Orden de Servicio.");
+            return;
+        }
+        window.open(`orden-servicio.html?id=${currentBookingId}`, '_blank');
+    };
+
     window.duplicateBooking = function () {
         if (!currentBookingId) return;
 
@@ -1154,27 +1250,39 @@
 
             // Auto-Calc Pax Logic
             // Ignore Rental or Extras
-            if (concept.includes("alquiler") || concept.includes("barra libre") || concept.includes("extra")) return;
+            if (concept.includes("alquiler") || concept.includes("extra")) return;
 
             // Simple heuristic
             if (concept.includes("niño") || concept.includes("nino") || concept.includes("infantil")) {
                 calcPaxN += uds;
-            } else if (concept.includes("adulto") || concept.includes("menú") || concept.includes("menu")) {
+            } else {
                 calcPaxA += uds;
             }
         });
 
         document.getElementById("evt-total").innerText = window.MesaChef.formatEuroValue(total) + " €";
 
-        // Update Headers if calculated > 0 (Optional: could force 0)
-        // Only update if lines have meaningful pax data to avoid clearing manual entry for simple events?
-        // Let's trust the lines if they exist.
-        if (calcPaxA > 0 || calcPaxN > 0) {
-            // Avoid circular update loop -> check existing values?
-            // Actually, if we type in header, we don't want calcTotal to overwrite us back immediately
-            // But calcTotal scans lines.
-            // If we type "7" in header -> syncPaxFromHeaderToLines -> updates lines -> calcTotal.
-            // This is fine.
+        // Update Headers if calculated > 0 (Only overwrite if lines of that type actually exist)
+        let hasAdultRow = false;
+        let hasChildrenRow = false;
+
+        document.querySelectorAll("#services-list tr").forEach(row => {
+            const inputs = row.querySelectorAll("input");
+            const concept = (inputs[1]?.value || "").toLowerCase();
+            if (!concept || concept.includes("alquiler") || concept.includes("extra")) return;
+
+            if (concept.includes("niño") || concept.includes("nino") || concept.includes("infantil")) {
+                hasChildrenRow = true;
+            } else {
+                hasAdultRow = true;
+            }
+        });
+
+        if (hasAdultRow) {
+            document.getElementById("evt-pax-a").value = calcPaxA;
+        }
+        if (hasChildrenRow) {
+            document.getElementById("evt-pax-n").value = calcPaxN;
         }
     };
 
@@ -1187,22 +1295,13 @@
             const inputs = row.querySelectorAll("input");
             const concept = (inputs[1].value || "").toLowerCase();
 
-            // Only update "Menu" lines to match Pax
-            // Heuristic must be safe
-            // Only update "Menu" or "Grupo" lines to match Pax
-            // Heuristic must be safe
-            if (concept.includes("grupo")) {
-                if (concept.includes("niño") || concept.includes("infantil")) {
-                    inputs[2].value = paxN;
-                } else {
-                    inputs[2].value = paxA;
-                }
-            }
-            else if ((concept.includes("menú") || concept.includes("menu")) && concept.includes("adulto")) {
-                inputs[2].value = paxA;
-            }
-            else if ((concept.includes("menú") || concept.includes("menu")) && (concept.includes("niño") || concept.includes("infantil"))) {
+            // Skip salon rentals and extras
+            if (concept.includes("alquiler") || concept.includes("extra")) return;
+
+            if (concept.includes("niño") || concept.includes("nino") || concept.includes("infantil")) {
                 inputs[2].value = paxN;
+            } else {
+                inputs[2].value = paxA;
             }
         });
         // Recalculate totals after update
@@ -1239,7 +1338,7 @@
         }
     };
 
-    window.updateRentalPrice = function () {
+    window.updateRentalPrice = function (forceUpdateConcept = false) {
         const hotel = localStorage.getItem(STORAGE_KEY) || "Guadiana";
         const salonName = document.getElementById("evt-salon").value;
         const jornada = document.getElementById("evt-jornada").value;
@@ -1280,19 +1379,29 @@
 
         if (mainRow) {
             const inp = mainRow.querySelector("input[type='text']");
-            inp.value = defaultConcept;
+            if (forceUpdateConcept || !inp.value) {
+                inp.value = defaultConcept;
+            }
             const inputs = mainRow.querySelectorAll("input");
-            inputs[3].value = window.MesaChef.formatEuroValue(price);
+            const currentPrice = window.MesaChef.parseEuroInput(inputs[3].value);
+            if (forceUpdateConcept || currentPrice === 0 || !inputs[3].value) {
+                inputs[3].value = window.MesaChef.formatEuroValue(price);
+            }
             if (isRte) inputs[2].value = paxA;
         }
 
         if (isRte && paxN > 0) {
             if (childRow) {
                 const inp = childRow.querySelector("input[type='text']");
-                inp.value = `Grupo ${cleanSalon} - ${jName} (Niños)`;
+                if (forceUpdateConcept || !inp.value) {
+                    inp.value = `Grupo ${cleanSalon} - ${jName} (Niños)`;
+                }
                 const inputs = childRow.querySelectorAll("input");
                 inputs[2].value = paxN;
-                inputs[3].value = window.MesaChef.formatEuroValue(price);
+                const currentChildPrice = window.MesaChef.parseEuroInput(inputs[3].value);
+                if (forceUpdateConcept || currentChildPrice === 0 || !inputs[3].value) {
+                    inputs[3].value = window.MesaChef.formatEuroValue(price);
+                }
             } else {
                 // Add new row for children
                 const row = document.createElement("tr");
@@ -1370,7 +1479,6 @@
 
         const payload = {
             hotel: localStorage.getItem(STORAGE_KEY) || "Guadiana",
-            created_at: new Date().toISOString(),
             fecha: document.getElementById("evt-fecha").value,
             salon: document.getElementById("evt-salon").value,
             cliente: cliente,
@@ -1502,12 +1610,12 @@
 
             if (currentBookingId) {
                 // Update existing
+                payload.updated_at = new Date().toISOString();
                 await db.collection("reservas_salones").doc(currentBookingId).set(payload, { merge: true });
             } else {
                 // Create new
-                // Create new
-                // We typically don't create new reservations from Salones that LINK to budgets manually yet?
-                // But if they did (e.g. manually set budget ID), logic applies.
+                payload.created_at = new Date().toISOString();
+                payload.updated_at = new Date().toISOString();
                 const ref = await db.collection("reservas_salones").add(payload);
                 currentBookingId = ref.id; // Update for sync
             }
