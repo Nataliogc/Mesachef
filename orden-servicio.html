@@ -184,9 +184,9 @@
                 <h1 class="text-xl font-serif text-slate-800 tracking-wide">ORDEN DE SERVICIO Nº <span id="lblId" class="font-mono text-lg font-bold">------</span></h1>
                 <p class="text-[11px] text-slate-500 mt-1 uppercase tracking-wider font-semibold">Fecha Impresión: <span id="lblFechaImpresion" class="font-mono text-slate-700">--/--/---- --:--</span></p>
             </div>
-            <div class="text-right">
+            <div class="text-right flex flex-col items-end">
+                <img id="headerHotelLogo" src="" class="h-12 w-auto max-w-[180px] object-contain mb-1 hidden" alt="Logo">
                 <h2 class="text-lg font-bold text-slate-800 tracking-widest uppercase" id="headerHotelName">HOTEL CUMBRIA</h2>
-                <p class="text-xs text-slate-500 uppercase tracking-widest">Ciudad Real</p>
             </div>
         </div>
 
@@ -257,12 +257,6 @@
         <h3 class="section-title">NOTAS OPERATIVAS</h3>
         <textarea id="txtNotas" class="w-full text-sm mt-2 outline-none p-2" rows="6" placeholder="Detalles operativos aquí..."></textarea>
 
-        <!-- FOOTER -->
-        <div class="footer-logo">
-            <h2 id="footerHotelName">C U M B R I A</h2>
-            <p id="footerAddress">Ctra. de Toledo, 26 | 13005 Ciudad Real | ESPAÑA</p>
-            <p id="footerPhone">Telf.: 926 25 04 04 www.encumbria.es</p>
-        </div>
 
     </div>
 
@@ -272,6 +266,6 @@
     <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-firestore-compat.js"></script>
     <script src="js/firebase-init.js"></script>
     <script src="js/app-common.js?v=1.1"></script>
-    <script src="js/orden-servicio.js?v=1.1"></script>
+    <script src="js/orden-servicio.js?v=1.3"></script>
 </body>
 </html>

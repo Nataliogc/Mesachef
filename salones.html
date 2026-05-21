@@ -371,7 +371,6 @@
                                 <label class="text-[10px] uppercase font-bold text-gray-500">Estado</label>
                                 <select id="evt-estado" class="w-full text-xs font-bold border-gray-200 rounded h-9">
                                     <option value="presupuesto">🟠 Presupuesto</option>
-                                    <option value="provisional">🟡 Provisional</option>
                                     <option value="confirmada" selected>🟢 Confirmada</option>
                                     <option value="cancelada">🔴 Cancelada</option>
                                 </select>
@@ -467,7 +466,7 @@
 
                         <!-- NOTES & CHECK -->
                         <div class="grid grid-cols-12 gap-3 mt-2">
-                            <div class="col-span-12">
+                            <div class="col-span-12" id="evt-revisado-container">
                                 <div class="flex items-center space-x-2 mb-1 pl-1">
                                     <input type="checkbox" id="evt-revisado"
                                         class="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500">

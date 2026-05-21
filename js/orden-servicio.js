@@ -55,16 +55,35 @@ async function loadData(id) {
         // Branding
         const STORAGE_KEY = 'MesaChef_Hotel';
         const hotel = localStorage.getItem(STORAGE_KEY) || data.hotel || "Guadiana";
+        const setElText = (id, text) => {
+            const el = document.getElementById(id);
+            if (el) el.innerText = text;
+        };
+
+        const setLogo = (src) => {
+            const el = document.getElementById("headerHotelLogo");
+            if (el) {
+                el.src = src;
+                el.classList.remove("hidden");
+            }
+        };
+
         if (hotel === "Guadiana") {
-            document.getElementById("headerHotelName").innerText = "HOTEL GUADIANA";
-            document.getElementById("footerHotelName").innerText = "G U A D I A N A";
-            document.getElementById("footerAddress").innerText = "Guadiana Baja, 36 | 13002 Ciudad Real | ESPAÑA";
-            document.getElementById("footerPhone").innerText = "Telf.: 926 22 33 13 www.hotelguadiana.es";
+            setElText("headerHotelName", "SERCOTEL GUADIANA");
+            setLogo("Img/logo-guadiana.svg");
+            const textEl = document.getElementById("headerHotelName");
+            if (textEl) textEl.classList.add("hidden");
+            setElText("footerHotelName", "G U A D I A N A");
+            setElText("footerAddress", "Guadiana Baja, 36 | 13002 Ciudad Real | ESPAÑA");
+            setElText("footerPhone", "Telf.: 926 22 33 13 www.hotelguadiana.es");
         } else {
-            document.getElementById("headerHotelName").innerText = "HOTEL CUMBRIA";
-            document.getElementById("footerHotelName").innerText = "C U M B R I A";
-            document.getElementById("footerAddress").innerText = "Ctra. de Toledo, 26 | 13005 Ciudad Real | ESPAÑA";
-            document.getElementById("footerPhone").innerText = "Telf.: 926 25 04 04 www.encumbria.es";
+            setElText("headerHotelName", "CUMBRIA SPA & HOTEL");
+            setLogo("Img/logo-cumbria.svg");
+            const textEl = document.getElementById("headerHotelName");
+            if (textEl) textEl.classList.add("hidden");
+            setElText("footerHotelName", "C U M B R I A");
+            setElText("footerAddress", "Ctra. de Toledo, 26 | 13005 Ciudad Real | ESPAÑA");
+            setElText("footerPhone", "Telf.: 926 25 04 04 www.encumbria.es");
         }
 
         if (data.ordenServicio) {
@@ -133,7 +152,7 @@ function renderDefaults(data) {
         
         if (filteredServices.length > 0) {
             filteredServices.forEach(s => {
-                const tr = createServicioRow(getFormatDate(s.fecha), s.concepto, s.uds, "", "__:__ h");
+                const tr = createServicioRow(getFormatDate(s.fecha), simplifyServicio(s.concepto), s.uds, "", "__:__ h");
                 tbodySrv.appendChild(tr);
             });
         } else {
@@ -171,14 +190,14 @@ function renderFromSaved(osData) {
             const savedRow = (osData.planServicios && osData.planServicios[index]) ? osData.planServicios[index] : null;
 
             let dia = getFormatDate(cs.fecha);
-            let servicio = cs.concepto;
+            let servicio = simplifyServicio(cs.concepto);
             let pax = cs.uds; // Always refresh to the latest Pax/Units!
             let menu = "";
             let hora = cs.hora || "__:__ h";
 
             if (savedRow) {
                 // Keep manually edited concept, menu, and time if present, but update pax and dia to latest
-                if (savedRow.servicio) servicio = savedRow.servicio;
+                if (savedRow.servicio) servicio = simplifyServicio(savedRow.servicio);
                 if (savedRow.menu) menu = savedRow.menu;
                 if (savedRow.hora && savedRow.hora !== "__:__ h") hora = savedRow.hora;
             }
@@ -369,3 +388,33 @@ window.guardarEImprimir = async function() {
     // Restore title
     document.title = originalTitle;
 };
+
+function simplifyServicio(concepto) {
+    if (!concepto) return "";
+    const lower = concepto.toLowerCase();
+    const isNinos = lower.includes("niño") || lower.includes("niña") || lower.includes("nino") || lower.includes("niñ");
+    
+    let base = "";
+    if (lower.includes("almuerzo")) {
+        base = "Almuerzo";
+    } else if (lower.includes("cena")) {
+        base = "Cena";
+    } else if (lower.includes("desayuno")) {
+        base = "Desayuno";
+    } else if (lower.includes("coctel") || lower.includes("cóctel")) {
+        base = "Cóctel";
+    } else if (lower.includes("coffee") || lower.includes("cafe") || lower.includes("café")) {
+        base = "Coffee Break";
+    } else {
+        // Clean up repetitive prefixes if any other text
+        let cleaned = concepto;
+        cleaned = cleaned.replace(/Grupo\s+(Eventos\s+Grupos|Eventos|Grupos)\s+/i, 'Grupo ');
+        cleaned = cleaned.replace(/\s+/g, ' ').trim();
+        base = cleaned;
+    }
+    
+    if (isNinos && !base.toLowerCase().includes("niño") && !base.toLowerCase().includes("nino")) {
+        return `${base} (Niños)`;
+    }
+    return base;
+}

@@ -441,7 +441,21 @@
             if (relevantDates.size === 0) relevantDates.add(res.fecha);
 
             const rawName = normalize(res.salon);
-            const canonicalName = salonMap[rawName];
+            let canonicalName = salonMap[rawName];
+
+            if (!canonicalName) {
+                const trimmedSalon = (res.salon || "").trim().toLowerCase();
+                const foundKey = Object.keys(salonMap).find(k => {
+                    const mappedName = (salonMap[k] || "").trim().toLowerCase();
+                    return mappedName === trimmedSalon || 
+                           mappedName.replace(/\s+/g, '') === trimmedSalon.replace(/\s+/g, '') ||
+                           mappedName.includes(trimmedSalon) || 
+                           trimmedSalon.includes(mappedName);
+                });
+                if (foundKey) {
+                    canonicalName = salonMap[foundKey];
+                }
+            }
 
             if (!canonicalName) {
                 console.warn(`Salon mismatch: "${res.salon}" (Normalized: "${rawName}") not found in configuration for ${hotel}.`, Object.keys(salonMap));
@@ -621,7 +635,7 @@
         const paxTotal = (res.detalles?.pax_adultos || 0) + (res.detalles?.pax_ninos || 0);
         const paxStr = paxTotal > 0 ? `<span class="text-[11px] bg-white/50 px-1 rounded ml-1">👤${paxTotal}</span>` : '';
 
-        const redDot = (!res.revisado && res.estado !== 'cancelada') ? `<div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-4 h-4 rounded-full bg-red-500 shadow-md animate-pulse z-20" title="Sin Revisar"></div>` : '';
+        const redDot = (!res.revisado && res.estado !== 'cancelada' && res.estado !== 'presupuesto') ? `<div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-4 h-4 rounded-full bg-red-500 shadow-md animate-pulse z-20" title="Sin Revisar"></div>` : '';
         const hasNote = res.notas && res.notas.interna && res.notas.interna.trim().length > 0;
         const noteStr = hasNote ? `<span title="Nota Interna: ${res.notas.interna.replace(/"/g, '&quot;')}" class="cursor-help ml-1">📝</span>` : '';
 
@@ -640,6 +654,7 @@
                 <div class="font-bold truncate leading-tight flex-1" title="${res.cliente}">${isRte ? '🍽️ ' : ''}${res.cliente}</div>
                 <div class="text-[11px]">${noteStr}</div>
             </div>
+            ${res.estado === 'presupuesto' ? `<div class="text-[9px] font-bold text-orange-700 bg-orange-200/60 px-1 py-0.5 rounded w-fit mt-0.5 uppercase tracking-wide">⚠️ Pendiente de Confirmar</div>` : ''}
             <div class="flex justify-between items-end mt-1 text-[11px]">
                 <div class="flex flex-col min-w-0 pr-1">
                      <span class="text-[10px] font-extrabold uppercase tracking-tight leading-none mb-0.5 px-1 rounded w-fit ${jClass}">${jText}</span>
@@ -904,6 +919,33 @@
         window.currentFullServices = []; // Store full services list for multi-day events
         window.currentViewDate = null;   // Store the date we are viewing/editing
 
+        // Reset Estado select options (remove any temporary old status options) and default to confirmada
+        const estadoSelect = document.getElementById("evt-estado");
+        const toggleRevisadoVisibility = (status) => {
+            const container = document.getElementById("evt-revisado-container");
+            if (container) {
+                if (status === 'presupuesto') {
+                    container.classList.add("hidden");
+                    const chk = document.getElementById("evt-revisado");
+                    if (chk) chk.checked = false;
+                } else {
+                    container.classList.remove("hidden");
+                }
+            }
+        };
+
+        if (estadoSelect) {
+            estadoSelect.innerHTML = `
+                <option value="presupuesto">🟠 Presupuesto</option>
+                <option value="confirmada" selected>🟢 Confirmada</option>
+                <option value="cancelada">🔴 Cancelada</option>
+            `;
+            estadoSelect.value = "confirmada";
+            estadoSelect.onchange = function () {
+                toggleRevisadoVisibility(this.value);
+            };
+        }
+
         document.getElementById("evt-nombre").value = "";
         document.getElementById("evt-telefono").value = "";
         document.getElementById("evt-email").value = "";
@@ -1026,7 +1068,24 @@
                 document.getElementById("evt-telefono").value = existing.contact.tel || "";
                 document.getElementById("evt-email").value = existing.contact.email || "";
             }
-            document.getElementById("evt-estado").value = existing.estado || "pendiente";
+            if (estadoSelect && existing.estado) {
+                let optionExists = Array.from(estadoSelect.options).some(opt => opt.value === existing.estado);
+                if (!optionExists) {
+                    const opt = document.createElement("option");
+                    opt.value = existing.estado;
+                    if (existing.estado === "provisional") {
+                        opt.textContent = "🟡 Provisional (Antiguo)";
+                    } else if (existing.estado === "pendiente") {
+                        opt.textContent = "⏳ Pendiente (Antiguo)";
+                    } else {
+                        opt.textContent = existing.estado.charAt(0).toUpperCase() + existing.estado.slice(1);
+                    }
+                    estadoSelect.appendChild(opt);
+                }
+                estadoSelect.value = existing.estado;
+            } else if (estadoSelect) {
+                estadoSelect.value = "confirmada";
+            }
             document.getElementById("evt-revisado").checked = existing.revisado === true; // Load Status
 
             if (existing.detalles) {
@@ -1135,6 +1194,8 @@
             document.getElementById("evt-incluido").checked = false;
             toggleIncluido();
         }
+
+        toggleRevisadoVisibility(estadoSelect ? estadoSelect.value : "confirmada");
 
         document.getElementById("modal-evt").classList.remove("hidden");
     };
@@ -1359,7 +1420,7 @@
         const jName = jornada.charAt(0).toUpperCase() + jornada.slice(1);
         
         // Dynamic Concept: "Grupo [Nombre]" instead of "Alquiler Salón [Nombre]"
-        const cleanSalon = salonName.replace(/^(Eventos|Grupos|Eventos Grupos)\s+/i, '');
+        const cleanSalon = salonName.replace(/^(Eventos\s+Grupos|Eventos|Grupos)\s+/i, '');
         const defaultConcept = isRte ? `Grupo ${cleanSalon} - ${jName}` : `Alquiler Salón ${salonName} - ${jornada}`;
 
         const paxA = parseFloat(document.getElementById("evt-pax-a").value) || 0;
@@ -1381,6 +1442,11 @@
             const inp = mainRow.querySelector("input[type='text']");
             if (forceUpdateConcept || !inp.value) {
                 inp.value = defaultConcept;
+            } else if (inp.value) {
+                let cleaned = inp.value;
+                cleaned = cleaned.replace(/Grupo\s+(Eventos\s+Grupos|Eventos|Grupos)\s+/i, 'Grupo ');
+                cleaned = cleaned.replace(/\s+/g, ' ').trim();
+                inp.value = cleaned;
             }
             const inputs = mainRow.querySelectorAll("input");
             const currentPrice = window.MesaChef.parseEuroInput(inputs[3].value);
@@ -1395,6 +1461,11 @@
                 const inp = childRow.querySelector("input[type='text']");
                 if (forceUpdateConcept || !inp.value) {
                     inp.value = `Grupo ${cleanSalon} - ${jName} (Niños)`;
+                } else if (inp.value) {
+                    let cleaned = inp.value;
+                    cleaned = cleaned.replace(/Grupo\s+(Eventos\s+Grupos|Eventos|Grupos)\s+/i, 'Grupo ');
+                    cleaned = cleaned.replace(/\s+/g, ' ').trim();
+                    inp.value = cleaned;
                 }
                 const inputs = childRow.querySelectorAll("input");
                 inputs[2].value = paxN;
@@ -1729,7 +1800,8 @@
 
             // 2. Status Check (Case Insensitive)
             const st = (r.estado || 'pendiente').toLowerCase();
-            const validStatuses = ['pendiente', 'confirmada', 'provisional', 'presupuesto', 'pending', 'confirmed'];
+            // Exclude 'presupuesto' from printed reports as requested
+            const validStatuses = ['pendiente', 'confirmada', 'provisional', 'pending', 'confirmed'];
 
             if (filterFn(r) && validStatuses.includes(st)) {
                 rows.push({ ...r, ts: new Date(r.fecha + 'T' + (r.detalles?.hora || '00:00')) });
