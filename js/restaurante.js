@@ -1278,21 +1278,7 @@
       document.getElementById("campoFecha").value = dVal;
       document.getElementById("campoId").value = data.id;
 
-      const historySection = document.getElementById("sectionHistorial");
-      if (historySection) {
-        historySection.classList.remove("hidden");
-        document.getElementById("valCreada").innerText = utils.formatDateTime(data.createdAt);
-        document.getElementById("valModificada").innerText = utils.formatDateTime(data.updatedAt);
-        document.getElementById("valAnulada").innerText = utils.formatDateTime(data.cancelledAt);
 
-        // Styling for Anulada
-        const labelAnulada = document.getElementById("valAnulada").parentElement;
-        if (!data.cancelledAt) {
-          labelAnulada.classList.add("opacity-30");
-        } else {
-          labelAnulada.classList.remove("opacity-30");
-        }
-      }
 
       // Populate Header Metadata
       const headerMetadata = document.getElementById("headerMetadata");
@@ -1324,9 +1310,6 @@
       }
     } else {
       // NEW
-      const historySection = document.getElementById("sectionHistorial");
-      if (historySection) historySection.classList.add("hidden");
-
       // Hide Header Metadata for new bookings
       const headerMetadata = document.getElementById("headerMetadata");
       if (headerMetadata) headerMetadata.classList.add("hidden");
