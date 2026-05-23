@@ -401,6 +401,10 @@
         // Open Modal (New Booking) - Default to Today, Lunch
         openBooking('Restaurante', utils.toIsoDate(new Date()), 'almuerzo');
 
+        // Set flag for Gest-Spa redirect context
+        window.state = window.state || {};
+        window.state.isGestSpaRedirect = true;
+
         // VISUAL CUE: Update Modal Title
         const modalTitle = document.getElementById("modalTitle");
         if (modalTitle) modalTitle.innerHTML = `<span class="bg-blue-600 text-white px-2 py-0.5 rounded text-sm mr-2">SPA/BONO</span> Nueva Reserva`;
@@ -1384,9 +1388,19 @@
     const telefono = document.getElementById("campoTelefono").value.trim();
     const fecha = document.getElementById("campoFecha").value;
     const hora = document.getElementById("campoHora").value;
-    if (!nombre || !telefono || !fecha || !hora) {
-      alert("⚠️ Por favor, completa los campos obligatorios:\n- Nombre\n- Teléfono\n- Fecha\n- Hora");
-      return;
+
+    const isGestSpa = window.state && window.state.isGestSpaRedirect;
+
+    if (isGestSpa) {
+      if (!nombre || !telefono || !fecha || !hora) {
+        alert("⚠️ Por favor, completa los campos obligatorios para la reserva de Spa/Bono:\n- Nombre\n- Teléfono\n- Fecha\n- Hora");
+        return;
+      }
+    } else {
+      if (!nombre || !telefono || !fecha) {
+        alert("⚠️ Por favor, completa los campos obligatorios:\n- Nombre\n- Teléfono\n- Fecha");
+        return;
+      }
     }
 
     // --- CHECK KITCHEN HOURS ---
