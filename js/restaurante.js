@@ -1302,12 +1302,18 @@
 
       if (headerMetadata) {
         headerMetadata.classList.remove("hidden");
+        const createdStr = utils.formatDateTime(data.createdAt);
+        const updatedStr = utils.formatDateTime(data.updatedAt);
+
         if (headerCreated) {
-          headerCreated.innerText = `Creada: ${utils.formatDateTime(data.createdAt)}`;
+          headerCreated.innerText = `Creada: ${createdStr}`;
         }
-        if (data.updatedAt) {
+
+        // Only display modified date if it differs from the creation date (i.e. it was actually updated later)
+        const hasBeenModified = updatedStr !== '-' && updatedStr !== createdStr;
+        if (data.updatedAt && hasBeenModified) {
           if (headerUpdated) {
-            headerUpdated.innerText = `Modificada: ${utils.formatDateTime(data.updatedAt)}`;
+            headerUpdated.innerText = `Modificada: ${updatedStr}`;
             headerUpdated.classList.remove("hidden");
           }
           if (headerDivider) headerDivider.classList.remove("hidden");
