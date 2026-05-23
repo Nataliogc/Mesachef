@@ -405,6 +405,12 @@
         window.state = window.state || {};
         window.state.isGestSpaRedirect = true;
 
+        // Show warning banner
+        const gestSpaAlert = document.getElementById("gestSpaAlert");
+        if (gestSpaAlert) {
+          gestSpaAlert.classList.remove("hidden");
+        }
+
         // VISUAL CUE: Update Modal Title
         const modalTitle = document.getElementById("modalTitle");
         if (modalTitle) modalTitle.innerHTML = `<span class="bg-blue-600 text-white px-2 py-0.5 rounded text-sm mr-2">SPA/BONO</span> Nueva Reserva`;
@@ -1183,7 +1189,12 @@
     document.getElementById("wrapperHabitacion").classList.remove("hidden");
     document.getElementById("wrapperBono").classList.add("hidden");
 
-    // Reset potential highlighting for Gest-Spa redirection
+    // Reset potential highlighting and alerts for Gest-Spa redirection
+    const gestSpaAlertReset = document.getElementById("gestSpaAlert");
+    if (gestSpaAlertReset) {
+      gestSpaAlertReset.classList.add("hidden");
+    }
+
     const campoFechaReset = document.getElementById("campoFecha");
     const campoHoraReset = document.getElementById("campoHora");
     if (campoFechaReset) {
