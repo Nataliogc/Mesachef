@@ -1293,10 +1293,37 @@
           labelAnulada.classList.remove("opacity-30");
         }
       }
+
+      // Populate Header Metadata
+      const headerMetadata = document.getElementById("headerMetadata");
+      const headerCreated = document.getElementById("headerMetadataCreated");
+      const headerUpdated = document.getElementById("headerMetadataUpdated");
+      const headerDivider = document.getElementById("headerMetadataDivider");
+
+      if (headerMetadata) {
+        headerMetadata.classList.remove("hidden");
+        if (headerCreated) {
+          headerCreated.innerText = `Creada: ${utils.formatDateTime(data.createdAt)}`;
+        }
+        if (data.updatedAt) {
+          if (headerUpdated) {
+            headerUpdated.innerText = `Modificada: ${utils.formatDateTime(data.updatedAt)}`;
+            headerUpdated.classList.remove("hidden");
+          }
+          if (headerDivider) headerDivider.classList.remove("hidden");
+        } else {
+          if (headerUpdated) headerUpdated.classList.add("hidden");
+          if (headerDivider) headerDivider.classList.add("hidden");
+        }
+      }
     } else {
       // NEW
       const historySection = document.getElementById("sectionHistorial");
       if (historySection) historySection.classList.add("hidden");
+
+      // Hide Header Metadata for new bookings
+      const headerMetadata = document.getElementById("headerMetadata");
+      if (headerMetadata) headerMetadata.classList.add("hidden");
     }
 
     const now = new Date();
