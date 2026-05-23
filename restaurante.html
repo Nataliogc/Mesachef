@@ -363,17 +363,17 @@
         class="fixed inset-0 z-50 hidden flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm">
         <div class="bg-white rounded-lg shadow-xl w-full max-w-4xl overflow-hidden animate-fade-in-up">
             <!-- Header -->
-            <div class="bg-white px-6 py-4 border-b border-gray-100 flex justify-between items-start">
-                <div>
-                    <h3 id="modalTitle" class="font-bold text-xl text-slate-800">Nueva Reserva</h3>
+            <div class="bg-white px-6 py-2 border-b border-gray-100 flex justify-between items-center">
+                <div class="flex flex-wrap items-baseline gap-3">
+                    <h3 id="modalTitle" class="font-bold text-base text-slate-800">Nueva Reserva</h3>
                     <!-- Header History Metadata -->
-                    <div id="headerMetadata" class="hidden flex flex-wrap items-center gap-2 mt-1 text-[11px] text-slate-500 font-medium">
+                    <div id="headerMetadata" class="hidden flex items-center gap-2 text-[10px] text-slate-400 font-mono">
                         <span id="headerMetadataCreated">Creada: -</span>
-                        <span id="headerMetadataDivider" class="w-1.5 h-1.5 bg-slate-300 rounded-full mx-1"></span>
+                        <span id="headerMetadataDivider" class="text-slate-300 select-none">•</span>
                         <span id="headerMetadataUpdated">Modificada: -</span>
                     </div>
                 </div>
-                <button type="button" id="btnCerrarModal" class="text-gray-400 hover:text-gray-600 transition pt-1">
+                <button type="button" id="btnCerrarModal" class="text-gray-400 hover:text-gray-600 transition">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
                         </path>
@@ -635,7 +635,7 @@
 
     <!-- App Scripts -->
     <script src="js/app-common.js"></script>
-    <script src="js/restaurante.js?v=11.2"></script>
+    <script src="js/restaurante.js?v=11.3"></script>
 
     <script>
         if ('serviceWorker' in navigator) {
