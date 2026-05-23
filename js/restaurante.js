@@ -421,6 +421,89 @@
           checkIncluded.dispatchEvent(new Event('change'));
         }
 
+        // Set "Tipo de Servicio" to Spa (Nº Bono)
+        const tipoIncluido = document.getElementById("tipoIncluido");
+        if (tipoIncluido) {
+          tipoIncluido.value = 'spa';
+          tipoIncluido.dispatchEvent(new Event('change'));
+        }
+
+        // Fill Voucher in "Nº Bono" field
+        const campoBono = document.getElementById("campoBono");
+        if (campoBono) {
+          campoBono.value = voucher;
+        }
+
+        // Clear and highlight Fecha & Hora to draw attention
+        const campoFecha = document.getElementById("campoFecha");
+        const campoHora = document.getElementById("campoHora");
+
+        if (campoFecha) {
+          campoFecha.value = "";
+          campoFecha.style.setProperty("border", "2px solid #ef4444", "important");
+          campoFecha.style.setProperty("background-color", "#fee2e2", "important");
+          
+          const labelFecha = campoFecha.previousElementSibling;
+          if (labelFecha && labelFecha.tagName === 'LABEL') {
+            labelFecha.innerHTML = 'Fecha <span class="text-red-500 font-bold">* Obligatorio</span>';
+            labelFecha.classList.remove("text-slate-400");
+            labelFecha.classList.add("text-red-500");
+          }
+
+          campoFecha.addEventListener("change", function() {
+            if (this.value) {
+              this.style.border = "";
+              this.style.backgroundColor = "";
+              if (labelFecha && labelFecha.tagName === 'LABEL') {
+                labelFecha.innerHTML = 'Fecha';
+                labelFecha.classList.remove("text-red-500");
+                labelFecha.classList.add("text-slate-400");
+              }
+            } else {
+              this.style.setProperty("border", "2px solid #ef4444", "important");
+              this.style.setProperty("background-color", "#fee2e2", "important");
+              if (labelFecha && labelFecha.tagName === 'LABEL') {
+                labelFecha.innerHTML = 'Fecha <span class="text-red-500 font-bold">* Obligatorio</span>';
+                labelFecha.classList.remove("text-slate-400");
+                labelFecha.classList.add("text-red-500");
+              }
+            }
+          });
+        }
+
+        if (campoHora) {
+          campoHora.value = "";
+          campoHora.style.setProperty("border", "2px solid #ef4444", "important");
+          campoHora.style.setProperty("background-color", "#fee2e2", "important");
+
+          const labelHora = campoHora.previousElementSibling;
+          if (labelHora && labelHora.tagName === 'LABEL') {
+            labelHora.innerHTML = 'Hora <span class="text-red-500 font-bold">* Obligatorio</span>';
+            labelHora.classList.remove("text-slate-400");
+            labelHora.classList.add("text-red-500");
+          }
+
+          campoHora.addEventListener("change", function() {
+            if (this.value) {
+              this.style.border = "";
+              this.style.backgroundColor = "";
+              if (labelHora && labelHora.tagName === 'LABEL') {
+                labelHora.innerHTML = 'Hora';
+                labelHora.classList.remove("text-red-500");
+                labelHora.classList.add("text-slate-400");
+              }
+            } else {
+              this.style.setProperty("border", "2px solid #ef4444", "important");
+              this.style.setProperty("background-color", "#fee2e2", "important");
+              if (labelHora && labelHora.tagName === 'LABEL') {
+                labelHora.innerHTML = 'Hora <span class="text-red-500 font-bold">* Obligatorio</span>';
+                labelHora.classList.remove("text-slate-400");
+                labelHora.classList.add("text-red-500");
+              }
+            }
+          });
+        }
+
         // Notes
         const notesField = document.getElementById("campoNotas");
         if (notesField) {
@@ -1096,6 +1179,30 @@
     document.getElementById("wrapperHabitacion").classList.remove("hidden");
     document.getElementById("wrapperBono").classList.add("hidden");
 
+    // Reset potential highlighting for Gest-Spa redirection
+    const campoFechaReset = document.getElementById("campoFecha");
+    const campoHoraReset = document.getElementById("campoHora");
+    if (campoFechaReset) {
+      campoFechaReset.style.border = "";
+      campoFechaReset.style.backgroundColor = "";
+      const labelFecha = campoFechaReset.previousElementSibling;
+      if (labelFecha && labelFecha.tagName === 'LABEL') {
+        labelFecha.innerHTML = 'Fecha';
+        labelFecha.classList.remove("text-red-500");
+        labelFecha.classList.add("text-slate-400");
+      }
+    }
+    if (campoHoraReset) {
+      campoHoraReset.style.border = "";
+      campoHoraReset.style.backgroundColor = "";
+      const labelHora = campoHoraReset.previousElementSibling;
+      if (labelHora && labelHora.tagName === 'LABEL') {
+        labelHora.innerHTML = 'Hora';
+        labelHora.classList.remove("text-red-500");
+        labelHora.classList.add("text-slate-400");
+      }
+    }
+
     document.getElementById("campoEstado").value = "confirmada";
     const btnAnular = document.getElementById("btnAnular");
     const btnWhatsApp = document.getElementById("btnWhatsApp");
@@ -1276,8 +1383,9 @@
     const nombre = document.getElementById("campoNombre").value.trim();
     const telefono = document.getElementById("campoTelefono").value.trim();
     const fecha = document.getElementById("campoFecha").value;
-    if (!nombre || !telefono || !fecha) {
-      alert("⚠️ Por favor, completa los campos obligatorios:\n- Nombre\n- Teléfono\n- Fecha");
+    const hora = document.getElementById("campoHora").value;
+    if (!nombre || !telefono || !fecha || !hora) {
+      alert("⚠️ Por favor, completa los campos obligatorios:\n- Nombre\n- Teléfono\n- Fecha\n- Hora");
       return;
     }
 
