@@ -371,6 +371,8 @@
     }
 
     function paintReservations(hotel) {
+        const renderedIds = new Set();
+        const eligibleReservations = [];
         // RESET ALL CELLS to "Libre" state first (Handles deletions/updates cleanliness)
         document.querySelectorAll(`[id^="cell_"]`).forEach(cell => {
             if (cell.getAttribute("data-salon")) {
@@ -433,6 +435,8 @@
             else if (filterVal === 'provisional') { if (!isPending) return; }
             else if (filterVal === 'cancelada') { if (!isCancelled) return; }
             else if (filterVal !== 'todos') { if (st !== filterVal.toLowerCase()) return; }
+
+            eligibleReservations.push(res);
 
             let relevantDates = new Set();
             if (res.servicios && res.servicios.length > 0) {
@@ -522,6 +526,7 @@
                 
                 group.forEach(r => {
                     htmlFinal += createCardHTML(r, "min-h-[48px] shrink-0");
+                    renderedIds.add(r.id);
                 });
 
                 // [FIX] Subtle Add Buttons for MultiService
@@ -542,13 +547,26 @@
 
                 if (evTodo) {
                     htmlFinal += createCardHTML(evTodo, "row-span-2 h-full");
+                    renderedIds.add(evTodo.id);
                 } else {
-                    const evMañana = group.find(r => (r._displayJornada || '').toLowerCase().includes('mañana'));
-                    if (evMañana) htmlFinal += createCardHTML(evMañana, "h-full");
+                    const evMañana = group.find(r => {
+                        const j = (r._displayJornada || '').toLowerCase();
+                        return j.includes('mañana') || j.includes('almuerzo');
+                    });
+                    if (evMañana) {
+                        htmlFinal += createCardHTML(evMañana, "h-full");
+                        renderedIds.add(evMañana.id);
+                    }
                     else htmlFinal += slotMañana;
 
-                    const evTarde = group.find(r => (r._displayJornada || '').toLowerCase().includes('tarde'));
-                    if (evTarde) htmlFinal += createCardHTML(evTarde, "h-full");
+                    const evTarde = group.find(r => {
+                        const j = (r._displayJornada || '').toLowerCase();
+                        return j.includes('tarde') || j.includes('cena');
+                    });
+                    if (evTarde) {
+                        htmlFinal += createCardHTML(evTarde, "h-full");
+                        renderedIds.add(evTarde.id);
+                    }
                     else htmlFinal += slotTarde;
                 }
             }
@@ -557,46 +575,48 @@
             cell.innerHTML = htmlFinal;
         });
 
-        // --- UNMAPPED NOTIFICATION ---
-        const footerAreaId = "footer-unmapped-area";
-        let footerArea = document.getElementById(footerAreaId);
-        if (!footerArea) {
-            footerArea = document.createElement("div");
-            footerArea.id = footerAreaId;
-            footerArea.className = "mt-6 max-w-7xl mx-auto px-4";
-            document.getElementById("calendarGrid").parentNode.appendChild(footerArea);
-        }
+        // Find which eligible reservations were not rendered
+        const unrenderedEvents = eligibleReservations.filter(r => !renderedIds.has(r.id));
+        const alertsArea = document.getElementById("app-alerts");
 
-        if (unmappedEvents.length > 0) {
-            // Deduplicate unmapped events
-            const uniqueUnmapped = Array.from(new Set(unmappedEvents.map(e => e.id)))
-                .map(id => unmappedEvents.find(e => e.id === id));
-            
-            let orphanHtml = `
-                <div class="bg-amber-50 border-l-4 border-amber-400 p-4 rounded-r-lg shadow-sm">
-                    <div class="flex items-center gap-3 mb-2">
-                        <span class="text-xl">⚠️</span>
-                        <div class="flex flex-col">
-                            <span class="text-amber-800 font-bold text-sm">Hay ${uniqueUnmapped.length} reserva(s) que no se pudieron ubicar en el planning.</span>
-                            <span class="text-amber-600 text-[10px] uppercase font-bold tracking-wider">Posible causa: nombre de salón modificado o antiguo test "pillado".</span>
+        if (alertsArea) {
+            if (unrenderedEvents.length > 0) {
+                // Deduplicate unrendered events
+                const uniqueUnrendered = Array.from(new Set(unrenderedEvents.map(e => e.id)))
+                    .map(id => unrenderedEvents.find(e => e.id === id));
+
+                alertsArea.innerHTML = `
+                    <div class="bg-red-50 border-l-4 border-red-500 p-4 rounded-r-lg shadow-md animate-pulse">
+                        <div class="flex items-start gap-3">
+                            <span class="text-2xl mt-0.5">🚨</span>
+                            <div class="flex-1">
+                                <h4 class="text-red-800 font-bold text-sm">CRÍTICO: Hay ${uniqueUnrendered.length} evento(s) activo(s) en este rango que NO se muestran en el cuadrante principal.</h4>
+                                <p class="text-red-700 text-xs mt-1 font-semibold uppercase tracking-wider">¡Ningún evento puede perderse! Por favor, haz clic sobre el evento para revisarlo o corregirlo:</p>
+                                <div class="flex flex-wrap gap-2 mt-3">
+                                    ${uniqueUnrendered.map(e => {
+                                        // Ensure the reservation is registered so openBooking can open it
+                                        window._resRegistry[e.id] = e;
+                                        const safeSalon = (e.salon || '').replace(/'/g, "\\'");
+                                        return `
+                                            <button onclick="window.openBooking('${safeSalon}', '${e.fecha}', window._resRegistry['${e.id}'])" 
+                                                class="bg-white border border-red-200 text-red-900 px-3 py-1.5 rounded-md text-xs font-bold hover:bg-red-100 transition shadow-sm flex items-center gap-2">
+                                                📌 ${e.cliente} (${e.salon || 'Sin Salón'}) - ${e.fecha} [Turno: ${e.detalles?.jornada || 'Desconocido'}]
+                                            </button>
+                                        `;
+                                    }).join('')}
+                                </div>
+                            </div>
                         </div>
                     </div>
-                    <div class="flex flex-wrap gap-2">
-                        ${uniqueUnmapped.map(e => `
-                            <button onclick="window.openBooking('${e.salon.replace(/'/g, "\\'")}', '${e.fecha}', window._resRegistry['${e.id}'])" 
-                                class="bg-white border border-amber-200 text-amber-900 px-3 py-1.5 rounded-md text-xs font-bold hover:bg-amber-100 transition shadow-sm flex items-center gap-2">
-                                📌 ${e.cliente} (${e.salon}) - ${e.fecha}
-                            </button>
-                        `).join('')}
-                    </div>
-                </div>
-            `;
-            // Register them in registry for opening
-            uniqueUnmapped.forEach(e => { window._resRegistry[e.id] = e; });
-            footerArea.innerHTML = orphanHtml;
-        } else {
-            footerArea.innerHTML = "";
+                `;
+            } else {
+                alertsArea.innerHTML = "";
+            }
         }
+
+        // Clean up legacy footer area if it exists
+        const footerArea = document.getElementById("footer-unmapped-area");
+        if (footerArea) footerArea.innerHTML = "";
     }
 
     // Helper for Card HTML
@@ -844,9 +864,18 @@
             });
 
             // Analyze conflicts
-            const hasTodo = conflictCandidates.some(r => (r.detalles?.jornada || 'todo') === 'todo');
-            const hasMorning = conflictCandidates.some(r => (r.detalles?.jornada || 'todo') === 'mañana');
-            const hasAfternoon = conflictCandidates.some(r => (r.detalles?.jornada || 'todo') === 'tarde');
+            const hasTodo = conflictCandidates.some(r => {
+                const j = (r.detalles?.jornada || 'todo').toLowerCase();
+                return j === 'todo' || j.includes('dia') || j.includes('completo');
+            });
+            const hasMorning = conflictCandidates.some(r => {
+                const j = (r.detalles?.jornada || 'todo').toLowerCase();
+                return j.includes('mañana') || j.includes('almuerzo');
+            });
+            const hasAfternoon = conflictCandidates.some(r => {
+                const j = (r.detalles?.jornada || 'todo').toLowerCase();
+                return j.includes('tarde') || j.includes('cena');
+            });
 
             // [NEW] MULTI-SERVICE EXCEPTION: Eventos Restaurante (Ignore conflicts)
             const isMultiService = isRestauranteStyle(salonName);

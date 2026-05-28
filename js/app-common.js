@@ -91,9 +91,16 @@
 
                 if (snapshot.empty) return { available: true };
 
+                const getShift = (j) => {
+                    const normalized = (j || "").toLowerCase().trim();
+                    if (normalized === 'todo' || normalized.includes('dia') || normalized.includes('completo')) return 'todo';
+                    if (normalized.includes('mañana') || normalized.includes('almuerzo') || normalized.includes('mjm')) return 'mañana';
+                    if (normalized.includes('tarde') || normalized.includes('cena') || normalized.includes('mjt')) return 'tarde';
+                    return 'todo';
+                };
+
+                const myShift = getShift(jornada);
                 let conflict = null;
-                const normalize = (s) => (s || "todo").toLowerCase().trim();
-                const myJornada = normalize(jornada);
 
                 snapshot.forEach(doc => {
                     if (conflict) return; // Already found one
@@ -103,14 +110,14 @@
                     const st = (data.estado || "").toLowerCase();
                     if (st === 'cancelada' || st === 'anulada') return;
 
-                    const otherJornada = normalize(data.detalles?.jornada || "todo");
+                    const otherShift = getShift(data.detalles?.jornada || "todo");
 
                     // LOGIC
-                    if (myJornada === 'todo' || otherJornada === 'todo' || otherJornada.includes('dia') || otherJornada.includes('completo')) {
+                    if (myShift === 'todo' || otherShift === 'todo') {
                         // Full day conflict
                         conflict = data;
-                    } else if (myJornada === otherJornada) {
-                        // Exact match (mañana vs mañana)
+                    } else if (myShift === otherShift) {
+                        // Exact match (morning vs morning, afternoon vs afternoon)
                         conflict = data;
                     }
                 });
