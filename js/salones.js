@@ -339,6 +339,7 @@
 
     function loadReservations() {
         if (unsubscribe) unsubscribe();
+        loadedReservations = [];
 
         const hotel = localStorage.getItem(STORAGE_KEY) || "Guadiana";
         const dates = utils.getWeekDates(currentWeekStart);
@@ -1574,6 +1575,18 @@
         const cliente = document.getElementById("evt-nombre").value.trim();
         if (!cliente) {
             alert("⚠️ Por favor, introduce el NOMBRE del cliente o evento.");
+            return;
+        }
+
+        const fecha = document.getElementById("evt-fecha").value;
+        if (!fecha) {
+            alert("⚠️ Por favor, introduce la FECHA del evento.");
+            return;
+        }
+
+        const salon = document.getElementById("evt-salon").value;
+        if (!salon) {
+            alert("⚠️ Por favor, selecciona un SALÓN para el evento.");
             return;
         }
 
