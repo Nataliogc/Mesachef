@@ -247,8 +247,12 @@
                 const isLast = index === salons.length - 1;
                 const isRteRow = isRestauranteStyle(salon.name);
 
-                html += `<div style="display: grid; grid-template-columns: 200px repeat(7, 1fr); ${isLast ? '' : 'border-bottom: 1px solid #f1f5f9;'}">
-                    <div class="${isRteRow ? 'bg-indigo-600 text-white' : 'bg-white text-slate-700'} p-2 font-bold flex flex-col justify-center border-r border-slate-100 relative group transition-colors">
+                const isOddRow = index % 2 === 1;
+                const rowBg = isOddRow ? '#f0f5ff' : '#ffffff';
+                const nameCellBg = isRteRow ? 'bg-indigo-600 text-white' : (isOddRow ? 'bg-blue-50/60 text-slate-700' : 'bg-white text-slate-700');
+
+                html += `<div style="display: grid; grid-template-columns: 200px repeat(7, 1fr); background: ${rowBg}; ${isLast ? '' : 'border-bottom: 1px solid #e2e8f0;'}">
+                    <div class="${nameCellBg} p-2 font-bold flex flex-col justify-center border-r border-slate-100 relative group transition-colors">
                         <span class="text-xs ${isRteRow ? 'text-white' : 'text-slate-800'}">${isRteRow ? '🍽️ ' : ''}${salon.name}</span>
                         <span class="${isRteRow ? 'text-indigo-100' : 'text-slate-400'} font-normal mt-0.5 uppercase tracking-wider text-[9px]">Cap: ${salon.pax}</span>
                     </div>`;
@@ -278,7 +282,7 @@
                     } else {
                         // Past check
                         const isPast = dateStr < utils.toIsoDate(new Date());
-                        let cellBg = isPast ? "bg-slate-100" : "bg-white";
+                        let cellBg = isPast ? (isOddRow ? 'bg-blue-50/40' : 'bg-slate-100') : (isOddRow ? 'bg-blue-50/30' : 'bg-white');
                         if (isRteRow && !isPast) cellBg = "bg-indigo-50/30 bg-gradient-to-b from-indigo-100/20 to-transparent";
 
                         // Interaction Classes
