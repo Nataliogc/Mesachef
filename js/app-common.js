@@ -175,4 +175,40 @@
             return n.includes("restaurante") || n.includes("grupos");
         }
     };
+
+    // --- GLOBAL: Punto → Coma en inputs de precio ---
+    // Convierte la tecla "." (teclado normal y numérico) en "," en todos los
+    // inputs de texto y número, para que los precios siempre usen coma decimal.
+    document.addEventListener("keydown", function (e) {
+        const tag = (e.target.tagName || "").toUpperCase();
+        if (tag !== "INPUT" && tag !== "TEXTAREA") return;
+
+        const type = (e.target.type || "text").toLowerCase();
+        if (type === "date" || type === "time" || type === "checkbox" ||
+            type === "radio" || type === "file" || type === "email" ||
+            type === "url" || type === "search") return;
+
+        // key "." tanto del teclado principal como del numérico (Decimal)
+        if (e.key === "." || e.key === "Decimal") {
+            e.preventDefault();
+            const el = e.target;
+            const start = el.selectionStart;
+            const end = el.selectionEnd;
+            const val = el.value;
+
+            // Si es input type=number cambiarlo a text temporalmente no funciona bien,
+            // así que insertamos en la posición del cursor
+            if (type === "number") {
+                // Para type=number no podemos usar selectionStart en todos los browsers,
+                // así que simplemente añadimos "," al final si no hay ya una
+                if (!val.includes(",")) {
+                    el.value = val + ",";
+                }
+            } else {
+                el.value = val.slice(0, start) + "," + val.slice(end);
+                // Mover cursor tras la coma
+                el.setSelectionRange(start + 1, start + 1);
+            }
+        }
+    }, true); // capture = true para interceptar antes que cualquier otro handler
 })();
