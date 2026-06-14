@@ -1192,7 +1192,7 @@
                         <td class="p-2 border-b"><input type="number" onchange="calcTotal()" value="${s.uds}" class="text-xs text-center row-uds w-full rounded border-gray-200"></td>
                         <td class="p-2 border-b">
                             <div class="relative w-full">
-                                <input type="text" onchange="calcTotal()" value="${window.MesaChef.formatEuroValue(s.precio)}" 
+                                <input type="text" onchange="calcTotal()" value="${s.precio ? window.MesaChef.formatEuroValue(s.precio) : ''}" 
                                        onfocus="window.MesaChef.unformatEuroInput(this)" onblur="window.MesaChef.formatEuroInput(this)"
                                        class="text-xs text-right row-price w-full rounded border-gray-200" style="padding-right: 30px !important;">
                                 <span class="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] font-bold text-slate-400">€</span>
@@ -1312,7 +1312,7 @@
             <td class="p-2 border-b"><input type="number" onchange="calcTotal()" value="1" class="text-xs text-center row-uds w-full rounded border-gray-200"></td>
             <td class="p-2 border-b">
                 <div class="relative w-full">
-                    <input type="text" onchange="calcTotal()" value="0,00" 
+                    <input type="text" onchange="calcTotal()" value="" placeholder="0,00"
                            onfocus="window.MesaChef.unformatEuroInput(this)" onblur="window.MesaChef.formatEuroInput(this)"
                            class="text-xs text-right row-price w-full rounded border-gray-200" style="padding-right: 30px !important;">
                     <span class="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] font-bold text-slate-400">€</span>

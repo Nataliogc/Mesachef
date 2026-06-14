@@ -159,8 +159,9 @@
         },
         formatEuroInput: (input) => {
             let val = input.value;
+            if (!val || val.trim() === "") { input.value = ""; return; }
             let num = window.MesaChef.parseEuroInput(val);
-            if (isNaN(num)) num = 0;
+            if (isNaN(num) || num === 0) { input.value = ""; return; }
             input.value = num.toLocaleString("es-ES", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         },
         unformatEuroInput: (input) => {
