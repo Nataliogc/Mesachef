@@ -295,6 +295,33 @@
             transform: translateY(-2px);
         }
 
+        .mc-module-card.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            pointer-events: none;
+            filter: grayscale(0.4);
+        }
+
+        .mc-module-card.disabled:hover {
+            transform: none;
+            border-color: #e2e8f0;
+        }
+
+        .mc-badge-soon {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            color: #fff;
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+            padding: 3px 8px;
+            border-radius: 20px;
+            align-self: flex-start;
+            margin-top: -4px;
+        }
+
         .mc-module-icon {
             width: 40px;
             height: 40px;
@@ -464,15 +491,15 @@
                             </div>
                             <span class="mc-link-hint">→ Ver planning</span>
                         </a>
-                        <!-- Presupuestos -->
-                        <a href="#" id="linkPresupuestos" class="mc-module-card">
-                            <div class="mc-module-icon icon-pres">📄</div>
-                            <div class="mc-module-text">
-                                <h3>Presupuestos</h3>
-                                <p>Propuestas, estados y totales económicos.</p>
-                            </div>
-                            <span class="mc-link-hint">→ Gestionar</span>
-                        </a>
+                        <!-- Presupuestos (deshabilitado) -->
+                         <div id="linkPresupuestos" class="mc-module-card disabled">
+                             <div class="mc-module-icon icon-pres">📄</div>
+                             <div class="mc-module-text">
+                                 <h3>Presupuestos</h3>
+                                 <p>Propuestas, estados y totales económicos.</p>
+                             </div>
+                             <span class="mc-badge-soon">🚧 Próximamente</span>
+                         </div>
                         <!-- Grandes Eventos -->
                         <a href="#" id="linkGrandesEventos" class="mc-module-card">
                             <div class="mc-module-icon icon-event">🎉</div>
