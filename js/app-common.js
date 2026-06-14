@@ -166,8 +166,9 @@
         },
         unformatEuroInput: (input) => {
             let val = input.value;
+            if (!val || val.trim() === "") return; // ya vacío, no tocar
             let num = window.MesaChef.parseEuroInput(val);
-            if (num === 0 && val === "") return;
+            if (num === 0) { input.value = ""; return; } // limpiar si es 0
             // Editing format: Use Comma for decimal, No dots
             input.value = num.toString().replace('.', ',');
         },

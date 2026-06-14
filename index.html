@@ -322,6 +322,14 @@
             margin-top: -4px;
         }
 
+        .mc-module-card--mini {
+            padding: 12px 14px;
+            gap: 8px;
+            flex-direction: row;
+            align-items: center;
+            justify-content: space-between;
+        }
+
         .mc-module-icon {
             width: 40px;
             height: 40px;
@@ -491,15 +499,6 @@
                             </div>
                             <span class="mc-link-hint">→ Ver planning</span>
                         </a>
-                        <!-- Presupuestos (deshabilitado) -->
-                         <div id="linkPresupuestos" class="mc-module-card disabled">
-                             <div class="mc-module-icon icon-pres">📄</div>
-                             <div class="mc-module-text">
-                                 <h3>Presupuestos</h3>
-                                 <p>Propuestas, estados y totales económicos.</p>
-                             </div>
-                             <span class="mc-badge-soon">🚧 Próximamente</span>
-                         </div>
                         <!-- Grandes Eventos -->
                         <a href="#" id="linkGrandesEventos" class="mc-module-card">
                             <div class="mc-module-icon icon-event">🎉</div>
@@ -509,6 +508,17 @@
                             </div>
                             <span class="mc-link-hint">→ Entrar al módulo</span>
                         </a>
+                        <!-- Presupuestos (deshabilitado) - compacto al final -->
+                        <div id="linkPresupuestos" class="mc-module-card disabled mc-module-card--mini">
+                            <div style="display:flex;align-items:center;gap:10px;">
+                                <div class="mc-module-icon icon-pres" style="width:28px;height:28px;font-size:14px;border-radius:8px;">📄</div>
+                                <div>
+                                    <h3 style="font-size:13px;margin:0;">Presupuestos</h3>
+                                    <p style="font-size:11px;margin:0;color:#94a3b8;">Propuestas y totales económicos</p>
+                                </div>
+                            </div>
+                            <span class="mc-badge-soon" style="align-self:flex-start;">🚧 Próximamente</span>
+                        </div>
                     </div>
                 </div>
 
