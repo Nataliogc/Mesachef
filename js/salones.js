@@ -528,10 +528,31 @@
                 // Change card container to flex for stacking
                 cell.classList.remove('grid', 'grid-rows-2', 'gap-[1px]');
                 cell.classList.add('flex', 'flex-col', 'gap-1', 'p-1', 'overflow-y-auto');
-                
-                group.forEach(r => {
+
+                // [ORDER] Sort: Almuerzo first, Cena after
+                const turnoOrder = t => {
+                    const v = (t.turno || t._displayJornada || '').toLowerCase();
+                    if (v.includes('almuerzo') || v.includes('mañana')) return 0;
+                    if (v.includes('cena') || v.includes('tarde')) return 2;
+                    return 1;
+                };
+                const sortedGroup = [...group].sort((a, b) => turnoOrder(a) - turnoOrder(b));
+
+                // Detect boundary between last almuerzo and first cena for separator
+                let lastLunchIdx = -1;
+                sortedGroup.forEach((r, i) => {
+                    const v = (r.turno || r._displayJornada || '').toLowerCase();
+                    if (v.includes('almuerzo') || v.includes('mañana')) lastLunchIdx = i;
+                });
+                const hasBothServices = lastLunchIdx >= 0 && lastLunchIdx < sortedGroup.length - 1;
+
+                sortedGroup.forEach((r, i) => {
                     htmlFinal += createCardHTML(r, "min-h-[48px] shrink-0");
                     renderedIds.add(r.id);
+                    // Add a subtle separator between the last almuerzo and the first cena
+                    if (hasBothServices && i === lastLunchIdx) {
+                        htmlFinal += `<div class="border-t border-slate-200 my-0.5 mx-1 no-print" title="—"></div>`;
+                    }
                 });
 
                 // [FIX] Subtle Add Buttons for MultiService
