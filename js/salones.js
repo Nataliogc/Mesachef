@@ -692,6 +692,12 @@
         else if (jText.includes("TARDE") || jText.includes("CENA")) { jText = isRte ? "CENA" : "1/2 TARD"; if (!isRte) jClass = "text-orange-700 bg-orange-100/50"; }
         else if (jText.includes("TODO")) { jText = "COMP"; if (!isRte) jClass = "text-indigo-700 bg-indigo-100/50"; }
 
+        // [INCLUIDO/PAGO] Badge
+        const isIncluido = res.detalles?.incluido === true;
+        const pagoBadge = isIncluido
+            ? `<span class="inline-flex items-center gap-0.5 text-[9px] font-bold uppercase tracking-wide px-1 py-0.5 rounded bg-emerald-100 text-emerald-700 border border-emerald-300 leading-none" title="Incluido en el paquete">✓ INC</span>`
+            : `<span class="inline-flex items-center gap-0.5 text-[9px] font-bold uppercase tracking-wide px-1 py-0.5 rounded bg-amber-100 text-amber-700 border border-amber-300 leading-none" title="Servicio de pago">💰 PAGO</span>`;
+
         return `
         <div onclick="window.handleCardClick('${res.id}', event)" 
              class="booking-card w-full rounded border-l-4 ${colorClass} shadow-sm px-1 py-1 text-xs flex flex-col justify-between relative box-border hover:z-20 hover:shadow-md transition cursor-pointer overflow-hidden ${extraClasses}">
@@ -703,7 +709,10 @@
             ${res.estado === 'presupuesto' ? `<div class="text-[9px] font-bold text-orange-700 bg-orange-200/60 px-1 py-0.5 rounded w-fit mt-0.5 uppercase tracking-wide">⚠️ Pendiente de Confirmar</div>` : ''}
             <div class="flex justify-between items-end mt-1 text-[11px]">
                 <div class="flex flex-col min-w-0 pr-1">
-                     <span class="text-[10px] font-extrabold uppercase tracking-tight leading-none mb-0.5 px-1 rounded w-fit ${jClass}">${jText}</span>
+                     <div class="flex items-center gap-1 mb-0.5">
+                         <span class="text-[10px] font-extrabold uppercase tracking-tight leading-none px-1 rounded ${jClass}">${jText}</span>
+                         ${pagoBadge}
+                     </div>
                      <span class="truncate opacity-90"><b class="opacity-70">Montaje:</b> ${res.detalles?.montaje || '-'}</span>
                 </div>
                  <div class="flex items-center space-x-1 shrink-0">
