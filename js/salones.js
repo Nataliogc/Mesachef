@@ -681,7 +681,7 @@
         const paxTotal = (res.detalles?.pax_adultos || 0) + (res.detalles?.pax_ninos || 0);
         const paxStr = paxTotal > 0 ? `<span class="text-[11px] bg-white/50 px-1 rounded ml-1">👤${paxTotal}</span>` : '';
 
-        const redDot = (!res.revisado && res.estado !== 'cancelada' && res.estado !== 'presupuesto') ? `<div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-4 h-4 rounded-full bg-red-500 shadow-md animate-pulse z-20" title="Sin Revisar"></div>` : '';
+
         const hasNote = res.notas && res.notas.interna && res.notas.interna.trim().length > 0;
         const noteStr = hasNote ? `<span title="Nota Interna: ${res.notas.interna.replace(/"/g, '&quot;')}" class="cursor-help ml-1">📝</span>` : '';
 
@@ -701,7 +701,7 @@
         return `
         <div onclick="window.handleCardClick('${res.id}', event)" 
              class="booking-card w-full rounded border-l-4 ${colorClass} shadow-sm px-1 py-1 text-xs flex flex-col justify-between relative box-border hover:z-20 hover:shadow-md transition cursor-pointer overflow-hidden ${extraClasses}">
-            ${redDot}
+
             <div class="flex items-center justify-between">
                 <div class="font-bold truncate leading-tight flex-1" title="${res.cliente}">${isRte ? '🍽️ ' : ''}${res.cliente}</div>
                 <div class="text-[11px]">${noteStr}</div>
