@@ -1883,7 +1883,18 @@
                 rows.push({ ...r, ts: new Date(r.fecha + 'T' + (r.detalles?.hora || '00:00')) });
             }
         });
-        rows.sort((a, b) => a.ts - b.ts);
+        // Sort by timestamp first, then by jornada (almuerzo before cena) as secondary criterion
+        const jornadaOrder = (r) => {
+            const j = (r.detalles?.jornada || '').toLowerCase();
+            if (j.includes('almuerzo') || j.includes('mañana')) return 0;
+            if (j.includes('cena') || j.includes('tarde') || j.includes('noche')) return 1;
+            return 0; // todo / unknown -> treat like almuerzo
+        };
+        rows.sort((a, b) => {
+            const tsDiff = a.ts - b.ts;
+            if (tsDiff !== 0) return tsDiff;
+            return jornadaOrder(a) - jornadaOrder(b);
+        });
 
         // 1. Group records by Date
         const groups = {};
