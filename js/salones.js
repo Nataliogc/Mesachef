@@ -1911,7 +1911,7 @@
             const dayName = dateObj.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' });
             const dayNameCap = dayName.charAt(0).toUpperCase() + dayName.slice(1);
 
-            html += `<h3 style="font-size: 16px; font-weight: bold; margin-top: 20px; margin-bottom: 5px; color: #2c3e50; border-bottom: 2px solid #ddd; padding-bottom: 5px;">📅 ${dayNameCap}</h3>`;
+            html += `<h3 style="font-size: 12px; font-weight: bold; margin-top: 12px; margin-bottom: 3px; color: #2c3e50; border-bottom: 1px solid #ddd; padding-bottom: 3px;">📅 ${dayNameCap}</h3>`;
 
             if (!groups[dateStr] || groups[dateStr].length === 0) {
                 html += `<p style="font-size: 11px; color: #94a3b8; font-style: italic; margin-bottom: 20px;">No hay eventos programados.</p>`;
