@@ -309,7 +309,7 @@
                         // DATA ATTRIBUTES for easy reset
                         html += `<div id="${getCellId(hotel, salon.name, dateStr)}"
                                     data-salon="${safeName}" data-date="${dateStr}"
-                                    class="${cellBg} min-h-[120px] border-r border-slate-100 last:border-r-0 relative group grid grid-rows-2 gap-[1px]">
+                                    class="${cellBg} min-h-[120px] border-r border-slate-100 last:border-r-0 relative group grid grid-rows-[minmax(58px,auto)_minmax(58px,auto)] gap-[1px]">
                                     
                                     <!-- Slot Mañana -->
                                     <div ${maOnClick}
@@ -388,7 +388,7 @@
                 
                 // [NEW] Reset layout classes for multi-service support
                 cell.classList.remove('flex', 'flex-col', 'gap-1', 'p-0.5', 'overflow-y-auto');
-                cell.classList.add('grid', 'grid-rows-2', 'gap-[1px]');
+                cell.classList.add('grid', 'grid-rows-[minmax(58px,auto)_minmax(58px,auto)]', 'gap-[1px]');
 
                 const interactionClass = isPast
                     ? "cursor-default text-slate-300"
@@ -526,7 +526,7 @@
 
             if (isMultiService) {
                 // Change card container to flex for stacking
-                cell.classList.remove('grid', 'grid-rows-2', 'gap-[1px]');
+                cell.classList.remove('grid', 'grid-rows-2', 'grid-rows-[minmax(58px,auto)_minmax(58px,auto)]', 'gap-[1px]');
                 cell.classList.add('flex', 'flex-col', 'gap-1', 'p-1', 'overflow-y-auto');
 
                 // [ORDER] Sort: Almuerzo first, Cena after
@@ -677,49 +677,74 @@
             extraClasses += " ring-1 ring-slate-200/50 shadow-md rounded-lg overflow-hidden";
         }
 
-        const timeStr = res.detalles?.hora ? `<span class="opacity-75"> ${res.detalles.hora}</span>` : '';
+        const timeStr = res.detalles?.hora ? `<span class="opacity-75">${res.detalles.hora}</span>` : '';
         const paxTotal = (res.detalles?.pax_adultos || 0) + (res.detalles?.pax_ninos || 0);
-        const paxStr = paxTotal > 0 ? `<span class="text-[11px] bg-white/50 px-1 rounded ml-1">👤${paxTotal}</span>` : '';
+        const paxStr = paxTotal > 0 ? `<span class="text-[11px] bg-white/60 px-1 rounded ml-1 font-bold text-slate-700" title="Pax Montaje: ${paxTotal}">👤${paxTotal}</span>` : '';
 
+        const montajeName = res.detalles?.montaje || '-';
+        const montajeStr = paxTotal > 0 ? `${montajeName} (${paxTotal} pax)` : montajeName;
 
-        const hasNote = res.notas && res.notas.interna && res.notas.interna.trim().length > 0;
-        const noteStr = hasNote ? `<span title="Nota Interna: ${res.notas.interna.replace(/"/g, '&quot;')}" class="cursor-help ml-1">📝</span>` : '';
+        // Breakdown of Services for Planning
+        const cateringServices = (res.servicios || []).filter(s => {
+            const c = (s.concepto || "").toLowerCase();
+            return !c.includes("alquiler");
+        });
 
-        let jText = (jornada || "").toUpperCase();
-        let jClass = isRte ? "text-indigo-700 bg-indigo-100/80" : "text-slate-600";
-        
-        if (jText.includes("MAÑANA") || jText.includes("ALMUERZO")) { jText = isRte ? "ALMUERZO" : "1/2 MAÑ"; if (!isRte) jClass = "text-sky-700 bg-sky-100/50"; }
-        else if (jText.includes("TARDE") || jText.includes("CENA")) { jText = isRte ? "CENA" : "1/2 TARD"; if (!isRte) jClass = "text-orange-700 bg-orange-100/50"; }
-        else if (jText.includes("TODO")) { jText = "COMP"; if (!isRte) jClass = "text-indigo-700 bg-indigo-100/50"; }
+        const getServiceIcon = (concept) => {
+            const c = (concept || "").toLowerCase();
+            if (c.includes("coffe") || c.includes("cafe") || c.includes("café") || c.includes("desayuno")) return "☕";
+            if (c.includes("coctel") || c.includes("cóctel")) return "🍸";
+            if (c.includes("almuerzo") || c.includes("cena") || c.includes("menu") || c.includes("menú") || c.includes("comida")) return "🍽️";
+            if (c.includes("barra") || c.includes("copas") || c.includes("vino")) return "🍷";
+            return "📌";
+        };
 
-        // [INCLUIDO/PAGO] Badge
-        const isIncluido = res.detalles?.incluido === true;
-        const pagoBadge = isIncluido
-            ? `<span class="inline-flex items-center gap-0.5 text-[9px] font-bold uppercase tracking-wide px-1 py-0.5 rounded bg-emerald-100 text-emerald-700 border border-emerald-300 leading-none" title="Incluido en el paquete">✓ INC</span>`
-            : `<span class="inline-flex items-center gap-0.5 text-[9px] font-bold uppercase tracking-wide px-1 py-0.5 rounded bg-amber-100 text-amber-700 border border-amber-300 leading-none" title="Servicio de pago">💰 PAGO</span>`;
+        let servicesHtml = '';
+        if (cateringServices.length > 0) {
+            const displayServices = cateringServices.slice(0, 4);
+            const remaining = cateringServices.length - displayServices.length;
+            servicesHtml = `
+            <div class="mt-1 pt-1 border-t border-slate-300/40 flex flex-col gap-0.5 text-[10px] leading-tight">
+                ${displayServices.map(s => `
+                    <div class="flex items-center justify-between text-slate-700 font-medium">
+                        <span class="truncate pr-1 opacity-90" title="${s.concepto}">${getServiceIcon(s.concepto)} ${s.concepto}</span>
+                        <span class="font-bold text-slate-900 shrink-0 bg-white/70 px-1 rounded text-[9px] shadow-[0_0_1px_rgba(0,0,0,0.15)]">${s.uds} pax</span>
+                    </div>
+                `).join('')}
+                ${remaining > 0 ? `<div class="text-[9px] text-slate-500 font-bold italic">+${remaining} servicio${remaining > 1 ? 's' : ''} más</div>` : ''}
+            </div>
+            `;
+        }
+
+        const cardTitle = `${res.cliente} | Montaje: ${montajeStr}${cateringServices.length > 0 ? ' | Servicios: ' + cateringServices.map(s => s.concepto + ' (' + s.uds + ' pax)').join(', ') : ''}`;
 
         return `
         <div onclick="window.handleCardClick('${res.id}', event)" 
-             class="booking-card w-full rounded border-l-4 ${colorClass} shadow-sm px-1 py-1 text-xs flex flex-col justify-between relative box-border hover:z-20 hover:shadow-md transition cursor-pointer overflow-hidden ${extraClasses}">
+             title="${cardTitle}"
+             class="booking-card w-full h-auto min-h-full rounded border-l-4 ${colorClass} shadow-sm px-1.5 py-1 text-xs flex flex-col justify-between relative box-border hover:z-20 hover:shadow-md transition cursor-pointer overflow-hidden ${extraClasses}">
 
-            <div class="flex items-center justify-between">
-                <div class="font-bold truncate leading-tight flex-1" title="${res.cliente}">${isRte ? '🍽️ ' : ''}${res.cliente}</div>
-                <div class="text-[11px]">${noteStr}</div>
-            </div>
-            ${res.estado === 'presupuesto' ? `<div class="text-[9px] font-bold text-orange-700 bg-orange-200/60 px-1 py-0.5 rounded w-fit mt-0.5 uppercase tracking-wide">⚠️ Pendiente de Confirmar</div>` : ''}
-            <div class="flex justify-between items-end mt-1 text-[11px]">
-                <div class="flex flex-col min-w-0 pr-1">
-                     <div class="flex items-center gap-1 mb-0.5">
-                         <span class="text-[10px] font-extrabold uppercase tracking-tight leading-none px-1 rounded ${jClass}">${jText}</span>
+            <div>
+                <div class="flex items-center justify-between">
+                    <div class="font-bold truncate leading-tight flex-1" title="${res.cliente}">${isRte ? '🍽️ ' : ''}${res.cliente}</div>
+                    <div class="text-[11px]">${noteStr}</div>
+                </div>
+                ${res.estado === 'presupuesto' ? `<div class="text-[9px] font-bold text-orange-700 bg-orange-200/60 px-1 py-0.5 rounded w-fit mt-0.5 uppercase tracking-wide">⚠️ Pendiente de Confirmar</div>` : ''}
+                <div class="flex justify-between items-center mt-1 text-[11px]">
+                     <div class="flex items-center gap-1">
+                         <span class="text-[10px] font-extrabold uppercase tracking-tight leading-none px-1 py-0.5 rounded ${jClass}">${jText}</span>
                          ${pagoBadge}
                      </div>
-                     <span class="truncate opacity-90"><b class="opacity-70">Montaje:</b> ${res.detalles?.montaje || '-'}</span>
+                     <div class="flex items-center space-x-1 shrink-0">
+                        ${timeStr}
+                        ${paxStr}
+                    </div>
                 </div>
-                 <div class="flex items-center space-x-1 shrink-0">
-                    ${timeStr}
-                    ${paxStr}
+                <div class="mt-0.5 text-[11px] truncate opacity-90" title="Montaje: ${montajeStr}">
+                    <b class="opacity-70">Montaje:</b> ${montajeStr}
                 </div>
             </div>
+
+            ${servicesHtml}
         </div>
         `;
     }
