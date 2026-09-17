@@ -1357,83 +1357,38 @@
 
     window.calcTotal = function () {
         let total = 0;
-        let calcPaxA = 0;
-        let calcPaxN = 0;
 
         document.querySelectorAll("#services-list tr").forEach(row => {
             const inputs = row.querySelectorAll("input");
             // inputs[0]=date, [1]=desc, [2]=uds, [3]=price
-            const concept = (inputs[1].value || "").toLowerCase();
-            const uds = parseFloat(inputs[2].value) || 0;
-            // [MODIFIED] Helper for Spanish Inputs
-            const price = window.MesaChef.parseEuroInput(inputs[3].value);
+            const uds = parseFloat(inputs[2]?.value) || 0;
+            // Helper for Spanish Inputs
+            const price = window.MesaChef.parseEuroInput(inputs[3]?.value);
             const sub = uds * price;
 
             // Update row total
-            row.querySelector(".row-total").innerText = window.MesaChef.formatEuroValue(sub) + " €";
+            const rowTotal = row.querySelector(".row-total");
+            if (rowTotal) {
+                rowTotal.innerText = window.MesaChef.formatEuroValue(sub) + " €";
+            }
             total += sub;
-
-            // Auto-Calc Pax Logic
-            // Ignore Rental or Extras
-            if (concept.includes("alquiler") || concept.includes("extra")) return;
-
-            // Simple heuristic
-            if (concept.includes("niño") || concept.includes("nino") || concept.includes("infantil")) {
-                calcPaxN += uds;
-            } else {
-                calcPaxA += uds;
-            }
         });
 
-        document.getElementById("evt-total").innerText = window.MesaChef.formatEuroValue(total) + " €";
-
-        // Update Headers if calculated > 0 (Only overwrite if lines of that type actually exist)
-        let hasAdultRow = false;
-        let hasChildrenRow = false;
-
-        document.querySelectorAll("#services-list tr").forEach(row => {
-            const inputs = row.querySelectorAll("input");
-            const concept = (inputs[1]?.value || "").toLowerCase();
-            if (!concept || concept.includes("alquiler") || concept.includes("extra")) return;
-
-            if (concept.includes("niño") || concept.includes("nino") || concept.includes("infantil")) {
-                hasChildrenRow = true;
-            } else {
-                hasAdultRow = true;
-            }
-        });
-
-        if (hasAdultRow) {
-            document.getElementById("evt-pax-a").value = calcPaxA;
-        }
-        if (hasChildrenRow) {
-            document.getElementById("evt-pax-n").value = calcPaxN;
+        const totalEl = document.getElementById("evt-total");
+        if (totalEl) {
+            totalEl.innerText = window.MesaChef.formatEuroValue(total) + " €";
         }
     };
 
-    // [NEW] Sync Pax form Header to Lines (Uni-directional on input)
+    // [MODIFIED] Sync Pax from Header to Lines:
+    // Event/room pax and service quantities are managed independently.
+    // Only updates dynamic restaurant group concepts when in restaurant mode.
     window.syncPaxFromHeaderToLines = function () {
-        const paxA = parseFloat(document.getElementById("evt-pax-a").value) || 0;
-        const paxN = parseFloat(document.getElementById("evt-pax-n").value) || 0;
-
-        document.querySelectorAll("#services-list tr").forEach(row => {
-            const inputs = row.querySelectorAll("input");
-            const concept = (inputs[1].value || "").toLowerCase();
-
-            // Skip salon rentals and extras
-            if (concept.includes("alquiler") || concept.includes("extra")) return;
-
-            if (concept.includes("niño") || concept.includes("nino") || concept.includes("infantil")) {
-                inputs[2].value = paxN;
-            } else {
-                inputs[2].value = paxA;
-            }
-        });
-        // Recalculate totals after update
-        calcTotal();
-
-        // [NEW] Trigger line creation/removal if needed (for restaurant groups)
-        updateRentalPrice();
+        const salonName = document.getElementById("evt-salon")?.value || "";
+        const isRte = isRestauranteStyle(salonName);
+        if (isRte) {
+            updateRentalPrice();
+        }
     };
 
     window.toggleIncluido = function () {
@@ -2061,22 +2016,14 @@
             // Calc Totals
             const newTotal = budgetLines.reduce((acc, curr) => acc + (curr.total || 0), 0);
 
-            // Heuristic for Pax: Sum of Uds for items that look like Menus/OpenBar, ignored for Rental
-            let newPax = 0;
-            budgetLines.forEach(l => {
-                const c = (l.concepto || "").toLowerCase();
-                if (!c.includes("alquiler") && !c.includes("montaje")) {
-                    newPax += (l.uds || 0);
-                }
-            });
-            // Validation: if newPax is 0 but we have valid pax in form details, maybe use that?
-            // But let's stick to lines to be consistent with Budget logic.
+            // Event Pax: Total adults + children defined for the event
+            const eventPax = (reserva.detalles?.pax_adultos || 0) + (reserva.detalles?.pax_ninos || 0);
 
             await pRef.update({
                 lines: budgetLines,
-                pax: newPax,
-                paxAdultos: reserva.detalles.pax_adultos || 0,
-                paxNinos: reserva.detalles.pax_ninos || 0,
+                pax: eventPax,
+                paxAdultos: reserva.detalles?.pax_adultos || 0,
+                paxNinos: reserva.detalles?.pax_ninos || 0,
                 importeTotal: newTotal,
                 fecha: reserva.fecha, // Sync Date
                 cliente: reserva.cliente, // Sync Client Name
