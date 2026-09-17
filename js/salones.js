@@ -309,7 +309,7 @@
                         // DATA ATTRIBUTES for easy reset
                         html += `<div id="${getCellId(hotel, salon.name, dateStr)}"
                                     data-salon="${safeName}" data-date="${dateStr}"
-                                    class="${cellBg} min-h-[120px] border-r border-slate-100 last:border-r-0 relative group grid grid-rows-[minmax(58px,auto)_minmax(58px,auto)] gap-[1px]">
+                                    class="${cellBg} min-h-[120px] border-r border-slate-100 last:border-r-0 relative group grid grid-rows-2 gap-[1px]">
                                     
                                     <!-- Slot Mañana -->
                                     <div ${maOnClick}
@@ -388,7 +388,7 @@
                 
                 // [NEW] Reset layout classes for multi-service support
                 cell.classList.remove('flex', 'flex-col', 'gap-1', 'p-0.5', 'overflow-y-auto');
-                cell.classList.add('grid', 'grid-rows-[minmax(58px,auto)_minmax(58px,auto)]', 'gap-[1px]');
+                cell.classList.add('grid', 'grid-rows-2', 'gap-[1px]');
 
                 const interactionClass = isPast
                     ? "cursor-default text-slate-300"
@@ -485,8 +485,9 @@
         window._resRegistry = {};
 
         Object.keys(cellGroups).forEach(key => {
-            const group = cellGroups[key];
-            if (group.length === 0) return;
+            try {
+                const group = cellGroups[key];
+                if (group.length === 0) return;
 
             const sample = group[0];
             const cellId = getCellId(hotel, sample._canonicalSalon, sample.fecha);
@@ -526,7 +527,7 @@
 
             if (isMultiService) {
                 // Change card container to flex for stacking
-                cell.classList.remove('grid', 'grid-rows-2', 'grid-rows-[minmax(58px,auto)_minmax(58px,auto)]', 'gap-[1px]');
+                cell.classList.remove('grid', 'grid-rows-2', 'gap-[1px]');
                 cell.classList.add('flex', 'flex-col', 'gap-1', 'p-1', 'overflow-y-auto');
 
                 // [ORDER] Sort: Almuerzo first, Cena after
@@ -599,6 +600,9 @@
 
             htmlFinal += staticAddBtn;
             cell.innerHTML = htmlFinal;
+        } catch (cellErr) {
+            console.error("Error pintando celda para clave:", key, cellErr);
+        }
         });
 
         // Find which eligible reservations were not rendered
@@ -677,6 +681,27 @@
             extraClasses += " ring-1 ring-slate-200/50 shadow-md rounded-lg overflow-hidden";
         }
 
+        let noteStr = '';
+        try {
+            const hasNote = res.notas && res.notas.interna && res.notas.interna.trim().length > 0;
+            noteStr = hasNote ? `<span title="Nota Interna: ${(res.notas.interna || '').replace(/"/g, '&quot;')}" class="cursor-help ml-1">📝</span>` : '';
+        } catch (e) {
+            noteStr = '';
+        }
+
+        let jText = (jornada || "").toUpperCase();
+        let jClass = isRte ? "text-indigo-700 bg-indigo-100/80" : "text-slate-600";
+        
+        if (jText.includes("MAÑANA") || jText.includes("ALMUERZO")) { jText = isRte ? "ALMUERZO" : "1/2 MAÑ"; if (!isRte) jClass = "text-sky-700 bg-sky-100/50"; }
+        else if (jText.includes("TARDE") || jText.includes("CENA")) { jText = isRte ? "CENA" : "1/2 TARD"; if (!isRte) jClass = "text-orange-700 bg-orange-100/50"; }
+        else if (jText.includes("TODO")) { jText = "COMP"; if (!isRte) jClass = "text-indigo-700 bg-indigo-100/50"; }
+
+        // [INCLUIDO/PAGO] Badge
+        const isIncluido = res.detalles?.incluido === true;
+        const pagoBadge = isIncluido
+            ? `<span class="inline-flex items-center gap-0.5 text-[9px] font-bold uppercase tracking-wide px-1 py-0.5 rounded bg-emerald-100 text-emerald-700 border border-emerald-300 leading-none" title="Incluido en el paquete">✓ INC</span>`
+            : `<span class="inline-flex items-center gap-0.5 text-[9px] font-bold uppercase tracking-wide px-1 py-0.5 rounded bg-amber-100 text-amber-700 border border-amber-300 leading-none" title="Servicio de pago">💰 PAGO</span>`;
+
         const timeStr = res.detalles?.hora ? `<span class="opacity-75">${res.detalles.hora}</span>` : '';
         const paxTotal = (res.detalles?.pax_adultos || 0) + (res.detalles?.pax_ninos || 0);
         const paxStr = paxTotal > 0 ? `<span class="text-[11px] bg-white/60 px-1 rounded ml-1 font-bold text-slate-700" title="Pax Montaje: ${paxTotal}">👤${paxTotal}</span>` : '';
@@ -684,11 +709,12 @@
         const montajeName = res.detalles?.montaje || '-';
         const montajeStr = paxTotal > 0 ? `${montajeName} (${paxTotal} pax)` : montajeName;
 
-        // Breakdown of Services for Planning
-        const cateringServices = (res.servicios || []).filter(s => {
-            const c = (s.concepto || "").toLowerCase();
+        // Breakdown of Services for Planning (safe guard for non-array / null items)
+        const cateringServices = Array.isArray(res.servicios) ? res.servicios.filter(s => {
+            if (!s) return false;
+            const c = (typeof s === 'string' ? s : (s.concepto || "")).toLowerCase();
             return !c.includes("alquiler");
-        });
+        }) : [];
 
         const getServiceIcon = (concept) => {
             const c = (concept || "").toLowerCase();
@@ -705,27 +731,32 @@
             const remaining = cateringServices.length - displayServices.length;
             servicesHtml = `
             <div class="mt-1 pt-1 border-t border-slate-300/40 flex flex-col gap-0.5 text-[10px] leading-tight">
-                ${displayServices.map(s => `
+                ${displayServices.map(s => {
+                    const concepto = typeof s === 'string' ? s : (s.concepto || 'Servicio');
+                    const uds = typeof s === 'object' && s && s.uds !== undefined ? s.uds : 1;
+                    return `
                     <div class="flex items-center justify-between text-slate-700 font-medium">
-                        <span class="truncate pr-1 opacity-90" title="${s.concepto}">${getServiceIcon(s.concepto)} ${s.concepto}</span>
-                        <span class="font-bold text-slate-900 shrink-0 bg-white/70 px-1 rounded text-[9px] shadow-[0_0_1px_rgba(0,0,0,0.15)]">${s.uds} pax</span>
+                        <span class="truncate pr-1 opacity-90" title="${concepto.replace(/"/g, '&quot;')}">${getServiceIcon(concepto)} ${concepto}</span>
+                        <span class="font-bold text-slate-900 shrink-0 bg-white/70 px-1 rounded text-[9px] shadow-[0_0_1px_rgba(0,0,0,0.15)]">${uds} pax</span>
                     </div>
-                `).join('')}
+                    `;
+                }).join('')}
                 ${remaining > 0 ? `<div class="text-[9px] text-slate-500 font-bold italic">+${remaining} servicio${remaining > 1 ? 's' : ''} más</div>` : ''}
             </div>
             `;
         }
 
-        const cardTitle = `${res.cliente} | Montaje: ${montajeStr}${cateringServices.length > 0 ? ' | Servicios: ' + cateringServices.map(s => s.concepto + ' (' + s.uds + ' pax)').join(', ') : ''}`;
+        const safeCliente = (res.cliente || '').replace(/"/g, '&quot;');
+        const safeCardTitle = `${safeCliente} | Montaje: ${montajeStr}${cateringServices.length > 0 ? ' | Servicios: ' + cateringServices.map(s => (typeof s === 'string' ? s : s.concepto || '') + ' (' + (s.uds || 1) + ' pax)').join(', ') : ''}`.replace(/"/g, '&quot;');
 
         return `
         <div onclick="window.handleCardClick('${res.id}', event)" 
-             title="${cardTitle}"
+             title="${safeCardTitle}"
              class="booking-card w-full h-auto min-h-full rounded border-l-4 ${colorClass} shadow-sm px-1.5 py-1 text-xs flex flex-col justify-between relative box-border hover:z-20 hover:shadow-md transition cursor-pointer overflow-hidden ${extraClasses}">
 
             <div>
                 <div class="flex items-center justify-between">
-                    <div class="font-bold truncate leading-tight flex-1" title="${res.cliente}">${isRte ? '🍽️ ' : ''}${res.cliente}</div>
+                    <div class="font-bold truncate leading-tight flex-1" title="${safeCliente}">${isRte ? '🍽️ ' : ''}${safeCliente}</div>
                     <div class="text-[11px]">${noteStr}</div>
                 </div>
                 ${res.estado === 'presupuesto' ? `<div class="text-[9px] font-bold text-orange-700 bg-orange-200/60 px-1 py-0.5 rounded w-fit mt-0.5 uppercase tracking-wide">⚠️ Pendiente de Confirmar</div>` : ''}
