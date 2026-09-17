@@ -734,9 +734,12 @@
                 ${displayServices.map(s => {
                     const concepto = typeof s === 'string' ? s : (s.concepto || 'Servicio');
                     const uds = typeof s === 'object' && s && s.uds !== undefined ? s.uds : 1;
+                    const hora = typeof s === 'object' && s && s.hora ? s.hora : '';
+                    const horaHtml = hora ? `<span class="font-bold text-slate-800 mr-1 bg-slate-200/80 px-1 py-0.5 rounded text-[8.5px]">${hora}</span>` : '';
+                    const fullTitle = (hora ? hora + ' ' : '') + concepto;
                     return `
                     <div class="flex items-center justify-between text-slate-700 font-medium">
-                        <span class="truncate pr-1 opacity-90" title="${concepto.replace(/"/g, '&quot;')}">${getServiceIcon(concepto)} ${concepto}</span>
+                        <span class="truncate pr-1 opacity-90" title="${fullTitle.replace(/"/g, '&quot;')}">${horaHtml}${getServiceIcon(concepto)} ${concepto}</span>
                         <span class="font-bold text-slate-900 shrink-0 bg-white/70 px-1 rounded text-[9px] shadow-[0_0_1px_rgba(0,0,0,0.15)]">${uds} pax</span>
                     </div>
                     `;
@@ -747,7 +750,7 @@
         }
 
         const safeCliente = (res.cliente || '').replace(/"/g, '&quot;');
-        const safeCardTitle = `${safeCliente} | Montaje: ${montajeStr}${cateringServices.length > 0 ? ' | Servicios: ' + cateringServices.map(s => (typeof s === 'string' ? s : s.concepto || '') + ' (' + (s.uds || 1) + ' pax)').join(', ') : ''}`.replace(/"/g, '&quot;');
+        const safeCardTitle = `${safeCliente} | Montaje: ${montajeStr}${cateringServices.length > 0 ? ' | Servicios: ' + cateringServices.map(s => (typeof s === 'object' && s && s.hora ? s.hora + ' ' : '') + (typeof s === 'string' ? s : s.concepto || '') + ' (' + (s.uds || 1) + ' pax)').join(', ') : ''}`.replace(/"/g, '&quot;');
 
         return `
         <div onclick="window.handleCardClick('${res.id}', event)" 
@@ -1272,20 +1275,24 @@
 
                 visibleServices.forEach(s => {
                     const row = document.createElement("tr");
+                    const uds = s.uds !== undefined ? s.uds : 1;
+                    const precioVal = s.precio !== undefined ? s.precio : 0;
+                    const totalVal = (parseFloat(uds) || 0) * (parseFloat(precioVal) || 0);
                     row.innerHTML = `
-                    <td class="p-2 border-b"><input type="date" value="${s.fecha}" class="text-xs bg-gray-50 w-24 rounded border-gray-200"></td>
-                        <td class="p-2 border-b"><input type="text" value="${s.concepto}" list="charge-options" onchange="updateRowPrice(this)" class="text-xs font-bold w-full rounded border-gray-200"></td>
-                        <td class="p-2 border-b"><input type="number" onchange="calcTotal()" value="${s.uds}" class="text-xs text-center row-uds w-full rounded border-gray-200"></td>
-                        <td class="p-2 border-b">
-                            <div class="relative w-full">
-                                <input type="text" onchange="calcTotal()" value="${s.precio ? window.MesaChef.formatEuroValue(s.precio) : ''}" 
-                                       onfocus="window.MesaChef.unformatEuroInput(this)" onblur="window.MesaChef.formatEuroInput(this)"
-                                       class="text-xs text-right row-price w-full rounded border-gray-200" style="padding-right: 30px !important;">
-                                <span class="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] font-bold text-slate-400">€</span>
-                            </div>
-                        </td>
-                        <td class="p-2 border-b text-right font-bold text-xs row-total text-slate-600">${s.total.toFixed(2)} €</td>
-                        <td class="p-2 border-b text-center"><button onclick="this.closest('tr').remove(); calcTotal()" class="text-red-400 hover:text-red-600 font-bold">&times;</button></td>
+                    <td class="p-2 border-b"><input type="date" value="${s.fecha || ''}" class="text-xs bg-gray-50 w-24 rounded border-gray-200 row-date"></td>
+                    <td class="p-2 border-b"><input type="time" value="${s.hora || ''}" class="text-xs bg-gray-50 w-20 rounded border-gray-200 row-time"></td>
+                    <td class="p-2 border-b"><input type="text" value="${(s.concepto || '').replace(/"/g, '&quot;')}" list="charge-options" onchange="updateRowPrice(this)" class="text-xs font-bold w-full rounded border-gray-200 row-concept"></td>
+                    <td class="p-2 border-b"><input type="number" onchange="calcTotal()" value="${uds}" class="text-xs text-center row-uds w-full rounded border-gray-200"></td>
+                    <td class="p-2 border-b col-price">
+                        <div class="relative w-full">
+                            <input type="text" onchange="calcTotal()" value="${precioVal ? window.MesaChef.formatEuroValue(precioVal) : ''}" 
+                                   onfocus="window.MesaChef.unformatEuroInput(this)" onblur="window.MesaChef.formatEuroInput(this)"
+                                   class="text-xs text-right row-price w-full rounded border-gray-200" style="padding-right: 30px !important;">
+                            <span class="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] font-bold text-slate-400">€</span>
+                        </div>
+                    </td>
+                    <td class="p-2 border-b text-right font-bold text-xs row-total text-slate-600 col-total">${window.MesaChef.formatEuroValue(totalVal)} €</td>
+                    <td class="p-2 border-b text-center"><button onclick="this.closest('tr').remove(); calcTotal()" class="text-red-400 hover:text-red-600 font-bold">&times;</button></td>
                 `;
                     document.getElementById("services-list").appendChild(row);
                 });
@@ -1393,10 +1400,11 @@
         const row = document.createElement("tr");
         const defaultDate = window.currentViewDate || document.getElementById("evt-fecha").value;
         row.innerHTML = `
-            <td class="p-2 border-b"><input type="date" value="${defaultDate}" class="text-xs bg-gray-50 w-24 rounded border-gray-200"></td>
-            <td class="p-2 border-b"><input type="text" placeholder="Concepto" list="charge-options" onchange="updateRowPrice(this)" class="text-xs font-bold w-full rounded border-gray-200"></td>
+            <td class="p-2 border-b"><input type="date" value="${defaultDate}" class="text-xs bg-gray-50 w-24 rounded border-gray-200 row-date"></td>
+            <td class="p-2 border-b"><input type="time" value="" class="text-xs bg-gray-50 w-20 rounded border-gray-200 row-time"></td>
+            <td class="p-2 border-b"><input type="text" placeholder="Concepto" list="charge-options" onchange="updateRowPrice(this)" class="text-xs font-bold w-full rounded border-gray-200 row-concept"></td>
             <td class="p-2 border-b"><input type="number" onchange="calcTotal()" value="1" class="text-xs text-center row-uds w-full rounded border-gray-200"></td>
-            <td class="p-2 border-b">
+            <td class="p-2 border-b col-price">
                 <div class="relative w-full">
                     <input type="text" onchange="calcTotal()" value="" placeholder="0,00"
                            onfocus="window.MesaChef.unformatEuroInput(this)" onblur="window.MesaChef.formatEuroInput(this)"
@@ -1404,7 +1412,7 @@
                     <span class="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] font-bold text-slate-400">€</span>
                 </div>
             </td>
-            <td class="p-2 border-b text-right font-bold text-xs row-total text-slate-600">0,00 €</td>
+            <td class="p-2 border-b text-right font-bold text-xs row-total text-slate-600 col-total">0,00 €</td>
             <td class="p-2 border-b text-center"><button onclick="this.closest('tr').remove(); calcTotal()" class="text-red-400 hover:text-red-600 font-bold">&times;</button></td>
                 `;
         document.getElementById("services-list").appendChild(row);
@@ -1415,11 +1423,8 @@
         let total = 0;
 
         document.querySelectorAll("#services-list tr").forEach(row => {
-            const inputs = row.querySelectorAll("input");
-            // inputs[0]=date, [1]=desc, [2]=uds, [3]=price
-            const uds = parseFloat(inputs[2]?.value) || 0;
-            // Helper for Spanish Inputs
-            const price = window.MesaChef.parseEuroInput(inputs[3]?.value);
+            const uds = parseFloat(row.querySelector(".row-uds")?.value) || 0;
+            const price = window.MesaChef.parseEuroInput(row.querySelector(".row-price")?.value);
             const sub = uds * price;
 
             // Update row total
@@ -1448,28 +1453,25 @@
     };
 
     window.toggleIncluido = function () {
-        const isIncluido = document.getElementById("evt-incluido").checked;
-        const table = document.querySelector(".services-table-container table");
-        const totalContainer = document.getElementById("evt-total").parentElement;
+        const isIncluido = document.getElementById("evt-incluido") ? document.getElementById("evt-incluido").checked : false;
+        const totalContainer = document.getElementById("evt-total") ? document.getElementById("evt-total").parentElement : null;
 
         if (isIncluido) {
             // Set all prices to 0
             document.querySelectorAll("#services-list tr").forEach(row => {
-                const inputs = row.querySelectorAll("input");
-                if (inputs[3]) {
-                    inputs[3].value = "";
+                const priceInput = row.querySelector(".row-price");
+                if (priceInput) {
+                    priceInput.value = "";
                 }
             });
             calcTotal();
 
             // Hide Price and Total columns
-            document.querySelectorAll(".services-table-container th:nth-child(4), .services-table-container th:nth-child(5)").forEach(el => el.classList.add("hidden"));
-            document.querySelectorAll("#services-list td:nth-child(4), #services-list td:nth-child(5)").forEach(el => el.classList.add("hidden"));
+            document.querySelectorAll(".col-price, .col-total").forEach(el => el.classList.add("hidden"));
             if (totalContainer) totalContainer.classList.add("invisible");
         } else {
             // Show Price and Total columns
-            document.querySelectorAll(".services-table-container th:nth-child(4), .services-table-container th:nth-child(5)").forEach(el => el.classList.remove("hidden"));
-            document.querySelectorAll("#services-list td:nth-child(4), #services-list td:nth-child(5)").forEach(el => el.classList.remove("hidden"));
+            document.querySelectorAll(".col-price, .col-total").forEach(el => el.classList.remove("hidden"));
             if (totalContainer) totalContainer.classList.remove("invisible");
         }
     };
@@ -1523,12 +1525,15 @@
                 cleaned = cleaned.replace(/\s+/g, ' ').trim();
                 inp.value = cleaned;
             }
-            const inputs = mainRow.querySelectorAll("input");
-            const currentPrice = window.MesaChef.parseEuroInput(inputs[3].value);
-            if (forceUpdateConcept || currentPrice === 0 || !inputs[3].value) {
-                inputs[3].value = price ? window.MesaChef.formatEuroValue(price) : "";
+            const priceInput = mainRow.querySelector(".row-price");
+            const udsInput = mainRow.querySelector(".row-uds");
+            if (priceInput) {
+                const currentPrice = window.MesaChef.parseEuroInput(priceInput.value);
+                if (forceUpdateConcept || currentPrice === 0 || !priceInput.value) {
+                    priceInput.value = price ? window.MesaChef.formatEuroValue(price) : "";
+                }
             }
-            if (isRte) inputs[2].value = paxA;
+            if (isRte && udsInput) udsInput.value = paxA;
         }
 
         if (isRte && paxN > 0) {
@@ -1542,21 +1547,25 @@
                     cleaned = cleaned.replace(/\s+/g, ' ').trim();
                     inp.value = cleaned;
                 }
-                const inputs = childRow.querySelectorAll("input");
-                inputs[2].value = paxN;
-                const currentChildPrice = window.MesaChef.parseEuroInput(inputs[3].value);
-                if (forceUpdateConcept || currentChildPrice === 0 || !inputs[3].value) {
-                    inputs[3].value = price ? window.MesaChef.formatEuroValue(price) : "";
+                const childUdsInput = childRow.querySelector(".row-uds");
+                if (childUdsInput) childUdsInput.value = paxN;
+                const childPriceInput = childRow.querySelector(".row-price");
+                if (childPriceInput) {
+                    const currentChildPrice = window.MesaChef.parseEuroInput(childPriceInput.value);
+                    if (forceUpdateConcept || currentChildPrice === 0 || !childPriceInput.value) {
+                        childPriceInput.value = price ? window.MesaChef.formatEuroValue(price) : "";
+                    }
                 }
             } else {
                 // Add new row for children
                 const row = document.createElement("tr");
                 const date = window.currentViewDate || document.getElementById("evt-fecha").value;
                 row.innerHTML = `
-                    <td class="p-2 border-b"><input type="date" value="${date}" class="text-xs bg-gray-50 w-24 rounded border-gray-200"></td>
-                    <td class="p-2 border-b"><input type="text" value="Grupo ${cleanSalon} - ${jName} (Niños)" list="charge-options" onchange="updateRowPrice(this)" class="text-xs font-bold w-full rounded border-gray-200"></td>
+                    <td class="p-2 border-b"><input type="date" value="${date}" class="text-xs bg-gray-50 w-24 rounded border-gray-200 row-date"></td>
+                    <td class="p-2 border-b"><input type="time" value="" class="text-xs bg-gray-50 w-20 rounded border-gray-200 row-time"></td>
+                    <td class="p-2 border-b"><input type="text" value="Grupo ${cleanSalon} - ${jName} (Niños)" list="charge-options" onchange="updateRowPrice(this)" class="text-xs font-bold w-full rounded border-gray-200 row-concept"></td>
                     <td class="p-2 border-b"><input type="number" onchange="calcTotal()" value="${paxN}" class="text-xs text-center row-uds w-full rounded border-gray-200"></td>
-                    <td class="p-2 border-b">
+                    <td class="p-2 border-b col-price">
                         <div class="relative w-full">
                             <input type="text" onchange="calcTotal()" value="${price ? window.MesaChef.formatEuroValue(price) : ''}" 
                                    onfocus="window.MesaChef.unformatEuroInput(this)" onblur="window.MesaChef.formatEuroInput(this)"
@@ -1564,7 +1573,7 @@
                             <span class="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] font-bold text-slate-400">€</span>
                         </div>
                     </td>
-                    <td class="p-2 border-b text-right font-bold text-xs row-total text-slate-600">${window.MesaChef.formatEuroValue(price * paxN)} €</td>
+                    <td class="p-2 border-b text-right font-bold text-xs row-total text-slate-600 col-total">${window.MesaChef.formatEuroValue(price * paxN)} €</td>
                     <td class="p-2 border-b text-center"><button onclick="this.closest('tr').remove(); calcTotal()" class="text-red-400 hover:text-red-600 font-bold">&times;</button></td>
                 `;
                 document.getElementById("services-list").appendChild(row);
@@ -1580,10 +1589,11 @@
             const qty = isRte ? paxA : 1;
 
             row.innerHTML = `
-            <td class="p-2 border-b"><input type="date" value="${date}" class="text-xs bg-gray-50 w-24 rounded border-gray-200"></td>
-                <td class="p-2 border-b"><input type="text" value="${defaultConcept}" list="charge-options" onchange="updateRowPrice(this)" class="text-xs font-bold w-full rounded border-gray-200"></td>
+                <td class="p-2 border-b"><input type="date" value="${date}" class="text-xs bg-gray-50 w-24 rounded border-gray-200 row-date"></td>
+                <td class="p-2 border-b"><input type="time" value="" class="text-xs bg-gray-50 w-20 rounded border-gray-200 row-time"></td>
+                <td class="p-2 border-b"><input type="text" value="${defaultConcept}" list="charge-options" onchange="updateRowPrice(this)" class="text-xs font-bold w-full rounded border-gray-200 row-concept"></td>
                 <td class="p-2 border-b"><input type="number" onchange="calcTotal()" value="${qty}" class="text-xs text-center row-uds w-full rounded border-gray-200"></td>
-                <td class="p-2 border-b">
+                <td class="p-2 border-b col-price">
                     <div class="relative w-full">
                         <input type="text" onchange="calcTotal()" value="${price ? window.MesaChef.formatEuroValue(price) : ''}" 
                                onfocus="window.MesaChef.unformatEuroInput(this)" onblur="window.MesaChef.formatEuroInput(this)"
@@ -1591,9 +1601,9 @@
                         <span class="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] font-bold text-slate-400">€</span>
                     </div>
                 </td>
-                <td class="p-2 border-b text-right font-bold text-xs row-total text-slate-600">${window.MesaChef.formatEuroValue(price * qty)} €</td>
+                <td class="p-2 border-b text-right font-bold text-xs row-total text-slate-600 col-total">${window.MesaChef.formatEuroValue(price * qty)} €</td>
                 <td class="p-2 border-b text-center"><button onclick="this.closest('tr').remove(); calcTotal()" class="text-red-400 hover:text-red-600 font-bold">&times;</button></td>
-        `;
+            `;
             document.getElementById("services-list").appendChild(row);
         }
         calcTotal();
@@ -1664,13 +1674,26 @@
 
         const visibleServicios = [];
         document.querySelectorAll("#services-list tr").forEach(row => {
-            const inputs = row.querySelectorAll("input");
+            const dateInput = row.querySelector(".row-date") || row.querySelector("input[type='date']");
+            const timeInput = row.querySelector(".row-time") || row.querySelector("input[type='time']");
+            const conceptInput = row.querySelector(".row-concept") || row.querySelector("input[list='charge-options']") || row.querySelector("input[type='text']");
+            const udsInput = row.querySelector(".row-uds") || row.querySelector("input[type='number']");
+            const priceInput = row.querySelector(".row-price");
+
+            const fecha = dateInput ? dateInput.value : "";
+            const hora = timeInput ? timeInput.value : "";
+            const concepto = conceptInput ? conceptInput.value : "";
+            const uds = udsInput ? (parseFloat(udsInput.value) || 0) : 0;
+            const precio = priceInput ? window.MesaChef.parseEuroInput(priceInput.value) : 0;
+            const total = uds * precio;
+
             visibleServicios.push({
-                fecha: inputs[0].value,
-                concepto: inputs[1].value,
-                uds: parseFloat(inputs[2].value) || 0,
-                precio: window.MesaChef.parseEuroInput(inputs[3].value),
-                total: parseFloat(row.querySelector(".row-total").innerText)
+                fecha,
+                hora,
+                concepto,
+                uds,
+                precio,
+                total
             });
         });
 
@@ -1997,7 +2020,7 @@
                                             <span style="font-weight: bold; color: #1e293b;">📌 Servicios:</span>
                                             ${dailyServices.map(s => `
                                                 <span style="background: #f1f5f9; padding: 1px 6px; border-radius: 4px; border: 1px solid #e2e8f0;">
-                                                    ${s.concepto} (${s.uds})
+                                                    ${s.hora ? '<b>' + s.hora + '</b> ' : ''}${s.concepto} (${s.uds})
                                                 </span>
                                             `).join('')}
                                         </div>
@@ -2063,6 +2086,7 @@
             // We assume Salon Services are the master when editing from Salon
             const budgetLines = (reserva.servicios || []).map(s => ({
                 fecha: s.fecha,
+                hora: s.hora || "",
                 concepto: s.concepto,
                 uds: s.uds,
                 precio: s.precio,

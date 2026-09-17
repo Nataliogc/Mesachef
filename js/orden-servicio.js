@@ -152,7 +152,7 @@ function renderDefaults(data) {
         
         if (filteredServices.length > 0) {
             filteredServices.forEach(s => {
-                const tr = createServicioRow(getFormatDate(s.fecha), simplifyServicio(s.concepto), s.uds, "", "__:__ h");
+                const tr = createServicioRow(getFormatDate(s.fecha), simplifyServicio(s.concepto), s.uds, "", s.hora || "__:__ h");
                 tbodySrv.appendChild(tr);
             });
         } else {
