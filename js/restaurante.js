@@ -335,6 +335,7 @@
       const precioNin = document.getElementById("campoPrecioNinos");
       const euroAdl = precioAdl ? precioAdl.nextElementSibling : null;
       const euroNin = precioNin ? precioNin.nextElementSibling : null;
+      const badgeDirecto = document.getElementById("badgePagoDirectoModal");
 
       if (isIncluded) {
         if (precioAdl) { precioAdl.value = ""; precioAdl.disabled = true; precioAdl.style.display = "none"; }
@@ -342,12 +343,14 @@
         if (euroAdl) euroAdl.style.display = "none";
         if (euroNin) euroNin.style.display = "none";
         if (container) container.classList.remove("hidden");
+        if (badgeDirecto) badgeDirecto.classList.add("hidden");
       } else {
         if (precioAdl) { precioAdl.disabled = false; precioAdl.style.display = ""; }
         if (precioNin) { precioNin.disabled = false; precioNin.style.display = ""; }
         if (euroAdl) euroAdl.style.display = "";
         if (euroNin) euroNin.style.display = "";
         if (container) container.classList.add("hidden");
+        if (badgeDirecto) badgeDirecto.classList.remove("hidden");
       }
     };
 
@@ -822,9 +825,39 @@
       const name = r.nombre || r.cliente || "Sin nombre";
       const totalPax = (parseInt(r.pax) || 0) + (parseInt(r.ninos) || 0);
       const pax = totalPax || r.pax || "?";
-      const precioNum = typeof r.precio === 'number' ? r.precio : window.MesaChef.parseEuroInput(r.precio || 0);
-      const precioNinosNum = typeof r.precioNinos === 'number' ? r.precioNinos : window.MesaChef.parseEuroInput(r.precioNinos || 0);
-      const totalNum = r.total !== undefined ? (typeof r.total === 'number' ? r.total : window.MesaChef.parseEuroInput(r.total)) : (((parseInt(r.pax) || 0) * precioNum) + ((parseInt(r.ninos) || 0) * precioNinosNum));
+
+      // Robust price extraction with full fallbacks
+      const rawPrecio = (r.precio !== undefined && r.precio !== null && r.precio !== "")
+        ? r.precio
+        : ((r.precioAdulto !== undefined && r.precioAdulto !== null && r.precioAdulto !== "")
+          ? r.precioAdulto
+          : ((r.price !== undefined && r.price !== null && r.price !== "")
+            ? r.price
+            : ((r.priceAdult !== undefined && r.priceAdult !== null && r.priceAdult !== "")
+              ? r.priceAdult
+              : null)));
+
+      const rawPrecioNinos = (r.precioNinos !== undefined && r.precioNinos !== null && r.precioNinos !== "")
+        ? r.precioNinos
+        : ((r.precioNino !== undefined && r.precioNino !== null && r.precioNino !== "")
+          ? r.precioNino
+          : ((r.priceKids !== undefined && r.priceKids !== null && r.priceKids !== "")
+            ? r.priceKids
+            : ((r.priceChild !== undefined && r.priceChild !== null && r.priceChild !== "")
+              ? r.priceChild
+              : null)));
+
+      let precioNum = rawPrecio !== null ? (typeof rawPrecio === 'number' ? rawPrecio : window.MesaChef.parseEuroInput(rawPrecio)) : 0;
+      const precioNinosNum = rawPrecioNinos !== null ? (typeof rawPrecioNinos === 'number' ? rawPrecioNinos : window.MesaChef.parseEuroInput(rawPrecioNinos)) : 0;
+
+      const rawTotal = (r.total !== undefined && r.total !== null && r.total !== "") ? r.total : null;
+      let totalNum = rawTotal !== null
+        ? (typeof rawTotal === 'number' ? rawTotal : window.MesaChef.parseEuroInput(rawTotal))
+        : (((parseInt(r.pax) || 0) * precioNum) + ((parseInt(r.ninos) || 0) * precioNinosNum));
+
+      if (precioNum === 0 && totalNum > 0 && (parseInt(r.pax) || 0) > 0 && precioNinosNum === 0) {
+        precioNum = totalNum / (parseInt(r.pax) || 1);
+      }
 
       const zoneId = `zone_${space}_${rDateStr}_${turno}`;
       const zone = document.getElementById(zoneId);
@@ -861,11 +894,18 @@
             </svg>`;
             if (r.campoBono) detailStr = `: ${r.campoBono}`;
           }
-          priceDisplay = `<span class="text-[9px] font-bold text-blue-600 bg-blue-50 px-1 rounded border border-blue-100 italic" title="${r.tipoIncluido || ''}${detailStr}">${symbol}Incl${detailStr}</span>`;
-        } else if (precioNum > 0 || precioNinosNum > 0 || totalNum > 0) {
+          priceDisplay = `<span class="text-[9px] font-bold text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-100 italic" title="${r.tipoIncluido || ''}${detailStr}">${symbol}Incl${detailStr}</span>`;
+        } else {
+          // PAGO DIRECTO: Debe quedar claro en el planning
           const pFormatted = window.MesaChef.formatEuroValue(precioNum);
           const tFormatted = window.MesaChef.formatEuroValue(totalNum);
-          priceDisplay = `<span title="Precio: ${pFormatted}€/p | Total: ${tFormatted}€">${pFormatted}€/p</span>`;
+          if (precioNum > 0) {
+            priceDisplay = `<span class="text-[9px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200 whitespace-nowrap" title="Pago Directo en restaurante · Total: ${tFormatted}€">💶 Directo: ${pFormatted}€/p</span>`;
+          } else if (totalNum > 0) {
+            priceDisplay = `<span class="text-[9px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200 whitespace-nowrap" title="Pago Directo en restaurante">💶 Directo: ${tFormatted}€</span>`;
+          } else {
+            priceDisplay = `<span class="text-[9px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200 whitespace-nowrap" title="Pago Directo en restaurante">💶 Pago Directo</span>`;
+          }
         }
 
         // CHECK NOTES
@@ -875,7 +915,6 @@
           notesIcon = `<span title="${notasStr}" class="ml-1 text-[10px] cursor-help">📝</span>`;
         }
 
-        div.className = `bg-white border border-gray-100 shadow-sm rounded p-1.5 cursor-pointer hover:shadow-md transition text-[10px] ${border} mb-1`;
         div.className = `bg-white border border-gray-100 shadow-sm rounded p-1.5 cursor-pointer hover:shadow-md transition text-[10px] ${border} mb-1`;
         div.innerHTML = `
                     <div class="flex justify-between font-bold text-gray-700 pointer-events-none items-center mb-1">
@@ -894,7 +933,7 @@
                         <div class="pointer-events-auto">${notesIcon}</div>
                         <div class="flex flex-col items-end">
                              ${r.mesa ? `<span class="text-[10px] font-bold text-slate-500 bg-slate-50 px-1 rounded border border-slate-100 mb-0.5" title="Mesa">M.${r.mesa}</span>` : ''}
-                             <div class="text-right text-gray-400 font-mono pointer-events-none">${priceDisplay}</div>
+                             <div class="text-right pointer-events-none">${priceDisplay}</div>
                         </div>
                     </div>
                 `;
@@ -1013,6 +1052,11 @@
           const incType = (r.tipoIncluido === 'spa') ? 'SPA' : 'HOTEL';
           const incVal = (r.tipoIncluido === 'spa') ? (r.campoBono || '?') : (r.campoHabitacion || '?');
           notesText = `[INC ${incType}: ${incVal}] ` + (notesText ? " - " + notesText : "");
+        } else {
+          const rawP = r.precio || r.precioAdulto || r.price;
+          const pVal = rawP ? (typeof rawP === 'number' ? rawP : window.MesaChef.parseEuroInput(rawP)) : 0;
+          const pStr = pVal > 0 ? ` ${window.MesaChef.formatEuroValue(pVal)}€/p` : '';
+          notesText = `[PAGO DIRECTO${pStr}] ` + (notesText ? " - " + notesText : "");
         }
         let type = "Esp.";
         let typeFull = "Especial";
@@ -1251,14 +1295,41 @@
       document.getElementById("campoHora").value = data.hora || "";
       document.getElementById("campoMesa").value = data.mesa || ""; // [NEW] Populate Mesa
       
-      const adultPrice = (data.precio !== undefined && data.precio !== null) ? data.precio : (data.precioAdulto !== undefined ? data.precioAdulto : 0);
-      const childPrice = (data.precioNinos !== undefined && data.precioNinos !== null) ? data.precioNinos : (data.precioNino !== undefined ? data.precioNino : 0);
+      const rawAdult = (data.precio !== undefined && data.precio !== null && data.precio !== "")
+        ? data.precio
+        : ((data.precioAdulto !== undefined && data.precioAdulto !== null && data.precioAdulto !== "")
+          ? data.precioAdulto
+          : ((data.price !== undefined && data.price !== null && data.price !== "")
+            ? data.price
+            : ((data.priceAdult !== undefined && data.priceAdult !== null && data.priceAdult !== "")
+              ? data.priceAdult
+              : 0)));
 
-      document.getElementById("campoPrecio").value = adultPrice ? window.MesaChef.formatEuroValue(adultPrice) : "";
+      const rawChild = (data.precioNinos !== undefined && data.precioNinos !== null && data.precioNinos !== "")
+        ? data.precioNinos
+        : ((data.precioNino !== undefined && data.precioNino !== null && data.precioNino !== "")
+          ? data.precioNino
+          : ((data.priceKids !== undefined && data.priceKids !== null && data.priceKids !== "")
+            ? data.priceKids
+            : ((data.priceChild !== undefined && data.priceChild !== null && data.priceChild !== "")
+              ? data.priceChild
+              : 0)));
+
+      let adultPriceNum = typeof rawAdult === 'number' ? rawAdult : window.MesaChef.parseEuroInput(rawAdult);
+      let childPriceNum = typeof rawChild === 'number' ? rawChild : window.MesaChef.parseEuroInput(rawChild);
+
+      const dTotal = (data.total !== undefined && data.total !== null && data.total !== "")
+        ? (typeof data.total === 'number' ? data.total : window.MesaChef.parseEuroInput(data.total))
+        : 0;
+      if (adultPriceNum === 0 && dTotal > 0 && childPriceNum === 0 && (parseInt(data.pax) || 0) > 0) {
+        adultPriceNum = dTotal / (parseInt(data.pax) || 1);
+      }
+
+      document.getElementById("campoPrecio").value = adultPriceNum ? window.MesaChef.formatEuroValue(adultPriceNum) : "";
       document.getElementById("campoPax").value = data.pax || "";
       document.getElementById("campoNinos").value = data.ninos || 0;
       if (document.getElementById("campoPrecioNinos")) {
-        document.getElementById("campoPrecioNinos").value = childPrice ? window.MesaChef.formatEuroValue(childPrice) : "";
+        document.getElementById("campoPrecioNinos").value = childPriceNum ? window.MesaChef.formatEuroValue(childPriceNum) : "";
       }
       document.getElementById("campoNotas").value = typeof data.notas === 'object' ? Object.values(data.notas).join(". ") : (data.notas || "");
       document.getElementById("campoNotaCliente").value = data.notaCliente || "";
