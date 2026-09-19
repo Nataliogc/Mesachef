@@ -482,30 +482,36 @@
 
                         <!-- LEFT: Pax pills -->
                         <div class="flex items-center gap-2">
-                            <!-- Adult Pax -->
-                            <div class="flex items-center gap-1 bg-white px-1.5 py-0.5 rounded border border-blue-100">
-                                <span class="text-[10px] font-bold text-blue-500">Adl:</span>
-                                <input type="number" id="campoPax" min="0" placeholder="0"
-                                    class="w-7 text-center font-bold text-slate-700 border-none bg-transparent outline-none p-0 text-xs focus:ring-0">
-                                <span class="text-xs text-slate-300">|</span>
-                                <input type="text" id="campoPrecio" placeholder="0,00" value=""
-                                    onfocus="window.MesaChef.unformatEuroInput(this)"
-                                    onblur="window.MesaChef.formatEuroInput(this)"
-                                    class="w-16 text-right font-mono text-[11px] text-slate-600 border-none bg-transparent outline-none p-0 focus:ring-0">
-                                <span class="text-[9px] text-slate-400">€</span>
+                            <!-- Adult Pax & Price -->
+                            <div class="flex items-center gap-1.5 bg-white px-2 py-1 rounded border border-blue-200 shadow-sm">
+                                <span class="text-[10px] font-bold text-blue-600">Adultos:</span>
+                                <input type="number" id="campoPax" min="0" placeholder="0" title="Número de adultos"
+                                    class="w-8 text-center font-bold text-slate-800 border border-slate-200 rounded px-1 py-0.5 text-xs focus:ring-1 focus:ring-blue-500">
+                                <div id="wrapperPrecioAdl" class="flex items-center gap-1">
+                                    <span class="text-xs text-slate-300">|</span>
+                                    <span class="text-[10px] font-semibold text-slate-500">Precio:</span>
+                                    <input type="text" id="campoPrecio" placeholder="0,00" value="" title="Precio por adulto (€)"
+                                        onfocus="window.MesaChef.unformatEuroInput(this)"
+                                        onblur="window.MesaChef.formatEuroInput(this)"
+                                        class="w-14 text-right font-mono font-bold text-xs text-slate-800 border border-slate-200 rounded px-1 py-0.5 focus:ring-1 focus:ring-blue-500">
+                                    <span class="text-[10px] font-bold text-slate-500">€/p</span>
+                                </div>
                             </div>
 
-                            <!-- Child Pax -->
-                            <div class="flex items-center gap-1 bg-white px-1.5 py-0.5 rounded border border-pink-100">
-                                <span class="text-[10px] font-bold text-pink-500">Niñ:</span>
-                                <input type="number" id="campoNinos" min="0" placeholder="0"
-                                    class="w-7 text-center font-bold text-slate-700 border-none bg-transparent outline-none p-0 text-xs focus:ring-0">
-                                <span class="text-xs text-slate-300">|</span>
-                                <input type="text" id="campoPrecioNinos" placeholder="0,00" value=""
-                                    onfocus="window.MesaChef.unformatEuroInput(this)"
-                                    onblur="window.MesaChef.formatEuroInput(this)"
-                                    class="w-16 text-right font-mono text-[11px] text-slate-600 border-none bg-transparent outline-none p-0 focus:ring-0">
-                                <span class="text-[9px] text-slate-400">€</span>
+                            <!-- Child Pax & Price -->
+                            <div class="flex items-center gap-1.5 bg-white px-2 py-1 rounded border border-pink-200 shadow-sm">
+                                <span class="text-[10px] font-bold text-pink-600">Niños:</span>
+                                <input type="number" id="campoNinos" min="0" placeholder="0" title="Número de niños"
+                                    class="w-8 text-center font-bold text-slate-800 border border-slate-200 rounded px-1 py-0.5 text-xs focus:ring-1 focus:ring-pink-500">
+                                <div id="wrapperPrecioNin" class="flex items-center gap-1">
+                                    <span class="text-xs text-slate-300">|</span>
+                                    <span class="text-[10px] font-semibold text-slate-500">Precio:</span>
+                                    <input type="text" id="campoPrecioNinos" placeholder="0,00" value="" title="Precio por niño (€)"
+                                        onfocus="window.MesaChef.unformatEuroInput(this)"
+                                        onblur="window.MesaChef.formatEuroInput(this)"
+                                        class="w-14 text-right font-mono font-bold text-xs text-slate-800 border border-slate-200 rounded px-1 py-0.5 focus:ring-1 focus:ring-pink-500">
+                                    <span class="text-[10px] font-bold text-slate-500">€/p</span>
+                                </div>
                             </div>
                         </div>
 
@@ -614,7 +620,7 @@
 
     <!-- App Scripts -->
     <script src="js/app-common.js?v=1.1"></script>
-    <script src="js/restaurante.js?v=11.9"></script>
+    <script src="js/restaurante.js?v=12.0"></script>
 
     <script>
         if ('serviceWorker' in navigator) {

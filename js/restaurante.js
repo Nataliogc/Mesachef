@@ -331,6 +331,8 @@
       if (checkServicio) checkServicio.checked = !!isIncluded;
 
       const container = document.getElementById("containerDetalleIncluido");
+      const wrapperPrecioAdl = document.getElementById("wrapperPrecioAdl");
+      const wrapperPrecioNin = document.getElementById("wrapperPrecioNin");
       const precioAdl = document.getElementById("campoPrecio");
       const precioNin = document.getElementById("campoPrecioNinos");
       const euroAdl = precioAdl ? precioAdl.nextElementSibling : null;
@@ -338,17 +340,21 @@
       const badgeDirecto = document.getElementById("badgePagoDirectoModal");
 
       if (isIncluded) {
-        if (precioAdl) { precioAdl.value = ""; precioAdl.disabled = true; precioAdl.style.display = "none"; }
-        if (precioNin) { precioNin.value = ""; precioNin.disabled = true; precioNin.style.display = "none"; }
-        if (euroAdl) euroAdl.style.display = "none";
-        if (euroNin) euroNin.style.display = "none";
+        if (precioAdl) { precioAdl.value = ""; precioAdl.disabled = true; }
+        if (precioNin) { precioNin.value = ""; precioNin.disabled = true; }
+        if (wrapperPrecioAdl) wrapperPrecioAdl.style.display = "none";
+        else if (precioAdl) { precioAdl.style.display = "none"; if (euroAdl) euroAdl.style.display = "none"; }
+        if (wrapperPrecioNin) wrapperPrecioNin.style.display = "none";
+        else if (precioNin) { precioNin.style.display = "none"; if (euroNin) euroNin.style.display = "none"; }
         if (container) container.classList.remove("hidden");
         if (badgeDirecto) badgeDirecto.classList.add("hidden");
       } else {
-        if (precioAdl) { precioAdl.disabled = false; precioAdl.style.display = ""; }
-        if (precioNin) { precioNin.disabled = false; precioNin.style.display = ""; }
-        if (euroAdl) euroAdl.style.display = "";
-        if (euroNin) euroNin.style.display = "";
+        if (precioAdl) { precioAdl.disabled = false; }
+        if (precioNin) { precioNin.disabled = false; }
+        if (wrapperPrecioAdl) wrapperPrecioAdl.style.display = "";
+        else if (precioAdl) { precioAdl.style.display = ""; if (euroAdl) euroAdl.style.display = ""; }
+        if (wrapperPrecioNin) wrapperPrecioNin.style.display = "";
+        else if (precioNin) { precioNin.style.display = ""; if (euroNin) euroNin.style.display = ""; }
         if (container) container.classList.add("hidden");
         if (badgeDirecto) badgeDirecto.classList.remove("hidden");
       }
@@ -849,6 +855,21 @@
       }
     }
 
+    // Fallback: If precioAdulto is 0, but precioNinos > 0:
+    // When ninos is 0 (or not specified) or pax > 0, the booking price was stored in the child price field
+    if (precioAdulto === 0 && precioNinos > 0) {
+      if (ninos === 0 || pax > 0) {
+        precioAdulto = precioNinos;
+        if (ninos === 0) precioNinos = 0;
+      }
+    }
+
+    // Fallback: If precioNinos is 0, but precioAdulto > 0 and pax is 0 and ninos > 0
+    if (precioNinos === 0 && precioAdulto > 0 && pax === 0 && ninos > 0) {
+      precioNinos = precioAdulto;
+      precioAdulto = 0;
+    }
+
     // Fallback: derive adult price if total exists and pax exists
     if (precioAdulto === 0 && total > 0 && pax > 0 && precioNinos === 0) {
       precioAdulto = total / pax;
@@ -974,9 +995,10 @@
           priceDisplay = `<span class="text-[9px] font-bold text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-100 italic" title="${r.tipoIncluido || ''}${detailStr}">${symbol}Incl${detailStr}</span>`;
         } else {
           // PAGO DIRECTO: Debe quedar claro en el planning
-          const pFormatted = window.MesaChef.formatEuroValue(precioNum);
+          const pVal = precioNum > 0 ? precioNum : precioNinosNum;
+          const pFormatted = window.MesaChef.formatEuroValue(pVal);
           const tFormatted = window.MesaChef.formatEuroValue(totalNum);
-          if (precioNum > 0) {
+          if (pVal > 0) {
             priceDisplay = `<span class="text-[9px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200 whitespace-nowrap" title="Pago Directo en restaurante · Total: ${tFormatted}€">💶 Directo: ${pFormatted}€/p</span>`;
           } else if (totalNum > 0) {
             priceDisplay = `<span class="text-[9px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200 whitespace-nowrap" title="Pago Directo en restaurante">💶 Directo: ${tFormatted}€</span>`;
@@ -1186,11 +1208,17 @@
 
   function updateTotalDisplay() {
     const priceField = document.getElementById("campoPrecio");
-    const price = priceField ? window.MesaChef.parseEuroInput(priceField.value) : 0;
+    let price = priceField ? window.MesaChef.parseEuroInput(priceField.value) : 0;
     const pax = parseInt(document.getElementById("campoPax").value) || 0;
     const priceKidsField = document.getElementById("campoPrecioNinos");
-    const priceKids = priceKidsField ? window.MesaChef.parseEuroInput(priceKidsField.value) : 0;
+    let priceKids = priceKidsField ? window.MesaChef.parseEuroInput(priceKidsField.value) : 0;
     const kids = parseInt(document.getElementById("campoNinos").value) || 0;
+
+    // Smart fallback if user typed price in kids price field while kids is 0
+    if (price === 0 && priceKids > 0 && kids === 0) {
+      price = priceKids;
+      priceKids = 0;
+    }
 
     const total = (price * pax) + (priceKids * kids);
     const el = document.getElementById("displayTotal");
@@ -1718,6 +1746,12 @@
 
     const pax = parseInt(document.getElementById("campoPax").value) || 0;
     const ninos = parseInt(document.getElementById("campoNinos").value) || 0;
+
+    if (!isServiceIncluded && precio === 0 && precioNinos > 0 && ninos === 0) {
+      precio = precioNinos;
+      precioNinos = 0;
+    }
+
     const total = (pax * precio) + (ninos * precioNinos);
 
     const payload = {
