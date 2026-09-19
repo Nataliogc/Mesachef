@@ -767,6 +767,113 @@
       });
   }
 
+  // Centralized robust price extractor for restaurant bookings
+  function extractReservationPrices(r) {
+    if (!r) return { precioAdulto: 0, precioNinos: 0, total: 0 };
+
+    const parseVal = (val) => {
+      if (val === undefined || val === null || val === "") return 0;
+      if (typeof val === 'number') return isNaN(val) ? 0 : val;
+      return window.MesaChef.parseEuroInput(val);
+    };
+
+    const pax = parseInt(r.pax) || 0;
+    const ninos = parseInt(r.ninos) || 0;
+
+    // Search for first NON-ZERO adult price candidate
+    const adultCandidates = [
+      r.precio,
+      r.precioPorPersona,
+      r.precio_por_persona,
+      r.precioAdulto,
+      r.precio_adulto,
+      r.precioAdultos,
+      r.precioPersona,
+      r.precio_persona,
+      r.precioPax,
+      r.precio_pax,
+      r.price,
+      r.priceAdult,
+      r.priceAdults,
+      r.detalles?.precio,
+      r.detalles?.precioAdulto,
+      r.detalles?.price,
+      r.menuPrecio
+    ];
+
+    let precioAdulto = 0;
+    for (const c of adultCandidates) {
+      const parsed = parseVal(c);
+      if (parsed > 0) {
+        precioAdulto = parsed;
+        break;
+      }
+    }
+
+    // Search for first NON-ZERO child price candidate
+    const childCandidates = [
+      r.precioNinos,
+      r.precio_ninos,
+      r.precioNino,
+      r.precio_nino,
+      r.priceKids,
+      r.priceChild,
+      r.detalles?.precioNinos,
+      r.detalles?.precioNino
+    ];
+
+    let precioNinos = 0;
+    for (const c of childCandidates) {
+      const parsed = parseVal(c);
+      if (parsed > 0) {
+        precioNinos = parsed;
+        break;
+      }
+    }
+
+    // Search for first NON-ZERO total candidate
+    const totalCandidates = [
+      r.total,
+      r.importeTotal,
+      r.importe,
+      r.totalReserva,
+      r.detalles?.total
+    ];
+
+    let total = 0;
+    for (const c of totalCandidates) {
+      const parsed = parseVal(c);
+      if (parsed > 0) {
+        total = parsed;
+        break;
+      }
+    }
+
+    // Fallback: derive adult price if total exists and pax exists
+    if (precioAdulto === 0 && total > 0 && pax > 0 && precioNinos === 0) {
+      precioAdulto = total / pax;
+    }
+
+    // Fallback: calculate total if prices exist
+    if (total === 0 && (precioAdulto > 0 || precioNinos > 0)) {
+      total = (pax * precioAdulto) + (ninos * precioNinos);
+    }
+
+    // Fallback: scan notes text if still 0
+    if (precioAdulto === 0 && r.notas && typeof r.notas === 'string') {
+      const match = r.notas.match(/(?:^|[^\d])(\d+(?:[.,]\d{1,2})?)\s*€(?:\s*(?:\/|\s*por\s*|\s*pax|\s*persona|\s*p\b|\s*comensal\b))?/i);
+      if (match && match[1]) {
+        const foundPrice = window.MesaChef.parseEuroInput(match[1]);
+        if (foundPrice > 0) {
+          precioAdulto = foundPrice;
+          if (total === 0 && pax > 0) total = (pax * precioAdulto) + (ninos * precioNinos);
+        }
+      }
+    }
+
+    return { precioAdulto, precioNinos, total };
+  }
+
   function paintReservations(reservations) {
     if (!reservations) reservations = loadedReservations;
 
@@ -827,37 +934,7 @@
       const pax = totalPax || r.pax || "?";
 
       // Robust price extraction with full fallbacks
-      const rawPrecio = (r.precio !== undefined && r.precio !== null && r.precio !== "")
-        ? r.precio
-        : ((r.precioAdulto !== undefined && r.precioAdulto !== null && r.precioAdulto !== "")
-          ? r.precioAdulto
-          : ((r.price !== undefined && r.price !== null && r.price !== "")
-            ? r.price
-            : ((r.priceAdult !== undefined && r.priceAdult !== null && r.priceAdult !== "")
-              ? r.priceAdult
-              : null)));
-
-      const rawPrecioNinos = (r.precioNinos !== undefined && r.precioNinos !== null && r.precioNinos !== "")
-        ? r.precioNinos
-        : ((r.precioNino !== undefined && r.precioNino !== null && r.precioNino !== "")
-          ? r.precioNino
-          : ((r.priceKids !== undefined && r.priceKids !== null && r.priceKids !== "")
-            ? r.priceKids
-            : ((r.priceChild !== undefined && r.priceChild !== null && r.priceChild !== "")
-              ? r.priceChild
-              : null)));
-
-      let precioNum = rawPrecio !== null ? (typeof rawPrecio === 'number' ? rawPrecio : window.MesaChef.parseEuroInput(rawPrecio)) : 0;
-      const precioNinosNum = rawPrecioNinos !== null ? (typeof rawPrecioNinos === 'number' ? rawPrecioNinos : window.MesaChef.parseEuroInput(rawPrecioNinos)) : 0;
-
-      const rawTotal = (r.total !== undefined && r.total !== null && r.total !== "") ? r.total : null;
-      let totalNum = rawTotal !== null
-        ? (typeof rawTotal === 'number' ? rawTotal : window.MesaChef.parseEuroInput(rawTotal))
-        : (((parseInt(r.pax) || 0) * precioNum) + ((parseInt(r.ninos) || 0) * precioNinosNum));
-
-      if (precioNum === 0 && totalNum > 0 && (parseInt(r.pax) || 0) > 0 && precioNinosNum === 0) {
-        precioNum = totalNum / (parseInt(r.pax) || 1);
-      }
+      const { precioAdulto: precioNum, precioNinos: precioNinosNum, total: totalNum } = extractReservationPrices(r);
 
       const zoneId = `zone_${space}_${rDateStr}_${turno}`;
       const zone = document.getElementById(zoneId);
@@ -1053,8 +1130,7 @@
           const incVal = (r.tipoIncluido === 'spa') ? (r.campoBono || '?') : (r.campoHabitacion || '?');
           notesText = `[INC ${incType}: ${incVal}] ` + (notesText ? " - " + notesText : "");
         } else {
-          const rawP = r.precio || r.precioAdulto || r.price;
-          const pVal = rawP ? (typeof rawP === 'number' ? rawP : window.MesaChef.parseEuroInput(rawP)) : 0;
+          const { precioAdulto: pVal } = extractReservationPrices(r);
           const pStr = pVal > 0 ? ` ${window.MesaChef.formatEuroValue(pVal)}€/p` : '';
           notesText = `[PAGO DIRECTO${pStr}] ` + (notesText ? " - " + notesText : "");
         }
@@ -1295,35 +1371,7 @@
       document.getElementById("campoHora").value = data.hora || "";
       document.getElementById("campoMesa").value = data.mesa || ""; // [NEW] Populate Mesa
       
-      const rawAdult = (data.precio !== undefined && data.precio !== null && data.precio !== "")
-        ? data.precio
-        : ((data.precioAdulto !== undefined && data.precioAdulto !== null && data.precioAdulto !== "")
-          ? data.precioAdulto
-          : ((data.price !== undefined && data.price !== null && data.price !== "")
-            ? data.price
-            : ((data.priceAdult !== undefined && data.priceAdult !== null && data.priceAdult !== "")
-              ? data.priceAdult
-              : 0)));
-
-      const rawChild = (data.precioNinos !== undefined && data.precioNinos !== null && data.precioNinos !== "")
-        ? data.precioNinos
-        : ((data.precioNino !== undefined && data.precioNino !== null && data.precioNino !== "")
-          ? data.precioNino
-          : ((data.priceKids !== undefined && data.priceKids !== null && data.priceKids !== "")
-            ? data.priceKids
-            : ((data.priceChild !== undefined && data.priceChild !== null && data.priceChild !== "")
-              ? data.priceChild
-              : 0)));
-
-      let adultPriceNum = typeof rawAdult === 'number' ? rawAdult : window.MesaChef.parseEuroInput(rawAdult);
-      let childPriceNum = typeof rawChild === 'number' ? rawChild : window.MesaChef.parseEuroInput(rawChild);
-
-      const dTotal = (data.total !== undefined && data.total !== null && data.total !== "")
-        ? (typeof data.total === 'number' ? data.total : window.MesaChef.parseEuroInput(data.total))
-        : 0;
-      if (adultPriceNum === 0 && dTotal > 0 && childPriceNum === 0 && (parseInt(data.pax) || 0) > 0) {
-        adultPriceNum = dTotal / (parseInt(data.pax) || 1);
-      }
+      const { precioAdulto: adultPriceNum, precioNinos: childPriceNum } = extractReservationPrices(data);
 
       document.getElementById("campoPrecio").value = adultPriceNum ? window.MesaChef.formatEuroValue(adultPriceNum) : "";
       document.getElementById("campoPax").value = data.pax || "";
@@ -1684,8 +1732,11 @@
       pax: pax,
       ninos: ninos,
       precio: precio,
+      precioAdulto: precio,
+      precioPorPersona: precio,
       precioNinos: precioNinos,
       total: total,
+      importeTotal: total,
       turno: document.getElementById("campoTurno").value,
       estado: document.getElementById("campoEstado").value,
       notas: document.getElementById("campoNotas").value,
