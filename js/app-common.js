@@ -142,20 +142,44 @@
         // --- SPANISH INPUT FORMATTERS ---
         // 0. Format Number -> "1.234,56"
         formatEuroValue: (num) => {
-            if (num === null || num === undefined) return "0,00";
-            let val = parseFloat(num);
+            if (num === null || num === undefined || num === "") return "0,00";
+            let val = typeof num === 'number' ? num : window.MesaChef.parseEuroInput(num);
             if (isNaN(val)) return "0,00";
             return val.toLocaleString("es-ES", { minimumFractionDigits: 2, maximumFractionDigits: 2, useGrouping: true });
         },
         parseEuroInput: (val) => {
-            if (typeof val === 'number') return val;
+            if (typeof val === 'number') return isNaN(val) ? 0 : val;
             if (!val) return 0;
-            // Remove dots (thousands), replace comma with dot
-            // Example: "1.234,56" -> "1234.56"
-            let clean = val.toString().replace(/\./g, 'TEMP').replace(/,/g, '.').replace(/TEMP/g, '');
-            // Also safer: remove any non-digit/minus/dot
-            clean = clean.replace(/[^\d.-]/g, '');
-            return parseFloat(clean) || 0;
+            let s = val.toString().trim();
+            if (!s) return 0;
+            // Remove spaces, currency symbols, keep digits, minus, dot, comma
+            s = s.replace(/[^\d.,-]/g, '');
+            if (!s) return 0;
+
+            const hasComma = s.includes(',');
+            const hasDot = s.includes('.');
+
+            if (hasComma && hasDot) {
+                const lastComma = s.lastIndexOf(',');
+                const lastDot = s.lastIndexOf('.');
+                if (lastComma > lastDot) {
+                    // Spanish format: 1.234,56 -> remove dots, replace comma with dot
+                    s = s.replace(/\./g, '').replace(',', '.');
+                } else {
+                    // English format: 1,234.56 -> remove commas
+                    s = s.replace(/,/g, '');
+                }
+            } else if (hasComma) {
+                s = s.replace(/,/g, '.');
+            } else if (hasDot) {
+                if (/^-?\d+\.\d{1,2}$/.test(s)) {
+                    // Single dot followed by 1 or 2 digits -> decimal dot (e.g. 25.50 or 25.5)
+                } else if (/^-?\d{1,3}(\.\d{3})+$/.test(s)) {
+                    // Thousands dot (e.g. 1.000 or 10.000)
+                    s = s.replace(/\./g, '');
+                }
+            }
+            return parseFloat(s) || 0;
         },
         formatEuroInput: (input) => {
             let val = input.value;
@@ -211,6 +235,8 @@
                 // Mover cursor tras la coma
                 el.setSelectionRange(start + 1, start + 1);
             }
+            // Disparar evento 'input' para que los cálculos dinámicos reaccionen
+            el.dispatchEvent(new Event("input", { bubbles: true }));
         }
     }, true); // capture = true para interceptar antes que cualquier otro handler
 })();
