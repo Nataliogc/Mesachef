@@ -130,6 +130,58 @@
 
     const isRestauranteStyle = (name) => window.MesaChef.isRestauranteStyle(name);
 
+    // --- NEXUS GROUPS HELPERS ---
+    const isNexusEvent = (data) => {
+        if (!data) return false;
+        if (data.origen === "Nexus Groups" || (typeof data.origen === "string" && data.origen.toLowerCase().includes("nexus"))) return true;
+        if (typeof data.id === "string" && data.id.startsWith("nexus_")) return true;
+        if (data.reservaId && typeof data.notas?.interna === "string" && data.notas.interna.includes("[Nexus Groups]")) return true;
+        return false;
+    };
+
+    const isNexusLinked = (data) => {
+        if (!isNexusEvent(data)) return false;
+        return !data.desvinculado && !data.vinculoRoto;
+    };
+
+    const getNexusRef = (data) => {
+        if (!data) return "";
+        if (data.reservaId) return String(data.reservaId);
+        if (data.id && typeof data.id === "string" && data.id.startsWith("nexus_")) {
+            const parts = data.id.split("_");
+            if (parts.length >= 2) return parts[1];
+        }
+        if (typeof data.notas?.interna === "string") {
+            const match = data.notas.interna.match(/Ref:\s*([^\s|]+)/i);
+            if (match) return match[1];
+        }
+        if (typeof data.cliente === "string") {
+            const match = data.cliente.match(/Ref:\s*([^)]+)\)/i);
+            if (match) return match[1].trim();
+        }
+        return "";
+    };
+
+    function setModalFieldsDisabled(disabled) {
+        const modal = document.getElementById("modal-evt");
+        if (!modal) return;
+        const fields = modal.querySelectorAll("input, select, textarea");
+        fields.forEach(el => {
+            el.disabled = disabled;
+        });
+        const serviceDeleteBtns = modal.querySelectorAll("#services-list button");
+        serviceDeleteBtns.forEach(btn => {
+            btn.disabled = disabled;
+            if (disabled) btn.classList.add("opacity-30", "cursor-not-allowed", "pointer-events-none");
+            else btn.classList.remove("opacity-30", "cursor-not-allowed", "pointer-events-none");
+        });
+        const btnAddSvc = document.getElementById("btnAddService");
+        if (btnAddSvc) {
+            if (disabled) btnAddSvc.classList.add("hidden");
+            else btnAddSvc.classList.remove("hidden");
+        }
+    }
+
     function startApp() {
         console.log("Salones: Iniciando aplicación...");
         db = firebase.firestore();
@@ -824,6 +876,13 @@
         const safeCliente = (res.cliente || '').replace(/"/g, '&quot;');
         const safeCardTitle = `${safeCliente} | Montaje: ${montajeStr}${cateringServices.length > 0 ? ' | Servicios: ' + cateringServices.map(s => (typeof s === 'object' && s && s.hora ? s.hora + ' ' : '') + (typeof s === 'string' ? s : s.concepto || '') + ' (' + (s.uds || 1) + ' pax)').join(', ') : ''}`.replace(/"/g, '&quot;');
 
+        let nexusTag = "";
+        if (isNexusLinked(res)) {
+            nexusTag = `<span class="bg-amber-100 text-amber-900 border border-amber-300 px-1 py-0.5 rounded text-[9px] font-bold mr-1 shrink-0" title="Vinculado a Nexus Groups">🔒 Nexus</span>`;
+        } else if (res.desvinculado || res.vinculoRoto) {
+            nexusTag = `<span class="bg-emerald-100 text-emerald-900 border border-emerald-300 px-1 py-0.5 rounded text-[9px] font-bold mr-1 shrink-0" title="Desvinculado de Nexus Groups (MesaChef)">🔓 MesaChef</span>`;
+        }
+
         return `
         <div onclick="window.handleCardClick('${res.id}', event)" 
              title="${safeCardTitle}"
@@ -831,7 +890,7 @@
 
             <div>
                 <div class="flex items-center justify-between">
-                    <div class="font-bold truncate leading-tight flex-1" title="${safeCliente}">${isRte ? '🍽️ ' : ''}${safeCliente}</div>
+                    <div class="font-bold truncate leading-tight flex-1 flex items-center" title="${safeCliente}">${nexusTag}${isRte ? '🍽️ ' : ''}<span>${safeCliente}</span></div>
                     <div class="text-[11px]">${noteStr}</div>
                 </div>
                 ${(res.estado === 'presupuesto' || res.estado === 'provisional' || res.estado === 'pendiente') ? `<div class="text-[9px] font-bold text-orange-700 bg-orange-200/60 px-1 py-0.5 rounded w-fit mt-0.5 uppercase tracking-wide">⚠️ Pendiente de Confirmar</div>` : ''}
@@ -1130,6 +1189,33 @@
         window.currentFullServices = []; // Store full services list for multi-day events
         window.currentViewDate = null;   // Store the date we are viewing/editing
 
+        // Reset Nexus banners and control state
+        const nexusBanner = document.getElementById("nexus-banner");
+        const nexusUnlinkedBadge = document.getElementById("nexus-unlinked-badge");
+        const nexusRefBadge = document.getElementById("nexus-ref-badge");
+        const nexusUnlinkedRef = document.getElementById("nexus-unlinked-ref");
+        const btnGuardarEl = document.getElementById("btnGuardar");
+        const btnEliminarEl = document.getElementById("btnEliminar");
+
+        if (nexusBanner) nexusBanner.classList.add("hidden");
+        if (nexusUnlinkedBadge) nexusUnlinkedBadge.classList.add("hidden");
+        if (nexusRefBadge) nexusRefBadge.innerText = "";
+        if (nexusUnlinkedRef) nexusUnlinkedRef.innerText = "";
+
+        if (btnGuardarEl) {
+            btnGuardarEl.disabled = false;
+            btnGuardarEl.classList.remove("opacity-50", "cursor-not-allowed", "pointer-events-none");
+            btnGuardarEl.title = "";
+            btnGuardarEl.style.display = 'inline-block';
+        }
+        if (btnEliminarEl) {
+            btnEliminarEl.disabled = false;
+            btnEliminarEl.classList.remove("opacity-50", "cursor-not-allowed", "pointer-events-none");
+            btnEliminarEl.title = "";
+            btnEliminarEl.style.display = 'block';
+        }
+        setModalFieldsDisabled(false);
+
         // Reset Estado select options (remove any temporary old status options) and default to confirmada
         const estadoSelect = document.getElementById("evt-estado");
         const toggleRevisadoVisibility = (status) => {
@@ -1332,38 +1418,82 @@
             document.getElementById("evt-incluido").checked = existing.detalles?.incluido === true;
             toggleIncluido();
 
-            // READ ONLY CHECK (Salones)
+            // READ ONLY / NEXUS GROUPS CHECK
             const isPast = (dateStr || existing.fecha) < utils.toIsoDate(new Date());
-            if (isPast) {
+            const isLinkedNexus = isNexusLinked(existing);
+            const isUnlinkedNexus = isNexusEvent(existing) && (existing.desvinculado || existing.vinculoRoto);
+            const nexusRef = getNexusRef(existing);
+
+            if (isLinkedNexus) {
+                const mt = document.getElementById("modalTitle");
+                if (mt) mt.innerText = "Evento Nexus Groups (Solo Lectura)";
+
+                if (nexusBanner) {
+                    nexusBanner.classList.remove("hidden");
+                    if (nexusRefBadge) nexusRefBadge.innerText = nexusRef ? `Ref: ${nexusRef}` : "Nexus Groups";
+                }
+                if (nexusUnlinkedBadge) nexusUnlinkedBadge.classList.add("hidden");
+
+                // Lock fields and action buttons
+                setModalFieldsDisabled(true);
+
+                if (btnGuardarEl) {
+                    btnGuardarEl.disabled = true;
+                    btnGuardarEl.classList.add("opacity-50", "cursor-not-allowed", "pointer-events-none");
+                    btnGuardarEl.title = "Evento vinculado a Nexus Groups. Desvincúlalo para modificarlo.";
+                }
+                if (btnEliminarEl) {
+                    btnEliminarEl.disabled = true;
+                    btnEliminarEl.classList.add("opacity-50", "cursor-not-allowed", "pointer-events-none");
+                    btnEliminarEl.title = "Evento vinculado a Nexus Groups.";
+                }
+
+                const btnDup = document.getElementById("btnDuplicar");
+                if (btnDup) btnDup.classList.add("hidden");
+            } else if (isPast) {
                 const mt = document.getElementById("modalTitle");
                 if (mt) mt.innerText = "Reserva Pasada (Solo Lectura)";
 
-                // Disable Inputs
-                const inputs = document.querySelectorAll("#modalReserva input, #modalReserva select, #modalReserva textarea");
-                inputs.forEach(inp => inp.disabled = true);
+                setModalFieldsDisabled(true);
 
-                // Hide Buttons
-                const btnGuardar = document.getElementById("btnGuardar"); // Assuming ID, check HTML if needed or use querySelector
-                const btnAnular = document.getElementById("btnAnular");
+                if (btnGuardarEl) btnGuardarEl.style.display = 'none';
+                if (btnEliminarEl) btnEliminarEl.style.display = 'none';
 
-                // We can just hide the footer buttons or specific ones
-                if (btnGuardar) btnGuardar.style.display = 'none';
-                if (btnAnular) btnAnular.style.display = 'none';
+                if (isUnlinkedNexus && nexusUnlinkedBadge) {
+                    nexusUnlinkedBadge.classList.remove("hidden");
+                    if (nexusUnlinkedRef) nexusUnlinkedRef.innerText = nexusRef ? `Ref: ${nexusRef}` : "Desvinculado";
+                }
 
-                // But ensure "Close" works (it's usually X or separate button)
+                const btnDup = document.getElementById("btnDuplicar");
+                if (btnDup) btnDup.classList.add("hidden");
             } else {
                 const mt = document.getElementById("modalTitle");
-                if (mt) mt.innerText = "Editar Reserva";
-                // Ensure enabled if reused
-                const inputs = document.querySelectorAll("#modalReserva input, #modalReserva select, #modalReserva textarea");
-                inputs.forEach(inp => inp.disabled = false);
+                if (mt) mt.innerText = isUnlinkedNexus ? "Editar Reserva (Desvinculada de Nexus Groups)" : "Editar Reserva";
 
-                const btnGuardar = document.getElementById("btnGuardar"); // Re-show
-                const btnAnular = document.getElementById("btnAnular");
-                if (btnGuardar) btnGuardar.style.display = 'inline-block'; // Or block/flex
-                if (btnAnular) btnAnular.style.display = 'block';
+                setModalFieldsDisabled(false);
 
-                // [NEW] Show Duplicar Button when editing
+                if (isUnlinkedNexus) {
+                    if (nexusBanner) nexusBanner.classList.add("hidden");
+                    if (nexusUnlinkedBadge) {
+                        nexusUnlinkedBadge.classList.remove("hidden");
+                        if (nexusUnlinkedRef) nexusUnlinkedRef.innerText = nexusRef ? `Ref: ${nexusRef}` : "Desvinculado";
+                    }
+                }
+
+                if (btnGuardarEl) {
+                    btnGuardarEl.disabled = false;
+                    btnGuardarEl.classList.remove("opacity-50", "cursor-not-allowed", "pointer-events-none");
+                    btnGuardarEl.title = "";
+                    btnGuardarEl.style.display = 'inline-block';
+                }
+                if (btnEliminarEl) {
+                    btnEliminarEl.disabled = false;
+                    btnEliminarEl.classList.remove("opacity-50", "cursor-not-allowed", "pointer-events-none");
+                    btnEliminarEl.title = "";
+                    btnEliminarEl.style.display = 'block';
+                }
+
+                // Show Duplicar Button when editing
                 const btnDup = document.getElementById("btnDuplicar");
                 if (btnDup) btnDup.classList.remove("hidden");
             }
@@ -1500,7 +1630,103 @@
         alert(`📋 Se ha preparado la copia para el ${newDate} (${newJornada}). Revisa los datos y pulsa GUARDAR para finalizar.`);
     };
 
+    window.desvincularNexus = async function () {
+        if (!currentBookingId) return;
+        const existing = window._resRegistry[currentBookingId];
+        const refStr = getNexusRef(existing);
+
+        const confirmed = confirm(
+            `🔓 DESVINCULAR EVENTO DE NEXUS GROUPS\n\n` +
+            `Ref: ${refStr || currentBookingId}\n\n` +
+            `¿Estás seguro de que deseas desvincular este evento?\n\n` +
+            `• El vínculo con Nexus Groups se romperá de forma permanente.\n` +
+            `• A partir de ahora, todas las modificaciones se gestionarán exclusivamente desde MesaChef.\n` +
+            `• Las sincronizaciones de Nexus Groups NO sobreescribirán ni cancelarán este evento.\n` +
+            `• El ID de reserva en MesaChef (${currentBookingId}) se mantendrá intacto.`
+        );
+
+        if (!confirmed) return;
+
+        const btnDesvincular = document.getElementById("btnDesvincularNexus");
+        const originalHtml = btnDesvincular ? btnDesvincular.innerHTML : "";
+        if (btnDesvincular) {
+            btnDesvincular.disabled = true;
+            btnDesvincular.innerHTML = `<span>⏳</span> Desvinculando...`;
+        }
+
+        try {
+            const nowIso = new Date().toISOString();
+            const updatePayload = {
+                desvinculado: true,
+                vinculoRoto: true,
+                desvinculado_at: nowIso,
+                updated_at: nowIso
+            };
+
+            await db.collection("reservas_salones").doc(currentBookingId).update(updatePayload);
+
+            // Update local registry & existing object
+            if (window._resRegistry[currentBookingId]) {
+                window._resRegistry[currentBookingId].desvinculado = true;
+                window._resRegistry[currentBookingId].vinculoRoto = true;
+                window._resRegistry[currentBookingId].desvinculado_at = nowIso;
+            }
+            if (existing) {
+                existing.desvinculado = true;
+                existing.vinculoRoto = true;
+                existing.desvinculado_at = nowIso;
+            }
+
+            // Update UI
+            const nexusBanner = document.getElementById("nexus-banner");
+            const nexusUnlinkedBadge = document.getElementById("nexus-unlinked-badge");
+            const nexusUnlinkedRef = document.getElementById("nexus-unlinked-ref");
+            const btnGuardarEl = document.getElementById("btnGuardar");
+            const btnEliminarEl = document.getElementById("btnEliminar");
+
+            if (nexusBanner) nexusBanner.classList.add("hidden");
+            if (nexusUnlinkedBadge) {
+                nexusUnlinkedBadge.classList.remove("hidden");
+                if (nexusUnlinkedRef) nexusUnlinkedRef.innerText = refStr ? `Ref: ${refStr}` : "Desvinculado";
+            }
+
+            // Enable fields and buttons
+            setModalFieldsDisabled(false);
+
+            if (btnGuardarEl) {
+                btnGuardarEl.disabled = false;
+                btnGuardarEl.classList.remove("opacity-50", "cursor-not-allowed", "pointer-events-none");
+                btnGuardarEl.title = "";
+            }
+            if (btnEliminarEl) {
+                btnEliminarEl.disabled = false;
+                btnEliminarEl.classList.remove("opacity-50", "cursor-not-allowed", "pointer-events-none");
+                btnEliminarEl.title = "";
+            }
+
+            const mt = document.getElementById("modalTitle");
+            if (mt) mt.innerText = "Editar Reserva (Desvinculada de Nexus Groups)";
+
+            alert("✅ Evento desvinculado con éxito.\nAhora puedes modificar cualquier dato y guardarlo directamente desde MesaChef.");
+        } catch (err) {
+            console.error("Error al desvincular de Nexus Groups:", err);
+            alert("❌ Error al desvincular el evento: " + err.message);
+        } finally {
+            if (btnDesvincular) {
+                btnDesvincular.disabled = false;
+                btnDesvincular.innerHTML = originalHtml;
+            }
+        }
+    };
+
     window.addServiceRow = function () {
+        if (currentBookingId) {
+            const existing = window._resRegistry[currentBookingId];
+            if (isNexusLinked(existing)) {
+                alert("⛔ Este evento está vinculado a Nexus Groups. Desvincúlalo primero para poder añadir items.");
+                return;
+            }
+        }
         const row = document.createElement("tr");
         const defaultDate = window.currentViewDate || document.getElementById("evt-fecha").value;
         row.innerHTML = `
@@ -1718,6 +1944,14 @@
     window.saveBooking = async function () {
         const btn = document.querySelector("button[onclick='saveBooking()']");
         const originalText = btn ? btn.innerText : "GUARDAR";
+
+        if (currentBookingId) {
+            const existing = window._resRegistry[currentBookingId];
+            if (isNexusLinked(existing)) {
+                alert("⛔ Este evento está vinculado a Nexus Groups y está protegido contra edición directa.\n\nPara modificarlo desde MesaChef, haz clic primero en el botón 'Desvincular de Nexus Groups'.");
+                return;
+            }
+        }
         
         if (currentBookingId) {
             const key = prompt("Introduce la clave de seguridad:");
@@ -1776,6 +2010,18 @@
             presupuestoId: window.currentEventBudgetID || (currentBookingId ? (window._resRegistry[currentBookingId]?.presupuestoId || null) : null) || null,
             servicios: []
         };
+
+        // Preservar metadatos y origen de Nexus Groups al editar un evento desvinculado
+        if (currentBookingId) {
+            const existing = window._resRegistry[currentBookingId];
+            if (existing) {
+                if (existing.reservaId) payload.reservaId = existing.reservaId;
+                if (existing.origen) payload.origen = existing.origen;
+                if (existing.desvinculado) payload.desvinculado = true;
+                if (existing.vinculoRoto) payload.vinculoRoto = true;
+                if (existing.desvinculado_at) payload.desvinculado_at = existing.desvinculado_at;
+            }
+        }
 
         const visibleServicios = [];
         document.querySelectorAll("#services-list tr").forEach(row => {
@@ -1927,6 +2173,12 @@
 
     window.deleteBooking = async function () {
         if (!currentBookingId) return;
+
+        const existing = window._resRegistry[currentBookingId];
+        if (isNexusLinked(existing)) {
+            alert("⛔ Este evento está vinculado a Nexus Groups y no se puede anular desde MesaChef.\n\nPara gestionarlo aquí, debes desvincularlo primero con el botón 'Desvincular de Nexus Groups'.");
+            return;
+        }
 
         const key = prompt("Introduce la clave de seguridad para ANULAR:");
         if (key === null) return; // User cancelled prompt

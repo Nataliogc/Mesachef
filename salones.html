@@ -343,6 +343,32 @@
 
                     <div class="px-4 py-3 space-y-3 bg-white">
 
+                        <!-- NEXUS GROUPS BANNER -->
+                        <div id="nexus-banner" class="hidden bg-amber-50 border-l-4 border-amber-500 p-3 rounded-r-lg flex items-center justify-between shadow-sm">
+                            <div class="flex items-center gap-2.5">
+                                <span class="text-xl">🔒</span>
+                                <div>
+                                    <div class="text-xs font-bold text-amber-900 flex items-center gap-2">
+                                        <span>Evento vinculado a Nexus Groups</span>
+                                        <span id="nexus-ref-badge" class="bg-amber-200 text-amber-900 px-1.5 py-0.5 rounded text-[10px] font-mono font-bold"></span>
+                                    </div>
+                                    <div class="text-[11px] text-amber-700">Este evento proviene de Nexus Groups y está protegido contra edición directa. Para modificarlo en MesaChef, debes desvincularlo.</div>
+                                </div>
+                            </div>
+                            <button type="button" id="btnDesvincularNexus" onclick="window.desvincularNexus()" class="bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs py-1.5 px-3 rounded shadow transition flex items-center gap-1.5 shrink-0 ml-3">
+                                <span>🔓</span> Desvincular de Nexus Groups
+                            </button>
+                        </div>
+
+                        <!-- NEXUS UNLINKED BADGE -->
+                        <div id="nexus-unlinked-badge" class="hidden bg-emerald-50 border-l-4 border-emerald-500 p-2.5 rounded-r-lg flex items-center justify-between text-xs text-emerald-800 shadow-sm">
+                            <div class="flex items-center gap-2">
+                                <span class="text-base">🔓</span>
+                                <span class="font-bold">Evento desvinculado de Nexus Groups. Gestión exclusiva desde MesaChef.</span>
+                            </div>
+                            <span id="nexus-unlinked-ref" class="text-[10px] font-mono font-bold bg-emerald-100 text-emerald-900 px-2 py-0.5 rounded border border-emerald-200"></span>
+                        </div>
+
                         <!-- ROW 1: LOGISTICS (Fecha, Hora, Salón, Estado) -->
                         <div class="grid grid-cols-12 gap-3">
                             <div class="col-span-2">
@@ -450,7 +476,7 @@
                                 </table>
                             </div>
                             <div class="flex justify-between mt-1">
-                                <button onclick="addServiceRow()"
+                                <button type="button" id="btnAddService" onclick="addServiceRow()"
                                     class="text-blue-600 font-bold text-xs hover:underline">+ Añadir Item</button>
                             </div>
                         </div>
@@ -482,7 +508,7 @@
                     </div>
 
                     <div class="bg-gray-50 px-4 py-2 flex justify-between items-center border-t">
-                        <button class="text-red-400 hover:text-red-600 text-xs font-bold" onclick="deleteBooking()">🗑️
+                        <button id="btnEliminar" class="text-red-400 hover:text-red-600 text-xs font-bold" onclick="deleteBooking()">🗑️
                             Eliminar</button>
                         <div class="flex gap-2">
                             <button class="text-indigo-600 hover:text-indigo-800 text-xs font-bold mr-4"
@@ -490,8 +516,8 @@
                             <button
                                 class="bg-white text-gray-700 font-bold py-1 px-3 border rounded text-xs hover:bg-gray-50"
                                 onclick="closeModal()">Cancelar</button>
-                            <button
-                                class="bg-slate-800 text-white font-bold py-1 px-4 rounded text-xs hover:bg-black shadow"
+                            <button id="btnGuardar"
+                                class="bg-slate-800 text-white font-bold py-1 px-4 rounded text-xs hover:bg-black shadow transition"
                                 onclick="saveBooking()">GUARDAR</button>
                         </div>
                     </div>
@@ -510,7 +536,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-firestore-compat.js"></script>
     <script src="js/firebase-init.js"></script>
     <script src="js/app-common.js"></script>
-    <script src="js/salones.js?v=6.7"></script>
+    <script src="js/salones.js?v=6.8"></script>
 </body>
 
 </html>
