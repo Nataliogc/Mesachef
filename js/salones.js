@@ -50,6 +50,61 @@
     // Key used by index.html
     const STORAGE_KEY = "mesaChef_hotel";
 
+    function getActiveHotel() {
+        const raw = localStorage.getItem(STORAGE_KEY) || "Guadiana";
+        return (raw.toLowerCase().includes("cumbria")) ? "Cumbria" : "Guadiana";
+    }
+
+    function updateHeaderHotelDisplay(currentHotel) {
+        const hotel = currentHotel || getActiveHotel();
+        const headerName = document.getElementById("headerHotelName");
+        if (!headerName) return;
+
+        const isGuadiana = hotel === "Guadiana";
+        const logoSrc = isGuadiana ? "Img/logo-guadiana.svg" : "Img/logo-cumbria.svg";
+        const displayName = isGuadiana ? "Sercotel Guadiana" : "Cumbria Spa & Hotel";
+
+        headerName.innerHTML = `
+            <div class="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1 shadow-sm">
+                <img src="${logoSrc}" class="h-6 w-auto max-w-[100px] object-contain mr-1 shrink-0" alt="${displayName}">
+                <select id="hotelSwitcherSelect" class="text-xs font-bold text-slate-800 bg-transparent border-none py-0 pl-1 pr-6 cursor-pointer focus:ring-0 outline-none">
+                    <option value="Guadiana" ${isGuadiana ? 'selected' : ''}>Sercotel Guadiana</option>
+                    <option value="Cumbria" ${!isGuadiana ? 'selected' : ''}>Cumbria Spa & Hotel</option>
+                </select>
+            </div>
+        `;
+
+        const selectEl = document.getElementById("hotelSwitcherSelect");
+        if (selectEl) {
+            selectEl.addEventListener("change", (e) => {
+                setActiveHotel(e.target.value);
+            });
+        }
+    }
+
+    function setActiveHotel(hotelName) {
+        const norm = (hotelName || "").toLowerCase().includes("cumbria") ? "Cumbria" : "Guadiana";
+        localStorage.setItem(STORAGE_KEY, norm);
+        updateHeaderHotelDisplay(norm);
+        if (globalConfig) {
+            populateDatalist();
+            renderGrid();
+        }
+    }
+
+    window.addEventListener("storage", (e) => {
+        if (e.key === STORAGE_KEY && e.newValue) {
+            const newNorm = e.newValue.toLowerCase().includes("cumbria") ? "Cumbria" : "Guadiana";
+            if (newNorm !== getActiveHotel()) {
+                updateHeaderHotelDisplay(newNorm);
+                if (globalConfig) {
+                    populateDatalist();
+                    renderGrid();
+                }
+            }
+        }
+    });
+
     const utils = window.MesaChef || {
         getWeekDates: (d) => {
             const start = new Date(d);
@@ -79,15 +134,14 @@
         console.log("Salones: Iniciando aplicación...");
         db = firebase.firestore();
 
-        // 1. HOTEL IDENTITY & LOGO
-        const currentHotel = localStorage.getItem(STORAGE_KEY) || "Guadiana";
-        const headerName = document.getElementById("headerHotelName");
-
-        if (headerName) {
-            const logoSrc = currentHotel === "Guadiana" ? "Img/logo-guadiana.svg" : "Img/logo-cumbria.svg";
-            const displayName = currentHotel === "Guadiana" ? "Sercotel Guadiana" : "Cumbria Spa & Hotel";
-            headerName.innerHTML = `<div class="flex items-center overflow-hidden"><img src="${logoSrc}" class="h-8 w-auto max-w-[120px] object-contain mr-2 shrink-0"> <span class="truncate whitespace-nowrap">${displayName}</span></div>`;
+        // 1. URL OVERRIDE & HOTEL IDENTITY
+        const urlParams = new URLSearchParams(window.location.search);
+        const hotelParam = urlParams.get('hotel');
+        if (hotelParam) {
+            const normParam = hotelParam.toLowerCase().includes("cumbria") ? "Cumbria" : "Guadiana";
+            localStorage.setItem(STORAGE_KEY, normParam);
         }
+        updateHeaderHotelDisplay(getActiveHotel());
 
         // 2. LOAD CONFIG
         db.collection("master_data").doc("CONFIG_SALONES").get().then(doc => {
@@ -109,7 +163,7 @@
         const dl = document.getElementById("charge-options");
         if (!dl || !globalConfig) return;
 
-        const hotel = localStorage.getItem(STORAGE_KEY) || "Guadiana";
+        const hotel = getActiveHotel();
         let html = "";
 
         // 1. Add Salon Rental Options (Filtered)
@@ -187,7 +241,7 @@
     }
 
     window.renderGrid = function () {
-        const hotel = localStorage.getItem(STORAGE_KEY) || "Guadiana";
+        const hotel = getActiveHotel();
         const container = document.getElementById("calendarGrid");
         if (!container) return;
 
@@ -345,7 +399,7 @@
         if (unsubscribe) unsubscribe();
         loadedReservations = [];
 
-        const hotel = localStorage.getItem(STORAGE_KEY) || "Guadiana";
+        const hotel = getActiveHotel();
         const dates = utils.getWeekDates(currentWeekStart);
         const start = utils.toIsoDate(dates[0]);
         const end = utils.toIsoDate(dates[6]);
@@ -363,9 +417,8 @@
                 snapshot.forEach(doc => {
                     const data = doc.data();
                     const hDoc = normalize(data.hotel);
-                    // LANIENT FILTER: Match printReport logic - if hotel is set and doesn't match, skip.
-                    // If hotel is missing, we allow it to proceed to Salon mapping.
-                    if (hDoc && hDoc !== hLocal) return;
+                    // STRICT FILTER: Only load reservations that strictly belong to current hotel
+                    if (!hDoc || hDoc !== hLocal) return;
                     
                     loadedReservations.push({ id: doc.id, ...data });
                 });
@@ -817,7 +870,7 @@
         if (hasLoadedAll) return Promise.resolve();
         if (fetchPromise) return fetchPromise;
 
-        const hotel = localStorage.getItem(STORAGE_KEY) || "Guadiana";
+        const hotel = getActiveHotel();
         const container = document.getElementById("searchResults");
 
         if (container) {
@@ -925,7 +978,7 @@
     let currentBookingId = null;
 
     window.openBooking = function (salonName, dateStr, existing = null, defaultJornada = 'todo') {
-        const currentHotel = localStorage.getItem(STORAGE_KEY) || "Guadiana";
+        const currentHotel = getActiveHotel();
 
         // [NEW] Redirect Grand Events
         if (existing && (existing.origen === 'grandes_eventos' || existing.tipoEvento === 'Gran Evento')) {
@@ -1477,7 +1530,7 @@
     };
 
     window.updateRentalPrice = function (forceUpdateConcept = false) {
-        const hotel = localStorage.getItem(STORAGE_KEY) || "Guadiana";
+        const hotel = getActiveHotel();
         const salonName = document.getElementById("evt-salon").value;
         const jornada = document.getElementById("evt-jornada").value;
 
@@ -1646,7 +1699,7 @@
         }
 
         const payload = {
-            hotel: localStorage.getItem(STORAGE_KEY) || "Guadiana",
+            hotel: getActiveHotel(),
             fecha: document.getElementById("evt-fecha").value,
             salon: document.getElementById("evt-salon").value,
             cliente: cliente,
@@ -1865,7 +1918,7 @@
     };
 
     window.printReport = function (mode) {
-        const hotel = localStorage.getItem(STORAGE_KEY) || "Guadiana";
+        const hotel = getActiveHotel();
         const dates = utils.getWeekDates(currentWeekStart);
         let title = "";
         let filterFn;
