@@ -348,13 +348,6 @@
 
                         const maOnClick = isPast ? "" : `onclick="window.openBooking('${safeName}', '${dateStr}', null, 'mañana')"`;
                         const taOnClick = isPast ? "" : `onclick="window.openBooking('${safeName}', '${dateStr}', null, 'tarde')"`;
-                        const addButton = isPast ? "" : `
-                                    <button onclick="window.openBooking('${safeName}', '${dateStr}')" 
-                                        class="absolute top-1 right-1 w-6 h-6 flex items-center justify-center bg-blue-50 text-blue-600 rounded-full shadow-sm opacity-0 group-hover:opacity-100 transition z-30 hover:bg-blue-600 hover:text-white font-bold pb-0.5"
-                                        title="Añadir evento">
-                                        +
-                                    </button>`;
-
                         const slotMaText = isPast ? '-' : (isRteRow ? '<span class="text-xl filter drop-shadow-sm">☀️</span>' : 'LIBRE');
                         const slotTaText = isPast ? '-' : (isRteRow ? '<span class="text-lg filter drop-shadow-sm">🌙</span>' : 'LIBRE');
 
@@ -376,9 +369,6 @@
                                          class="relative flex items-center justify-center text-[9px] font-bold uppercase tracking-tight transition ${interactionClass} ${slotRteClass}">
                                          ${slotTaText}
                                     </div>
-                                    
-                                    <!-- Floating Add Button (Universal) -->
-                                    ${addButton}
                                   </div>`;
                     }
                 });
@@ -460,7 +450,6 @@
                     <div onclick="${isPast ? '' : `window.openBooking('${s}', '${d}', null, 'tarde')`}" class="flex items-center justify-center font-bold uppercase tracking-tight transition ${interactionClass} ${isRte && !isPast ? slotRteClass : ''}">
                         <span class="${iconSize} ${opacityClass}">${slotTaText}</span>
                     </div>
-                    <button onclick="window.openBooking('${s}', '${d}')" class="absolute top-1 right-1 w-6 h-6 flex items-center justify-center bg-blue-50 text-blue-600 rounded-full shadow-sm opacity-0 group-hover:opacity-100 transition z-30 hover:bg-blue-600 hover:text-white font-bold pb-0.5" title="Añadir evento">+</button>
                  `;
             }
         });
@@ -571,8 +560,6 @@
             const slotMañana = `<div ${maOnClick} class="relative flex items-center justify-center font-bold uppercase tracking-widest transition border-b border-transparent hover:border-slate-100 ${interactionClass}"><span class="${iconSize} ${opacityClass}">${slotMaText}</span></div>`;
             const slotTarde = `<div ${taOnClick} class="relative flex items-center justify-center font-bold uppercase tracking-widest transition ${interactionClass}"><span class="${iconSize} ${opacityClass}">${slotTaText}</span></div>`;
 
-            const staticAddBtn = isPast ? "" : `<button ${cellOnClick} class="absolute top-1 right-1 w-6 h-6 flex items-center justify-center bg-blue-50 text-blue-600 rounded-full shadow-sm opacity-0 group-hover:opacity-100 transition z-30 hover:bg-blue-600 hover:text-white font-bold pb-0.5" title="Añadir evento">+</button>`;
-
             let htmlFinal = "";
 
             // [NEW] MULTI-SERVICE EXCEPTION: Eventos Restaurante
@@ -651,7 +638,6 @@
                 }
             }
 
-            htmlFinal += staticAddBtn;
             cell.innerHTML = htmlFinal;
         } catch (cellErr) {
             console.error("Error pintando celda para clave:", key, cellErr);
