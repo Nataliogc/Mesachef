@@ -555,7 +555,7 @@
             salonMap["eventosalarcos"] = canonicalRteName;
             salonMap["eventosgruposalarcos"] = canonicalRteName;
             salonMap["gruposalarcos"] = canonicalRteName;
-            salonMap["restaurante"] = canonicalRteName;
+
             salonMap["eventosrestaurante"] = canonicalRteName;
         }
 
@@ -563,6 +563,8 @@
         const unmappedEvents = [];
 
         loadedReservations.forEach(res => {
+            // Restaurante se gestiona en su propio cuadrante, también si procede de Nexus.
+            if (window.EventLocation.isRestaurant(res.salon)) return;
             const st = (res.estado || "").toLowerCase();
             const isConfirmed = st === 'confirmada' || st === 'confirmed';
             const isPending = st === 'provisional' || st === 'pendiente' || st === 'pending' || st === 'presupuesto';
@@ -2148,6 +2150,11 @@
             }
 
             if (currentBookingId) {
+                // Recordar el salón para poder deshacer el traslado desde Restaurante.
+                const previous = window._resRegistry && window._resRegistry[currentBookingId];
+                if (window.EventLocation.isRestaurant(payload.salon) && previous && previous.salon && !window.EventLocation.isRestaurant(previous.salon)) {
+                    payload.salonAnterior = previous.salon;
+                }
                 // Update existing
                 payload.updated_at = new Date().toISOString();
                 await db.collection("reservas_salones").doc(currentBookingId).set(payload, { merge: true });

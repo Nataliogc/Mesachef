@@ -818,6 +818,9 @@
 
     // 1. Process explicit restaurant bookings
     rawRestauranteDocs.forEach(r => {
+      const sourceId = r.salonBookingId || (r.id?.startsWith('salon_') ? r.id.slice(6) : null);
+      const source = sourceId && rawSalonesDocs.find(doc => doc.id === sourceId);
+      if (source && !window.EventLocation.isRestaurant(source.salon)) return;
       combined.push(r);
       if (r.salonBookingId) {
         seenSalonIds.add(r.salonBookingId);
@@ -1630,6 +1633,7 @@
       }
     });
 
+    configureReturnToEvents(data, isReadOnly);
     const modalTitle = document.getElementById("modalTitle");
     if (modalTitle) {
       if (isReadOnly) {
@@ -1688,6 +1692,66 @@
 
   window.closeModal = function () {
     document.getElementById("modalReserva").classList.add("hidden");
+  };
+
+  let returnEventsRequest = 0;
+  let returnEventsBookingId = null;
+  async function configureReturnToEvents(data, isReadOnly) {
+    const request = ++returnEventsRequest;
+    const panel = document.getElementById('returnToEvents');
+    panel.classList.add('hidden');
+    returnEventsBookingId = null;
+    const bookingId = data?.salonBookingId || (data?.id?.startsWith('salon_') ? data.id.slice(6) : null);
+    if (!bookingId || isReadOnly) return;
+    const button = document.getElementById('btnReturnEvents');
+    const select = document.getElementById('returnSalon');
+    const error = document.getElementById('returnEventsError');
+    panel.classList.remove('hidden');
+    button.disabled = true;
+    select.replaceChildren();
+    error.textContent = 'Cargando salones…';
+    try {
+      const [source, config] = await Promise.all([
+        db.collection('reservas_salones').doc(bookingId).get(),
+        db.collection('master_data').doc('CONFIG_SALONES').get()
+      ]);
+      if (request !== returnEventsRequest) return;
+      if (!source.exists || !window.EventLocation.isRestaurant(source.data().salon)) {
+        panel.classList.add('hidden');
+        return;
+      }
+      const record = source.data();
+      const hotel = record.hotel || localStorage.getItem(STORAGE_KEY) || 'Guadiana';
+      const salons = (config.exists && config.data()[hotel]) || [];
+      const names = salons.filter(s => s.active !== false && !window.EventLocation.isRestaurant(s.name)).map(s => s.name).filter(Boolean);
+      if (record.salonAnterior && names.includes(record.salonAnterior)) {
+        names.splice(names.indexOf(record.salonAnterior), 1);
+        names.unshift(record.salonAnterior);
+      }
+      names.forEach(name => select.add(new Option(name, name)));
+      returnEventsBookingId = bookingId;
+      error.textContent = names.length ? '' : 'No hay salones activos configurados para este hotel.';
+      button.disabled = !names.length;
+    } catch (err) {
+      if (request === returnEventsRequest) error.textContent = 'No se han podido cargar los salones: ' + err.message;
+    }
+  }
+
+  window.returnReservationToEvents = async function () {
+    const bookingId = returnEventsBookingId;
+    const salon = document.getElementById('returnSalon').value;
+    if (!bookingId || !salon) return;
+    const button = document.getElementById('btnReturnEvents');
+    button.disabled = true;
+    try {
+      await window.EventLocation.returnToEvents(db, bookingId, salon);
+      closeModal();
+      alert('Reserva trasladada a Eventos: ' + salon);
+    } catch (err) {
+      document.getElementById('returnEventsError').textContent = 'No se ha podido trasladar: ' + err.message;
+    } finally {
+      button.disabled = false;
+    }
   };
 
   window.saveReservation = async function (e) {
