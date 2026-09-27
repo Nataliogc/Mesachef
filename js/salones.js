@@ -1618,7 +1618,7 @@
             const key = prompt("Introduce la clave de seguridad:");
             if (key === null) return; 
             if (key !== "Mreserva") {
-                alert("Clave incorrecta (v5.5)");
+                alert("Clave incorrecta (v6.0)");
                 return;
             }
         }
