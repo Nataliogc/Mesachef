@@ -223,9 +223,9 @@
             globalConfig[hotel].forEach(s => {
                 if (s.active !== false) {
                     const isRte = isRestauranteStyle(s.name);
-                    const sDisplayName = (hotel === "Guadiana" && isRte) ? "Restaurante" : s.name;
+                    const sDisplayName = s.name;
                     // Filter: Show only if no filter is set OR matches selected salon
-                    if (!salonFilter || s.name === salonFilter || (isRte && (salonFilter === "Restaurante" || isRestauranteStyle(salonFilter)))) {
+                    if (!salonFilter || s.name === salonFilter || (isRte && isRestauranteStyle(salonFilter))) {
                         if (isRte) {
                             html += `<option value="Grupo ${sDisplayName} - almuerzo">`;
                             html += `<option value="Grupo ${sDisplayName} - cena">`;
@@ -374,7 +374,7 @@
                 const isOddRow = index % 2 === 1;
                 const rowBg = isOddRow ? '#f0f5ff' : '#ffffff';
                 const nameCellBg = isRteRow ? 'bg-indigo-600 text-white' : (isOddRow ? 'bg-blue-50/60 text-slate-700' : 'bg-white text-slate-700');
-                const salonDisplayName = (hotel === "Guadiana" && isRteRow) ? "Restaurante" : salon.name;
+                const salonDisplayName = salon.name;
 
                 html += `<div style="display: grid; grid-template-columns: 200px repeat(7, 1fr); background: ${rowBg}; ${isLast ? '' : 'border-bottom: 1px solid #e2e8f0;'}">
                     <div class="${nameCellBg} p-2 font-bold flex flex-col justify-center border-r border-slate-100 relative group transition-colors">
@@ -384,7 +384,7 @@
 
                 dates.forEach(d => {
                     const dateStr = utils.toIsoDate(d);
-                    const safeName = (hotel === "Guadiana" && isRteRow) ? "Restaurante" : salon.name.replace(/'/g, "\\'");
+                    const safeName = salon.name.replace(/'/g, "\\'");
 
                     // Check Block
                     let isBlocked = false;
@@ -541,10 +541,13 @@
 
         if (hotel === "Guadiana") {
             const rteSalon = (globalConfig.Guadiana || []).find(s => isRestauranteStyle(s.name));
-            const canonicalRteName = rteSalon ? rteSalon.name : "Restaurante";
-            salonMap["restaurante"] = canonicalRteName;
+            const canonicalRteName = rteSalon ? rteSalon.name : "Alarcos Eventos";
+            salonMap["alarcoseventos"] = canonicalRteName;
+            salonMap["eventosalarcos"] = canonicalRteName;
+            salonMap["alarcos"] = canonicalRteName;
             salonMap["eventosgruposalarcos"] = canonicalRteName;
             salonMap["gruposalarcos"] = canonicalRteName;
+            salonMap["restaurante"] = canonicalRteName;
             salonMap["eventosrestaurante"] = canonicalRteName;
         }
 
@@ -590,7 +593,7 @@
 
             if (!canonicalName && hotel === "Guadiana" && isRestauranteStyle(res.salon)) {
                 const rteSalon = (globalConfig.Guadiana || []).find(s => isRestauranteStyle(s.name));
-                canonicalName = rteSalon ? rteSalon.name : "Restaurante";
+                canonicalName = rteSalon ? rteSalon.name : "Alarcos Eventos";
             }
 
             if (!canonicalName) {
@@ -1150,29 +1153,14 @@
 
 
         const salons = globalConfig[currentHotel] || [];
-        let hasRteOption = false;
 
         salons.forEach(s => {
             if (s.active === false) return;
             const op = document.createElement("option");
-            const isRte = isRestauranteStyle(s.name);
-            if (currentHotel === "Guadiana" && isRte) {
-                op.value = "Restaurante";
-                op.text = "Restaurante";
-                hasRteOption = true;
-            } else {
-                op.value = s.name;
-                op.text = s.name;
-            }
+            op.value = s.name;
+            op.text = s.name;
             sSel.appendChild(op);
         });
-
-        if (currentHotel === "Guadiana" && !hasRteOption) {
-            const op = document.createElement("option");
-            op.value = "Restaurante";
-            op.text = "Restaurante";
-            sSel.insertBefore(op, sSel.firstChild);
-        }
 
         if (globalConfig.montajes && mList) {
             globalConfig.montajes.forEach(m => {
@@ -1284,9 +1272,7 @@
         document.getElementById("evt-jornada").value = defaultJornada;
 
         if (!existing) {
-            if (currentHotel === "Guadiana" && isRestauranteStyle(salonName)) {
-                sSel.value = "Restaurante";
-            } else if (salonName) {
+            if (salonName) {
                 sSel.value = salonName;
             }
             populateDatalist(sSel.value);
@@ -1305,13 +1291,10 @@
             document.getElementById("evt-fecha").value = existing.fecha;
             window.currentViewDate = dateStr || existing.fecha; // Store view date
 
-            if (currentHotel === "Guadiana" && isRestauranteStyle(existing.salon)) {
-                sSel.value = "Restaurante";
-            } else {
-                sSel.value = existing.salon;
-            }
+            sSel.value = existing.salon;
             if (!sSel.value && currentHotel === "Guadiana" && isRestauranteStyle(existing.salon)) {
-                sSel.value = "Restaurante";
+                const rteSalon = (globalConfig.Guadiana || []).find(s => isRestauranteStyle(s.name));
+                sSel.value = rteSalon ? rteSalon.name : "Alarcos Eventos";
             }
             populateDatalist(sSel.value || existing.salon); // Filter for this salon
             document.getElementById("evt-nombre").value = existing.cliente;
@@ -1828,7 +1811,7 @@
         const jName = jornada.charAt(0).toUpperCase() + jornada.slice(1);
         
         // Dynamic Concept: "Grupo [Nombre]" instead of "Alquiler Salón [Nombre]"
-        const cleanSalon = isRte ? "Restaurante" : salonName.replace(/^(Eventos\s+Grupos|Eventos|Grupos)\s+/i, '');
+        const cleanSalon = isRte ? (hotel === "Guadiana" ? salonName : "Restaurante") : salonName.replace(/^(Eventos\s+Grupos|Eventos|Grupos)\s+/i, '');
         const defaultConcept = isRte ? `Grupo ${cleanSalon} - ${jName}` : `Alquiler Salón ${salonName} - ${jornada}`;
 
         const paxA = parseFloat(document.getElementById("evt-pax-a").value) || 0;
@@ -1852,7 +1835,7 @@
                 inp.value = defaultConcept;
             } else if (inp.value) {
                 let cleaned = inp.value;
-                cleaned = cleaned.replace(/Grupo\s+(Eventos\s+Grupos|Eventos|Grupos|Alarcos)\s+/i, 'Grupo Restaurante ');
+                cleaned = cleaned.replace(/Grupo\s+(Eventos\s+Grupos|Eventos|Grupos|Alarcos)\s+/i, hotel === "Guadiana" ? `Grupo ${cleanSalon} ` : 'Grupo Restaurante ');
                 cleaned = cleaned.replace(/\s+/g, ' ').trim();
                 inp.value = cleaned;
             }
@@ -1874,7 +1857,7 @@
                     inp.value = `Grupo ${cleanSalon} - ${jName} (Niños)`;
                 } else if (inp.value) {
                     let cleaned = inp.value;
-                    cleaned = cleaned.replace(/Grupo\s+(Eventos\s+Grupos|Eventos|Grupos|Alarcos)\s+/i, 'Grupo Restaurante ');
+                    cleaned = cleaned.replace(/Grupo\s+(Eventos\s+Grupos|Eventos|Grupos|Alarcos)\s+/i, hotel === "Guadiana" ? `Grupo ${cleanSalon} ` : 'Grupo Restaurante ');
                     cleaned = cleaned.replace(/\s+/g, ' ').trim();
                     inp.value = cleaned;
                 }
@@ -2335,9 +2318,6 @@
 
                 const time = r.detalles?.hora || "--:--";
                 let space = r.salon || "Salon";
-                if (hotel === "Guadiana" && isRestauranteStyle(space)) {
-                    space = "Restaurante";
-                }
                 const spaceAbbr = space.substring(0, 15) + (space.length > 15 ? '.' : '');
                 const clientName = r.cliente || "Sin Nombre";
                 const montaje = r.detalles?.montaje || "-";
