@@ -234,6 +234,15 @@
                             html += `<option value="Grupo ${sDisplayName} - todo">`;
                             html += `<option value="Grupo ${sDisplayName} - almuerzo (Niños)">`;
                             html += `<option value="Grupo ${sDisplayName} - cena (Niños)">`;
+                            if (hotel === "Guadiana" && sDisplayName.toLowerCase() !== "restaurante") {
+                                html += `<option value="Grupo Restaurante - almuerzo">`;
+                                html += `<option value="Grupo Restaurante - cena">`;
+                                html += `<option value="Grupo Restaurante - mañana">`;
+                                html += `<option value="Grupo Restaurante - tarde">`;
+                                html += `<option value="Grupo Restaurante - todo">`;
+                                html += `<option value="Grupo Restaurante - almuerzo (Niños)">`;
+                                html += `<option value="Grupo Restaurante - cena (Niños)">`;
+                            }
                         } else {
                             html += `<option value="Alquiler Salón ${s.name} - todo">`;
                             html += `<option value="Alquiler Salón ${s.name} - mañana">`;
@@ -1153,14 +1162,29 @@
 
 
         const salons = globalConfig[currentHotel] || [];
+        let hasRestauranteOption = false;
 
         salons.forEach(s => {
             if (s.active === false) return;
+            if (s.name.toLowerCase() === "restaurante") hasRestauranteOption = true;
             const op = document.createElement("option");
             op.value = s.name;
             op.text = s.name;
             sSel.appendChild(op);
         });
+
+        // En Guadiana y solo en Guadiana, permitir cambiar cualquier evento a "Restaurante"
+        if (currentHotel === "Guadiana" && !hasRestauranteOption) {
+            const op = document.createElement("option");
+            op.value = "Restaurante";
+            op.text = "Restaurante";
+            const alarcosIdx = Array.from(sSel.options).findIndex(o => isRestauranteStyle(o.value));
+            if (alarcosIdx >= 0 && alarcosIdx < sSel.options.length - 1) {
+                sSel.insertBefore(op, sSel.options[alarcosIdx + 1]);
+            } else {
+                sSel.appendChild(op);
+            }
+        }
 
         if (globalConfig.montajes && mList) {
             globalConfig.montajes.forEach(m => {
