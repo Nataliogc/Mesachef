@@ -815,7 +815,7 @@
                     <div class="font-bold truncate leading-tight flex-1" title="${safeCliente}">${isRte ? '🍽️ ' : ''}${safeCliente}</div>
                     <div class="text-[11px]">${noteStr}</div>
                 </div>
-                ${res.estado === 'presupuesto' ? `<div class="text-[9px] font-bold text-orange-700 bg-orange-200/60 px-1 py-0.5 rounded w-fit mt-0.5 uppercase tracking-wide">⚠️ Pendiente de Confirmar</div>` : ''}
+                ${(res.estado === 'presupuesto' || res.estado === 'provisional' || res.estado === 'pendiente') ? `<div class="text-[9px] font-bold text-orange-700 bg-orange-200/60 px-1 py-0.5 rounded w-fit mt-0.5 uppercase tracking-wide">⚠️ Pendiente de Confirmar</div>` : ''}
                 <div class="flex justify-between items-center mt-1 text-[11px]">
                      <div class="flex items-center gap-1">
                          <span class="text-[10px] font-extrabold uppercase tracking-tight leading-none px-1 py-0.5 rounded ${jClass}">${jText}</span>
