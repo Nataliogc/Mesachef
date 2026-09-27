@@ -589,7 +589,7 @@
           loadedReservations.forEach(r => {
             if (r.hotel && r.hotel !== currentHotel) return;
             const st = (r.estado || 'pendiente').toLowerCase();
-            if (st === 'anulada') return;
+            if (st === 'anulada' || st === 'cancelada') return;
 
             let rDate = "";
             if (r.fecha && r.fecha.toDate) rDate = utils.toIsoDate(r.fecha.toDate());
@@ -728,48 +728,163 @@
     }
   }
 
-  let unsubscribe = null;
+  let unsubscribeRestaurante = null;
+  let unsubscribeSalones = null;
+  let rawRestauranteDocs = [];
+  let rawSalonesDocs = [];
+
+  function mapSalonDocToRestaurante(d) {
+    const paxA = parseInt(d.detalles?.pax_adultos) || 0;
+    const paxN = parseInt(d.detalles?.pax_ninos) || 0;
+    const totalPax = paxA + paxN;
+
+    let precioAdulto = 0;
+    let precioNinos = 0;
+    let totalImporte = 0;
+
+    if (Array.isArray(d.servicios) && d.servicios.length > 0) {
+      d.servicios.forEach(s => {
+        totalImporte += (parseFloat(s.total) || 0);
+        const conc = (s.concepto || "").toLowerCase();
+        if (conc.includes("niño") || conc.includes("infantil")) {
+          if (!precioNinos && s.precio) precioNinos = parseFloat(s.precio) || 0;
+        } else {
+          if (!precioAdulto && s.precio) precioAdulto = parseFloat(s.precio) || 0;
+        }
+      });
+    }
+
+    let turno = "almuerzo";
+    const j = (d.detalles?.jornada || "").toLowerCase();
+    const h = d.detalles?.hora || "";
+    const hourNum = parseInt((h.split(":")[0] || "0"), 10);
+    if (j.includes("cena") || j.includes("tarde") || hourNum >= 19) {
+      turno = "cena";
+    }
+
+    let notasCombined = "";
+    if (typeof d.notas === "string") {
+      notasCombined = d.notas;
+    } else if (d.notas && typeof d.notas === "object") {
+      const parts = [];
+      if (d.notas.interna) parts.push(d.notas.interna);
+      if (d.notas.cliente) parts.push("Nota cliente: " + d.notas.cliente);
+      notasCombined = parts.join(" | ");
+    }
+    if (d.detalles?.montaje) {
+      notasCombined = (notasCombined ? notasCombined + " | " : "") + `Montaje: ${d.detalles.montaje}`;
+    }
+
+    let fechaVal = d.fecha;
+    if (fechaVal && fechaVal.toDate) {
+      fechaVal = utils.toIsoDate(fechaVal.toDate());
+    }
+
+    return {
+      id: "salon_" + d.id,
+      salonBookingId: d.id,
+      _isFromSalones: true,
+      hotel: d.hotel,
+      espacio: "Restaurante",
+      fecha: fechaVal,
+      hora: d.detalles?.hora || (turno === "cena" ? "21:00" : "14:00"),
+      turno: turno,
+      nombre: d.cliente || "Evento Salón",
+      cliente: d.cliente,
+      telefono: d.contact?.tel || "",
+      email: d.contact?.email || "",
+      pax: totalPax || 1,
+      paxAdultos: paxA,
+      ninos: paxN,
+      precio: precioAdulto,
+      precioAdulto: precioAdulto,
+      precioPorPersona: precioAdulto,
+      precioNinos: precioNinos,
+      total: totalImporte,
+      importeTotal: totalImporte,
+      estado: d.estado || "confirmada",
+      notas: notasCombined,
+      servicioIncluido: !!d.detalles?.incluido,
+      referencia: d.referenciaPresupuesto || (d.reservaId ? String(d.reservaId) : d.id),
+      createdAt: d.created_at || d.createdAt || null,
+      updatedAt: d.updated_at || d.updatedAt || null
+    };
+  }
+
+  function combineAndRenderReservations() {
+    const currentHotel = localStorage.getItem(STORAGE_KEY) || "Guadiana";
+    const combined = [];
+    const seenSalonIds = new Set();
+
+    // 1. Process explicit restaurant bookings
+    rawRestauranteDocs.forEach(r => {
+      combined.push(r);
+      if (r.salonBookingId) {
+        seenSalonIds.add(r.salonBookingId);
+      }
+      if (r.id && r.id.startsWith("salon_")) {
+        seenSalonIds.add(r.id.replace("salon_", ""));
+      }
+    });
+
+    // 2. Process salon bookings assigned to "Restaurante"
+    rawSalonesDocs.forEach(sDoc => {
+      const sHotel = sDoc.hotel || currentHotel;
+      if (sHotel !== currentHotel) return;
+
+      const salonName = (sDoc.salon || "").trim().toLowerCase();
+      if (salonName !== "restaurante") return;
+
+      // Skip if already in rawRestauranteDocs
+      if (seenSalonIds.has(sDoc.id)) return;
+
+      const mapped = mapSalonDocToRestaurante(sDoc);
+      combined.push(mapped);
+    });
+
+    loadedReservations = combined;
+    console.log("DEBUG: Loaded", loadedReservations.length, "reservations (restaurante + salones)");
+
+    // [UX] Feedback to User
+    const connStatus = document.getElementById("connStatus");
+    if (connStatus) {
+      const span = connStatus.querySelector("span");
+      if (span) span.innerText = "Online";
+    }
+
+    renderGridStructure();
+  }
 
   function loadReservations() {
-    if (unsubscribe) unsubscribe();
+    if (unsubscribeRestaurante) unsubscribeRestaurante();
+    if (unsubscribeSalones) unsubscribeSalones();
     console.log("DEBUG: loadReservations started");
 
-    // Calculate start/end of current week view
-    const dates = utils.getWeekDates(currentWeekStart);
-    const start = utils.toIsoDate(dates[0]);
-    const end = utils.toIsoDate(dates[6]);
     const hotel = localStorage.getItem(STORAGE_KEY) || "Guadiana";
 
-    console.log(`DEBUG: Querying ${hotel} from ${start} to ${end}`);
-
-    unsubscribe = db.collection("reservas_restaurante")
+    unsubscribeRestaurante = db.collection("reservas_restaurante")
       .where("hotel", "==", hotel)
-      // Removed date filter to avoid 'Requires Index' error. 
-      // Filtering is done client-side in paintReservations.
       .onSnapshot(snapshot => {
-        loadedReservations = [];
+        rawRestauranteDocs = [];
         snapshot.forEach(doc => {
-          loadedReservations.push({ id: doc.id, ...doc.data() });
+          rawRestauranteDocs.push({ id: doc.id, ...doc.data() });
         });
-
-        console.log("DEBUG: Loaded", loadedReservations.length, "reservations");
-
-        // [UX] Feedback to User
-        const connStatus = document.getElementById("connStatus");
-        if (connStatus) {
-          const span = connStatus.querySelector("span");
-          if (span) span.innerText = "Online";
-        }
-
-        // Re-render grid structure (totals) AND paint cards
-        renderGridStructure();
-        // renderGridStructure calls paintReservations if we fix the logic there,
-        // OR we just call paintReservations here.
-        // renderGridStructure calculates totals based on loadedReservations.
-        // So calling it IS necessary to update headers.
+        combineAndRenderReservations();
       }, err => {
-        console.error("DEBUG: Load Error", err);
-        logUI("Error cargando reservas: " + err.message);
+        console.error("DEBUG: Load Error reservas_restaurante", err);
+        logUI("Error cargando restaurante: " + err.message);
+      });
+
+    unsubscribeSalones = db.collection("reservas_salones")
+      .where("hotel", "==", hotel)
+      .onSnapshot(snapshot => {
+        rawSalonesDocs = [];
+        snapshot.forEach(doc => {
+          rawSalonesDocs.push({ id: doc.id, ...doc.data() });
+        });
+        combineAndRenderReservations();
+      }, err => {
+        console.error("DEBUG: Load Error reservas_salones", err);
       });
   }
 
@@ -935,7 +1050,9 @@
       // 3. Status Filter
       const rStatus = (r.estado || "pendiente").toLowerCase();
       if (filterStatus === 'activos') {
-        if (rStatus === 'anulada' || rStatus === 'no-presentado') return;
+        if (rStatus === 'anulada' || rStatus === 'no-presentado' || rStatus === 'cancelada') return;
+      } else if (filterStatus === 'anulada') {
+        if (rStatus !== 'anulada' && rStatus !== 'cancelada') return;
       } else if (filterStatus !== 'todas') {
         if (rStatus !== filterStatus) return;
       }
@@ -964,8 +1081,15 @@
         const div = document.createElement("div");
         let border = 'border-l-[3px] border-amber-300';
         if (rStatus === 'confirmada') border = 'border-l-[3px] border-green-500';
-        if (rStatus === 'anulada') border = 'border-l-[3px] border-red-500';
+        if (rStatus === 'presupuesto') border = 'border-l-[3px] border-blue-400';
+        if (rStatus === 'anulada' || rStatus === 'cancelada') border = 'border-l-[3px] border-red-500';
         if (rStatus === 'no-presentado') border = 'border-l-[3px] border-slate-400';
+
+        // Event from Salones badge
+        let badgeSalones = "";
+        if (r._isFromSalones) {
+          badgeSalones = `<span class="text-[9px] font-bold text-purple-700 bg-purple-50 px-1 py-0.2 rounded border border-purple-200" title="Evento de Salones">🏛️ Evento</span>`;
+        }
 
         // NEW: Check for recent creation (15 mins) -> Flashing Badge
         let badgeHTML = "";
@@ -1019,6 +1143,7 @@
                     <div class="flex justify-between font-bold text-gray-700 pointer-events-none items-center mb-1">
                         <div class="flex items-center gap-1">
                             ${badgeHTML}
+                            ${badgeSalones}
                             <span>${time}</span>
                         </div>
                         <span class="bg-gray-100 px-1 rounded text-gray-600">${pax}p</span>
@@ -1084,7 +1209,7 @@
       if (r.fecha && r.fecha.toDate) rDateStr = utils.toIsoDate(r.fecha.toDate());
       else if (typeof r.fecha === 'string') rDateStr = r.fecha;
 
-      if (filterFn(r, rDateStr) && ['pendiente', 'confirmada'].includes(r.estado)) {
+      if (filterFn(r, rDateStr) && ['pendiente', 'confirmada', 'presupuesto'].includes(r.estado)) {
         rows.push({ ...r, dateStr: rDateStr, ts: new Date(rDateStr + 'T' + (r.hora || '00:00')) });
       }
     });
@@ -1509,6 +1634,8 @@
     if (modalTitle) {
       if (isReadOnly) {
         modalTitle.innerHTML = `Visualizar Reserva <span class="ml-2 text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded border border-amber-200">HISTÓRICO (Solo Lectura)</span>`;
+      } else if (data && (data._isFromSalones || data.salonBookingId || (data.id && data.id.startsWith("salon_")))) {
+        modalTitle.innerHTML = `Editar Reserva <span class="ml-2 text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded border border-purple-200">🏛️ Evento Salón</span>`;
       } else {
         modalTitle.innerText = data ? "Editar Reserva" : "Nueva Reserva";
       }
@@ -1804,7 +1931,30 @@
       const id = document.getElementById("campoId").value;
       if (id) {
         finalId = id;
-        await db.collection("reservas_restaurante").doc(id).update(payload);
+        if (window.state?.currentReserva?._isFromSalones || window.state?.currentReserva?.salonBookingId || id.startsWith("salon_")) {
+          payload.salonBookingId = window.state?.currentReserva?.salonBookingId || id.replace("salon_", "");
+          payload._isFromSalones = true;
+        }
+        await db.collection("reservas_restaurante").doc(id).set(payload, { merge: true });
+
+        // 2-Way Sync to Salones
+        if (payload.salonBookingId) {
+          try {
+            const salonUpdate = {
+              cliente: payload.nombre,
+              updated_at: new Date().toISOString()
+            };
+            if (payload.hora) salonUpdate["detalles.hora"] = payload.hora;
+            if (payload.pax !== undefined) salonUpdate["detalles.pax_adultos"] = payload.pax;
+            if (payload.ninos !== undefined) salonUpdate["detalles.pax_ninos"] = payload.ninos;
+            if (payload.telefono) salonUpdate["contact.tel"] = payload.telefono;
+            if (payload.estado) salonUpdate.estado = payload.estado;
+            await db.collection("reservas_salones").doc(payload.salonBookingId).set(salonUpdate, { merge: true });
+          } catch (eSal) {
+            console.warn("Could not sync back to reservas_salones:", eSal);
+          }
+        }
+
         // [NEW] 2-Way Sync
         if (window.state && window.state.currentReserva && window.state.currentReserva.presupuestoId) {
           payload.presupuestoId = window.state.currentReserva.presupuestoId;
@@ -1920,11 +2070,24 @@
       const resData = resDoc.exists ? resDoc.data() : null;
 
       // 2. Update Reservation Status
-      await db.collection("reservas_restaurante").doc(id).update({
+      await db.collection("reservas_restaurante").doc(id).set({
         estado: 'anulada',
         cancelledAt: firebase.firestore.FieldValue.serverTimestamp(),
         updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-      });
+      }, { merge: true });
+
+      // Sync cancellation to Salones if this reservation originated there
+      const salonBookingId = (resData && resData.salonBookingId) || (window.state?.currentReserva?.salonBookingId) || (id.startsWith("salon_") ? id.replace("salon_", "") : null);
+      if (salonBookingId) {
+        try {
+          await db.collection("reservas_salones").doc(salonBookingId).update({
+            estado: 'cancelada',
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+          });
+        } catch (eSal) {
+          console.warn("Could not cancel salon booking:", eSal);
+        }
+      }
 
       // 3. Sync to Linked Budget (if exists)
       if (resData && resData.presupuestoId) {

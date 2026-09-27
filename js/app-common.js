@@ -197,8 +197,9 @@
             input.value = num.toString().replace('.', ',');
         },
         isRestauranteStyle: (name) => {
-            const n = (name || "").toLowerCase();
-            return n.includes("restaurante") || n.includes("grupos") || n.includes("alarcos");
+            const n = (name || "").toLowerCase().trim();
+            if (n.startsWith("puerta") || n.includes("puerta de alarcos")) return false;
+            return n.includes("restaurante") || n.includes("grupos") || n.includes("eventos grupos");
         }
     };
 

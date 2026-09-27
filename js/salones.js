@@ -553,7 +553,6 @@
             const canonicalRteName = rteSalon ? rteSalon.name : "Alarcos Eventos";
             salonMap["alarcoseventos"] = canonicalRteName;
             salonMap["eventosalarcos"] = canonicalRteName;
-            salonMap["alarcos"] = canonicalRteName;
             salonMap["eventosgruposalarcos"] = canonicalRteName;
             salonMap["gruposalarcos"] = canonicalRteName;
             salonMap["restaurante"] = canonicalRteName;
@@ -2165,6 +2164,68 @@
                 await syncPresupuestoFromSalon(payload);
             }
 
+            // [NEW] Traspaso automático a módulo Restaurante si el salón es "Restaurante"
+            const isRteSelected = (payload.salon || "").trim().toLowerCase() === "restaurante";
+            const rteDocId = "salon_" + currentBookingId;
+            if (isRteSelected) {
+                try {
+                    const turno = (payload.detalles.jornada || "").toLowerCase().includes("cena") ||
+                                  (payload.detalles.jornada || "").toLowerCase().includes("tarde") ||
+                                  (payload.detalles.hora && parseInt(payload.detalles.hora.split(":")[0]) >= 19) ? "cena" : "almuerzo";
+                    
+                    let pAdl = 0, pNin = 0, tot = 0;
+                    if (Array.isArray(payload.servicios)) {
+                        payload.servicios.forEach(s => {
+                            tot += (parseFloat(s.total) || 0);
+                            const c = (s.concepto || "").toLowerCase();
+                            if (c.includes("niño") || c.includes("infantil")) {
+                                if (!pNin && s.precio) pNin = parseFloat(s.precio) || 0;
+                            } else {
+                                if (!pAdl && s.precio) pAdl = parseFloat(s.precio) || 0;
+                            }
+                        });
+                    }
+
+                    const rtePayload = {
+                        hotel: payload.hotel,
+                        referencia: payload.presupuestoId || (payload.reservaId ? String(payload.reservaId) : currentBookingId),
+                        fecha: payload.fecha,
+                        espacio: "Restaurante",
+                        nombre: payload.cliente,
+                        telefono: payload.contact?.tel || "",
+                        hora: payload.detalles.hora || (turno === "cena" ? "21:00" : "14:00"),
+                        pax: (payload.detalles.pax_adultos || 0) + (payload.detalles.pax_ninos || 0),
+                        ninos: payload.detalles.pax_ninos || 0,
+                        precio: pAdl,
+                        precioAdulto: pAdl,
+                        precioPorPersona: pAdl,
+                        precioNinos: pNin,
+                        total: tot,
+                        importeTotal: tot,
+                        turno: turno,
+                        estado: payload.estado,
+                        notas: (payload.notas?.interna ? payload.notas.interna : "") + (payload.notas?.cliente ? " | " + payload.notas.cliente : ""),
+                        servicioIncluido: !!payload.detalles.incluido,
+                        salonBookingId: currentBookingId,
+                        _isFromSalones: true,
+                        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                    };
+                    await db.collection("reservas_restaurante").doc(rteDocId).set(rtePayload, { merge: true });
+                } catch (eRteSync) {
+                    console.warn("Error syncing to reservas_restaurante:", eRteSync);
+                }
+            } else {
+                // Si el evento ya no está en el Restaurante, eliminarlo de reservas_restaurante si existía
+                try {
+                    const docCheck = await db.collection("reservas_restaurante").doc(rteDocId).get();
+                    if (docCheck.exists) {
+                        await db.collection("reservas_restaurante").doc(rteDocId).delete();
+                    }
+                } catch (eCleanRte) {
+                    console.warn("Error cleaning up reservas_restaurante:", eCleanRte);
+                }
+            }
+
             closeModal();
             // alert("Evento guardado exitosamente."); // Removed to be less intrusive, UI updates automatically via snapshot
         } catch (e) {
@@ -2205,6 +2266,20 @@
                 estado: 'cancelada',
                 updatedAt: firebase.firestore.FieldValue.serverTimestamp()
             });
+
+            // Sincronizar anulación con reservas_restaurante si existía
+            try {
+                const rteDocId = "salon_" + currentBookingId;
+                const docCheck = await db.collection("reservas_restaurante").doc(rteDocId).get();
+                if (docCheck.exists) {
+                    await db.collection("reservas_restaurante").doc(rteDocId).update({
+                        estado: 'anulada',
+                        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                }
+            } catch (eDelRte) {
+                console.warn("Error cancelling in reservas_restaurante:", eDelRte);
+            }
 
             // Sync Cancellation to Linked Budget
             if (window.currentEventBudgetID) {
