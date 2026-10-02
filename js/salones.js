@@ -1434,7 +1434,7 @@
 
             if (isLinkedNexus) {
                 const mt = document.getElementById("modalTitle");
-                if (mt) mt.innerText = "Evento Nexus Groups (Solo Lectura)";
+                if (mt) mt.innerText = "Evento Nexus Groups (Cambiar salón)";
 
                 if (nexusBanner) {
                     nexusBanner.classList.remove("hidden");
@@ -1444,11 +1444,15 @@
 
                 // Lock fields and action buttons
                 setModalFieldsDisabled(true);
+                document.getElementById("evt-salon").disabled = false;
+                // A linked event may only change its location, never its service rows.
+                document.getElementById("evt-salon").onchange = function () {};
 
                 if (btnGuardarEl) {
-                    btnGuardarEl.disabled = true;
-                    btnGuardarEl.classList.add("opacity-50", "cursor-not-allowed", "pointer-events-none");
-                    btnGuardarEl.title = "Evento vinculado a Nexus Groups. Desvincúlalo para modificarlo.";
+                    btnGuardarEl.disabled = false;
+                    btnGuardarEl.classList.remove("opacity-50", "cursor-not-allowed", "pointer-events-none");
+                    btnGuardarEl.style.display = 'inline-block';
+                    btnGuardarEl.title = "Guardar solo el salón y mantener el vínculo con Grupos.";
                 }
                 if (btnEliminarEl) {
                     btnEliminarEl.disabled = true;
@@ -1956,7 +1960,24 @@
         if (currentBookingId) {
             const existing = window._resRegistry[currentBookingId];
             if (isNexusLinked(existing)) {
-                alert("⛔ Este evento está vinculado a Nexus Groups y está protegido contra edición directa.\n\nPara modificarlo desde MesaChef, haz clic primero en el botón 'Desvincular de Nexus Groups'.");
+                const salon = document.getElementById("evt-salon").value;
+                const allowed = Array.from(document.getElementById("evt-salon").options).some(option => option.value === salon && !option.disabled);
+                if (!salon || !allowed) {
+                    alert("Selecciona un salón válido para este hotel.");
+                    return;
+                }
+                const key = prompt("Introduce la clave de seguridad:");
+                if (key === null) return;
+                if (key !== "Mreserva") { alert("Clave incorrecta (v6.0)"); return; }
+                try {
+                    if (btn) { btn.disabled = true; btn.innerText = "GUARDANDO…"; }
+                    await window.EventLocation.changeLinkedSalon(db, currentBookingId, salon, existing.salon);
+                    closeModal();
+                } catch (error) {
+                    alert("No se ha podido cambiar el salón: " + error.message);
+                } finally {
+                    if (btn) { btn.disabled = false; btn.innerText = originalText; }
+                }
                 return;
             }
         }
