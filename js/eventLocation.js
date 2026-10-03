@@ -11,7 +11,7 @@
       if (event.desvinculado || event.vinculoRoto) throw new Error('El evento ya está desvinculado. Vuelve a abrirlo.');
       if (event.salon !== expectedSalon) throw new Error('La ubicación ha cambiado. Cierra y vuelve a abrir la reserva.');
       if (event.salon === salon) return;
-      transaction.update(source, {salon, salonOverride: salon, updated_at: new Date().toISOString()});
+      transaction.update(source, {salon, salonOverride: salon, salonOverrideHotel: event.hotel, updated_at: new Date().toISOString()});
       const mirror = db.collection('reservas_restaurante').doc('salon_' + bookingId);
       if (isRestaurant(salon)) {
         const details = event.detalles || {};
