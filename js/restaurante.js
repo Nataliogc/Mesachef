@@ -1082,16 +1082,26 @@
 
       if (zone) {
         const div = document.createElement("div");
+        const isCancelled = rStatus === 'anulada' || rStatus === 'cancelada' || rStatus === 'anulado' || rStatus === 'cancelado';
         let border = 'border-l-[3px] border-amber-300';
+        let bgCard = 'bg-white';
         if (rStatus === 'confirmada') border = 'border-l-[3px] border-green-500';
         if (rStatus === 'presupuesto') border = 'border-l-[3px] border-blue-400';
-        if (rStatus === 'anulada' || rStatus === 'cancelada') border = 'border-l-[3px] border-red-500';
+        if (isCancelled) {
+          border = 'border-l-[3px] border-red-500';
+          bgCard = 'bg-red-100 text-red-900';
+        }
         if (rStatus === 'no-presentado') border = 'border-l-[3px] border-slate-400';
 
         // Event from Salones badge
         let badgeSalones = "";
         if (r._isFromSalones) {
           badgeSalones = `<span class="text-[9px] font-bold text-purple-700 bg-purple-50 px-1 py-0.2 rounded border border-purple-200" title="Evento de Salones">🏛️ Evento</span>`;
+        }
+
+        let badgeCancelled = "";
+        if (isCancelled) {
+          badgeCancelled = `<span class="text-[9px] font-bold text-red-800 bg-red-200 px-1 py-0.5 rounded border border-red-300">❌ Anulada</span>`;
         }
 
         // NEW: Check for recent creation (15 mins) -> Flashing Badge
@@ -1141,12 +1151,13 @@
           notesIcon = `<span title="${notasStr}" class="ml-1 text-[10px] cursor-help">📝</span>`;
         }
 
-        div.className = `bg-white border border-gray-100 shadow-sm rounded p-1.5 cursor-pointer hover:shadow-md transition text-[10px] ${border} mb-1`;
+        div.className = `${bgCard} border border-gray-100 shadow-sm rounded p-1.5 cursor-pointer hover:shadow-md transition text-[10px] ${border} mb-1`;
         div.innerHTML = `
                     <div class="flex justify-between font-bold text-gray-700 pointer-events-none items-center mb-1">
                         <div class="flex items-center gap-1">
                             ${badgeHTML}
                             ${badgeSalones}
+                            ${badgeCancelled}
                             <span>${time}</span>
                         </div>
                         <span class="bg-gray-100 px-1 rounded text-gray-600">${pax}p</span>

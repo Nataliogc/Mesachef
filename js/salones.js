@@ -792,30 +792,39 @@
 
         const isRte = isRestauranteStyle(res.salon || res._canonicalSalon);
         const jornada = res._displayJornada || res.detalles?.jornada || "todo";
+        const st = (res.estado || "").toLowerCase();
+        const isCancelled = st === 'cancelada' || st === 'cancelled' || st === 'anulada' || st === 'anulado';
         let colorClass = 'bg-blue-100 border-blue-500 text-blue-800';
 
-        if (res.estado === 'confirmada') {
+        if (isCancelled) {
+            colorClass = 'bg-red-100 border-red-500 text-red-900';
+        }
+        else if (st === 'confirmada' || st === 'confirmed') {
             colorClass = 'bg-green-100 border-green-500 text-green-800';
             const jLower = (jornada || "").toLowerCase();
             if (jLower.includes('mañana')) colorClass = 'bg-teal-100 border-green-500 text-green-800';
             else if (jLower.includes('tarde')) colorClass = 'bg-lime-100 border-green-500 text-green-800';
         }
-        else if (res.estado === 'provisional') colorClass = 'bg-yellow-100 border-yellow-500 text-yellow-800';
-        else if (res.estado === 'presupuesto') colorClass = 'bg-orange-100 border-orange-500 text-orange-800';
-        else if (res.estado === 'cancelada') colorClass = 'bg-red-100 border-red-500 text-red-800 opacity-60';
+        else if (st === 'provisional' || st === 'pendiente' || st === 'pending') colorClass = 'bg-yellow-100 border-yellow-500 text-yellow-800';
+        else if (st === 'presupuesto') colorClass = 'bg-orange-100 border-orange-500 text-orange-800';
 
         // [DISTINCT FORMAT] Custom style for Restaurant
         if (isRte) {
-            // Determine border color based on status
-            let statusColor = 'indigo-600';
-            if (res.estado === 'confirmada') statusColor = 'green-600';
-            else if (res.estado === 'provisional') statusColor = 'amber-500';
-            else if (res.estado === 'presupuesto') statusColor = 'orange-500';
-            else if (res.estado === 'cancelada') statusColor = 'slate-400';
+            if (isCancelled) {
+                // Anulados en Restaurante con fondo rojo y borde rojo
+                colorClass = `bg-red-100 text-red-900 border-red-500 border-l-[6px] shadow-sm hover:ring-2 hover:ring-red-200`;
+                extraClasses += " ring-1 ring-red-200 shadow-md rounded-lg overflow-hidden";
+            } else {
+                // Determine border color based on status
+                let statusColor = 'indigo-600';
+                if (st === 'confirmada' || st === 'confirmed') statusColor = 'green-600';
+                else if (st === 'provisional' || st === 'pendiente' || st === 'pending') statusColor = 'amber-500';
+                else if (st === 'presupuesto') statusColor = 'orange-500';
 
-            // Override colorClass with a unique Indigo/Violet theme
-            colorClass = `bg-white text-slate-800 border-${statusColor} border-l-[6px] shadow-sm hover:ring-2 hover:ring-indigo-100`;
-            extraClasses += " ring-1 ring-slate-200/50 shadow-md rounded-lg overflow-hidden";
+                // Override colorClass with a unique Indigo/Violet theme
+                colorClass = `bg-white text-slate-800 border-${statusColor} border-l-[6px] shadow-sm hover:ring-2 hover:ring-indigo-100`;
+                extraClasses += " ring-1 ring-slate-200/50 shadow-md rounded-lg overflow-hidden";
+            }
         }
 
         let noteStr = '';
@@ -906,7 +915,7 @@
                     <div class="font-bold truncate leading-tight flex-1 flex items-center" title="${safeCliente}">${nexusTag}${isRte ? '🍽️ ' : ''}<span>${safeCliente}</span></div>
                     <div class="text-[11px]">${noteStr}</div>
                 </div>
-                ${(res.estado === 'presupuesto' || res.estado === 'provisional' || res.estado === 'pendiente') ? `<div class="text-[9px] font-bold text-orange-700 bg-orange-200/60 px-1 py-0.5 rounded w-fit mt-0.5 uppercase tracking-wide">⚠️ Pendiente de Confirmar</div>` : ''}
+                ${isCancelled ? `<div class="text-[9px] font-bold text-red-800 bg-red-200/90 border border-red-300 px-1 py-0.5 rounded w-fit mt-0.5 uppercase tracking-wide">❌ Anulado</div>` : ((res.estado === 'presupuesto' || res.estado === 'provisional' || res.estado === 'pendiente') ? `<div class="text-[9px] font-bold text-orange-700 bg-orange-200/60 px-1 py-0.5 rounded w-fit mt-0.5 uppercase tracking-wide">⚠️ Pendiente de Confirmar</div>` : '')}
                 <div class="flex justify-between items-center mt-1 text-[11px]">
                      <div class="flex items-center gap-1">
                          <span class="text-[10px] font-extrabold uppercase tracking-tight leading-none px-1 py-0.5 rounded ${jClass}">${jText}</span>
@@ -1038,9 +1047,11 @@
                 item.onmousedown = (e) => e.preventDefault();
                 item.onclick = () => selectSearchResult(r);
 
-                const statusColor = r.estado === 'confirmada' ? 'bg-green-100 text-green-700 border border-green-200' :
-                    r.estado === 'cancelada' ? 'bg-red-100 text-red-700 border border-red-200' :
-                        r.estado === 'presupuesto' ? 'bg-orange-100 text-orange-700 border border-orange-200' :
+                const st = (r.estado || '').toLowerCase();
+                const isCancelled = st === 'cancelada' || st === 'cancelled' || st === 'anulada' || st === 'anulado';
+                const statusColor = (st === 'confirmada' || st === 'confirmed') ? 'bg-green-100 text-green-700 border border-green-200' :
+                    isCancelled ? 'bg-red-100 text-red-700 border border-red-200' :
+                        st === 'presupuesto' ? 'bg-orange-100 text-orange-700 border border-orange-200' :
                             'bg-yellow-100 text-yellow-700 border border-yellow-200';
 
                 item.innerHTML = `
