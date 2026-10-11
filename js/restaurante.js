@@ -1082,6 +1082,18 @@
 
       if (zone) {
         const div = document.createElement("div");
+        // Check if reservation is in the past
+        const now = new Date();
+        const todayIso = utils.toIsoDate(now);
+        const currentHour = now.getHours();
+
+        let isPast = rDateStr < todayIso;
+        if (rDateStr === todayIso && turno === 'almuerzo' && currentHour >= 18) {
+          isPast = true;
+        } else if (rDateStr === todayIso && turno === 'cena' && (currentHour > 23 || (currentHour === 23 && now.getMinutes() >= 30))) {
+          isPast = true;
+        }
+
         const isCancelled = rStatus === 'anulada' || rStatus === 'cancelada' || rStatus === 'anulado' || rStatus === 'cancelado';
         let border = 'border-l-[3px] border-amber-300';
         let bgCard = 'bg-white';
@@ -1093,22 +1105,41 @@
         }
         if (rStatus === 'no-presentado') border = 'border-l-[3px] border-slate-400';
 
+        // Sombrear reservas pasadas
+        if (isPast) {
+          if (isCancelled) {
+            bgCard = 'bg-red-50/70 text-red-900/80';
+            border = 'border-l-[3px] border-red-400';
+          } else {
+            bgCard = 'bg-slate-200/90 text-slate-600';
+            if (rStatus === 'confirmada') border = 'border-l-[3px] border-emerald-600/70';
+            else if (rStatus === 'presupuesto') border = 'border-l-[3px] border-blue-500/70';
+            else if (rStatus === 'no-presentado') border = 'border-l-[3px] border-slate-400';
+            else border = 'border-l-[3px] border-amber-400/70';
+          }
+        }
+
         // Event from Salones badge
         let badgeSalones = "";
         if (r._isFromSalones) {
-          badgeSalones = `<span class="text-[9px] font-bold text-purple-700 bg-purple-50 px-1 py-0.2 rounded border border-purple-200" title="Evento de Salones">🏛️ Evento</span>`;
+          const salonesClasses = isPast
+            ? "text-purple-700/70 bg-purple-100/60 border-purple-200/60"
+            : "text-purple-700 bg-purple-50 border-purple-200";
+          badgeSalones = `<span class="text-[9px] font-bold ${salonesClasses} px-1 py-0.2 rounded border" title="Evento de Salones">🏛️ Evento</span>`;
         }
 
         let badgeCancelled = "";
         if (isCancelled) {
-          badgeCancelled = `<span class="text-[9px] font-bold text-red-800 bg-red-200 px-1 py-0.5 rounded border border-red-300">❌ Anulada</span>`;
+          const cancelClasses = isPast
+            ? "text-red-800/80 bg-red-100/80 border-red-200"
+            : "text-red-800 bg-red-200 border-red-300";
+          badgeCancelled = `<span class="text-[9px] font-bold ${cancelClasses} px-1 py-0.5 rounded border">❌ Anulada</span>`;
         }
 
-        // NEW: Check for recent creation (15 mins) -> Flashing Badge
+        // NEW: Check for recent creation (15 mins) -> Flashing Badge (never for past reservations)
         let badgeHTML = "";
-        if (r.createdAt) {
+        if (!isPast && r.createdAt) {
           const created = r.createdAt.toDate ? r.createdAt.toDate() : new Date(r.createdAt);
-          const now = new Date();
           const diffMins = (now - created) / 1000 / 60;
           if (diffMins <= 15) {
             badgeHTML = `<span class="badge-nuevo">NUEVO</span>`;
@@ -1124,23 +1155,30 @@
             if (r.campoHabitacion) detailStr = `: ${r.campoHabitacion}`;
           } else if (r.tipoIncluido === 'spa') {
             // Stylized Lotus Logo (Gold) matching the reference
-            symbol = `<svg class="inline-block w-3.5 h-3.5 mr-0.5" viewBox="0 0 24 24" style="color: #b8860b; vertical-align: -3px;" fill="currentColor">
+            const lotusColor = isPast ? '#856404' : '#b8860b';
+            symbol = `<svg class="inline-block w-3.5 h-3.5 mr-0.5" viewBox="0 0 24 24" style="color: ${lotusColor}; vertical-align: -3px;" fill="currentColor">
                 <path d="M12,22c0,0-5-2-5-7s2-8,5-10c3,2,5,5,5,10S12,22,12,22z M12,14c1.1,0,2-0.9,2-2s-0.9-2-2-2s-2,0.9-2,2S10.9,14,12,14z M2,12 c0,0,3-1,5,3c2,4,0,7,0,7s-4-1-5-6C1.5,14,2,12,2,12z M22,12c0,0-3-1-5,3c-2,4,0,7,0,7s4-1,5-6C22.5,14,22,12,22,12z"></path>
             </svg>`;
             if (r.campoBono) detailStr = `: ${r.campoBono}`;
           }
-          priceDisplay = `<span class="text-[9px] font-bold text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-100 italic" title="${r.tipoIncluido || ''}${detailStr}">${symbol}Incl${detailStr}</span>`;
+          const inclClasses = isPast
+            ? "text-slate-600 bg-slate-300/70 border-slate-300"
+            : "text-blue-600 bg-blue-50 border-blue-100";
+          priceDisplay = `<span class="text-[9px] font-bold ${inclClasses} px-1.5 py-0.5 rounded border italic" title="${r.tipoIncluido || ''}${detailStr}">${symbol}Incl${detailStr}</span>`;
         } else {
           // PAGO DIRECTO: Debe quedar claro en el planning
           const pVal = precioNum > 0 ? precioNum : precioNinosNum;
           const pFormatted = window.MesaChef.formatEuroValue(pVal);
           const tFormatted = window.MesaChef.formatEuroValue(totalNum);
+          const directClasses = isPast
+            ? "text-slate-600 bg-slate-300/70 border-slate-300"
+            : "text-emerald-700 bg-emerald-50 border-emerald-200";
           if (pVal > 0) {
-            priceDisplay = `<span class="text-[9px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200 whitespace-nowrap" title="Pago Directo en restaurante · Total: ${tFormatted}€">💶 Directo: ${pFormatted}€/p</span>`;
+            priceDisplay = `<span class="text-[9px] font-bold ${directClasses} px-1.5 py-0.5 rounded border whitespace-nowrap" title="Pago Directo en restaurante · Total: ${tFormatted}€">💶 Directo: ${pFormatted}€/p</span>`;
           } else if (totalNum > 0) {
-            priceDisplay = `<span class="text-[9px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200 whitespace-nowrap" title="Pago Directo en restaurante">💶 Directo: ${tFormatted}€</span>`;
+            priceDisplay = `<span class="text-[9px] font-bold ${directClasses} px-1.5 py-0.5 rounded border whitespace-nowrap" title="Pago Directo en restaurante">💶 Directo: ${tFormatted}€</span>`;
           } else {
-            priceDisplay = `<span class="text-[9px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200 whitespace-nowrap" title="Pago Directo en restaurante">💶 Pago Directo</span>`;
+            priceDisplay = `<span class="text-[9px] font-bold ${directClasses} px-1.5 py-0.5 rounded border whitespace-nowrap" title="Pago Directo en restaurante">💶 Pago Directo</span>`;
           }
         }
 
@@ -1151,26 +1189,34 @@
           notesIcon = `<span title="${notasStr}" class="ml-1 text-[10px] cursor-help">📝</span>`;
         }
 
-        div.className = `${bgCard} border border-gray-100 shadow-sm rounded p-1.5 cursor-pointer hover:shadow-md transition text-[10px] ${border} mb-1`;
+        const pastCardClasses = isPast
+          ? 'reserva-pasada border-slate-300/80 opacity-75 hover:opacity-100 shadow-none hover:shadow-sm'
+          : 'border-gray-100 shadow-sm hover:shadow-md';
+
+        div.className = `${bgCard} border ${pastCardClasses} rounded p-1.5 cursor-pointer transition text-[10px] ${border} mb-1`;
+        if (isPast) {
+          div.title = `${name} · (Reserva pasada)`;
+        }
+
         div.innerHTML = `
-                    <div class="flex justify-between font-bold text-gray-700 pointer-events-none items-center mb-1">
+                    <div class="flex justify-between font-bold ${isPast ? 'text-slate-500' : 'text-gray-700'} pointer-events-none items-center mb-1">
                         <div class="flex items-center gap-1">
                             ${badgeHTML}
                             ${badgeSalones}
                             ${badgeCancelled}
                             <span>${time}</span>
                         </div>
-                        <span class="bg-gray-100 px-1 rounded text-gray-600">${pax}p</span>
+                        <span class="${isPast ? 'bg-slate-300/70 text-slate-600' : 'bg-gray-100 text-gray-600'} px-1 rounded">${pax}p</span>
                     </div>
                     
-                    <div class="truncate font-bold text-slate-800 text-xs mb-1 pointer-events-none w-full" title="${name}">
+                    <div class="truncate font-bold ${isPast ? 'text-slate-600' : 'text-slate-800'} text-xs mb-1 pointer-events-none w-full" title="${name}">
                         ${name}
                     </div>
 
                     <div class="flex justify-between items-end mt-1">
                         <div class="pointer-events-auto">${notesIcon}</div>
                         <div class="flex flex-col items-end">
-                             ${r.mesa ? `<span class="text-[10px] font-bold text-slate-500 bg-slate-50 px-1 rounded border border-slate-100 mb-0.5" title="Mesa">M.${r.mesa}</span>` : ''}
+                             ${r.mesa ? `<span class="text-[10px] font-bold ${isPast ? 'text-slate-500 bg-slate-300/50 border-slate-300' : 'text-slate-500 bg-slate-50 border-slate-100'} px-1 rounded border mb-0.5" title="Mesa">M.${r.mesa}</span>` : ''}
                              <div class="text-right pointer-events-none">${priceDisplay}</div>
                         </div>
                     </div>

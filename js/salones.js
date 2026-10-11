@@ -794,10 +794,18 @@
         const jornada = res._displayJornada || res.detalles?.jornada || "todo";
         const st = (res.estado || "").toLowerCase();
         const isCancelled = st === 'cancelada' || st === 'cancelled' || st === 'anulada' || st === 'anulado';
+        let rDateStr = "";
+        if (res.fecha && res.fecha.toDate) rDateStr = utils.toIsoDate(res.fecha.toDate());
+        else if (typeof res.fecha === 'string') rDateStr = res.fecha;
+        const isPast = !!(rDateStr && rDateStr < utils.toIsoDate(new Date()));
+
         let colorClass = 'bg-blue-100 border-blue-500 text-blue-800';
 
         if (isCancelled) {
-            colorClass = 'bg-red-100 border-red-500 text-red-900';
+            colorClass = isPast ? 'bg-red-50 text-red-900 border-red-400' : 'bg-red-100 border-red-500 text-red-900';
+        }
+        else if (isPast) {
+            colorClass = 'bg-slate-200/85 border-slate-400 text-slate-600';
         }
         else if (st === 'confirmada' || st === 'confirmed') {
             colorClass = 'bg-green-100 border-green-500 text-green-800';
@@ -808,12 +816,21 @@
         else if (st === 'provisional' || st === 'pendiente' || st === 'pending') colorClass = 'bg-yellow-100 border-yellow-500 text-yellow-800';
         else if (st === 'presupuesto') colorClass = 'bg-orange-100 border-orange-500 text-orange-800';
 
+        if (isPast) {
+            extraClasses += " opacity-75 hover:opacity-100 transition shadow-none";
+        }
+
         // [DISTINCT FORMAT] Custom style for Restaurant
         if (isRte) {
             if (isCancelled) {
                 // Anulados en Restaurante con fondo rojo y borde rojo
-                colorClass = `bg-red-100 text-red-900 border-red-500 border-l-[6px] shadow-sm hover:ring-2 hover:ring-red-200`;
+                colorClass = isPast
+                    ? `bg-red-50 text-red-900 border-red-400 border-l-[6px] shadow-sm hover:ring-2 hover:ring-red-200`
+                    : `bg-red-100 text-red-900 border-red-500 border-l-[6px] shadow-sm hover:ring-2 hover:ring-red-200`;
                 extraClasses += " ring-1 ring-red-200 shadow-md rounded-lg overflow-hidden";
+            } else if (isPast) {
+                colorClass = `bg-slate-200/85 text-slate-600 border-slate-400 border-l-[6px] shadow-sm hover:ring-2 hover:ring-slate-300`;
+                extraClasses += " ring-1 ring-slate-300/60 shadow-md rounded-lg overflow-hidden";
             } else {
                 // Determine border color based on status
                 let statusColor = 'indigo-600';
