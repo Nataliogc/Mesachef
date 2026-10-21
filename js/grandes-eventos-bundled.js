@@ -1084,7 +1084,7 @@
         const currentCap = parseInt($('inputCapacity').value) || 0;
         if (currentCap > 0) {
             const pId = $('pId').value;
-            if (pId && !checkSecurity()) return; // Protection for editing
+            // No password required for modifying participants
 
             // DEBUG: Log current state
             console.log('=== CAPACITY CHECK DEBUG ===');
@@ -1174,7 +1174,6 @@
         if (!id) return alert("No se puede identificar al participante.");
         if (!reason) return alert("Indica un motivo.");
         
-        if (!checkSecurity()) return;
         if (!confirm("¿Confirmar anulación del participante?")) return;
 
         const newState = action === 'keep' ? 'anulado-con-cargos' : 'anulado-sin-cargos';
@@ -1229,7 +1228,6 @@
 
 
     async function handleRecover(id) {
-        if (!checkSecurity()) return;
         if (!confirm("¿Recuperar?")) return;
         await API.recoverParticipant(id);
         closeParticipantModal();
@@ -1438,14 +1436,26 @@
         const id = state.currentEventId;
         if (!id) return;
 
-        if (!checkSecurity()) return;
+        const newCap = parseInt($('inputCapacity').value) || 0;
+        const newPriceAdult = parseFloat($('inputPriceAdult').value) || 0;
+        const newPriceChild = parseFloat($('inputPriceChild').value) || 0;
+
+        const oldCap = parseInt(state.currentEvent?.capacidad) || 0;
+        const oldPriceAdult = parseFloat(state.currentEvent?.precioAdulto) || 0;
+        const oldPriceChild = parseFloat(state.currentEvent?.precioNino) || 0;
+
+        const modifiesCapacityOrPrices = (newCap !== oldCap) || (newPriceAdult !== oldPriceAdult) || (newPriceChild !== oldPriceChild);
+
+        if (modifiesCapacityOrPrices) {
+            if (!checkSecurity()) return;
+        }
 
         const updates = {
             nombre: $('inputName').value,
             fecha: $('inputDate').value,
-            capacidad: parseInt($('inputCapacity').value) || 0,
-            precioAdulto: parseFloat($('inputPriceAdult').value) || 0,
-            precioNino: parseFloat($('inputPriceChild').value) || 0,
+            capacidad: newCap,
+            precioAdulto: newPriceAdult,
+            precioNino: newPriceChild,
         };
         try {
             await API.updateEvent(id, updates);
@@ -1479,8 +1489,6 @@
 
         const currentStatus = state.currentEvent.estado || 'abierto';
         const newStatus = currentStatus === 'completo' ? 'abierto' : 'completo';
-
-        if (!checkSecurity()) return;
 
         try {
             await API.updateEvent(state.currentEventId, { estado: newStatus });
