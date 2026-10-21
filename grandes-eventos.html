@@ -249,9 +249,13 @@
             Volver al Inicio
           </a>
 
-          <div class="flex items-center gap-3 px-3 py-1.5 bg-slate-50 rounded-lg border border-slate-100">
-            <img id="headerHotelLogo" src="Img/logo-guadiana.png" class="h-6 w-auto object-contain" alt="Hotel Logo">
-            <span id="headerHotelName" class="text-sm font-bold text-slate-700">Sercotel Guadiana</span>
+          <div id="headerHotelContainer" class="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1 shadow-sm">
+            <img id="headerHotelLogo" src="Img/logo-guadiana.svg" class="h-6 w-auto max-w-[100px] object-contain mr-1 shrink-0" alt="Hotel Logo">
+            <select id="hotelSwitcherSelect" class="text-xs font-bold text-slate-800 bg-transparent border-none py-0 pl-1 pr-6 cursor-pointer focus:ring-0 outline-none">
+              <option value="Guadiana">Sercotel Guadiana</option>
+              <option value="Cumbria">Cumbria Spa & Hotel</option>
+            </select>
+            <span id="headerHotelName" class="hidden">Sercotel Guadiana</span>
           </div>
 
           <div class="h-6 w-px bg-slate-200"></div>
@@ -878,7 +882,7 @@
       }
     });
   </script>
-  <script src="js/grandes-eventos-bundled.js?v=5.0"></script>
+  <script src="js/grandes-eventos-bundled.js?v=6.0"></script>
 </body>
 
 </html>

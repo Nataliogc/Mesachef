@@ -27,15 +27,78 @@
 
 
 
-    // Load initial state from LocalStorage
-    const storedHotel = localStorage.getItem("mesaChef_hotel") || "Guadiana";
-    state.hotelInfo.id = storedHotel;
-    if (storedHotel === "Cumbria") {
-        state.hotelInfo.name = "Cumbria Spa&Hotel";
-        state.hotelInfo.logo = "Img/logo-cumbria.svg"; // [FIX] Use SVG
-    } else {
-        state.hotelInfo.name = "Sercotel Guadiana";
-        state.hotelInfo.logo = "Img/logo-guadiana.svg"; // [FIX] Use SVG
+    function getActiveHotel() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const urlHotel = urlParams.get('hotel');
+        const raw = urlHotel || localStorage.getItem("mesaChef_hotel") || "Guadiana";
+        return (raw.toLowerCase().includes("cumbria")) ? "Cumbria" : "Guadiana";
+    }
+
+    function syncHotelState(hotelId) {
+        const norm = (hotelId || getActiveHotel()).toLowerCase().includes("cumbria") ? "Cumbria" : "Guadiana";
+        state.hotelInfo.id = norm;
+        if (norm === "Cumbria") {
+            state.hotelInfo.name = "Cumbria Spa&Hotel";
+            state.hotelInfo.logo = "Img/logo-cumbria.svg";
+        } else {
+            state.hotelInfo.name = "Sercotel Guadiana";
+            state.hotelInfo.logo = "Img/logo-guadiana.svg";
+        }
+        localStorage.setItem("mesaChef_hotel", norm);
+        return norm;
+    }
+
+    syncHotelState();
+
+    function updateHeaderHotelDisplay() {
+        const curHotel = state.hotelInfo.id || getActiveHotel();
+        const isGuadiana = curHotel === "Guadiana";
+        const logoSrc = isGuadiana ? "Img/logo-guadiana.svg" : "Img/logo-cumbria.svg";
+        const displayName = isGuadiana ? "Sercotel Guadiana" : "Cumbria Spa & Hotel";
+
+        const headerName = $('headerHotelName');
+        const headerLogo = $('headerHotelLogo');
+        if (headerName) headerName.textContent = displayName;
+        if (headerLogo) headerLogo.src = logoSrc;
+
+        const sel = $('hotelSwitcherSelect');
+        if (sel) {
+            sel.value = curHotel;
+        }
+    }
+
+    function ensureAuth(callback) {
+        if (typeof firebase === 'undefined' || !firebase.auth) {
+            console.warn("Grandes Eventos: Firebase Auth no disponible");
+            if (callback) callback();
+            return;
+        }
+
+        let executed = false;
+        const runOnce = () => {
+            if (!executed) {
+                executed = true;
+                if (callback) callback();
+            }
+        };
+
+        try {
+            firebase.auth().onAuthStateChanged((user) => {
+                if (user) {
+                    console.log("Grandes Eventos: Usuario autenticado:", user.uid);
+                    runOnce();
+                } else {
+                    console.log("Grandes Eventos: Iniciando sesión anónima...");
+                    firebase.auth().signInAnonymously().catch((err) => {
+                        console.error("Grandes Eventos: Error en autenticación anónima:", err);
+                        runOnce();
+                    });
+                }
+            });
+        } catch (e) {
+            console.error("Grandes Eventos: Error en inicialización de Auth:", e);
+            runOnce();
+        }
     }
 
     function resetState() {
@@ -151,52 +214,63 @@
         let db, eventosRef, participantesRef, masterRef;
 
         function initAPI() {
-            db = window.db;
+            db = window.db || (typeof firebase !== 'undefined' && firebase.firestore ? firebase.firestore() : null);
             if (!db) return false;
-            eventosRef = db.collection("grandes_eventos");
-            participantesRef = db.collection("participantes_eventos");
-            masterRef = db.collection("master_data");
+            if (!eventosRef) eventosRef = db.collection("grandes_eventos");
+            if (!participantesRef) participantesRef = db.collection("participantes_eventos");
+            if (!masterRef) masterRef = db.collection("master_data");
             return true;
         }
 
         async function fetchEvents() {
             if (!initAPI()) return [];
 
-            // [FIX] Client-side filtering to handle Legacy Data (no hotel field = Guadiana)
             const currentHotel = state.hotelInfo.id || "Guadiana";
-            // Fetch ALL (sorted) then filter in memory to catch legacy docs
             let query = eventosRef.orderBy("fecha", "desc");
 
             try {
-                const snapshot = await query.get();
+                let snapshot;
+                try {
+                    snapshot = await query.get();
+                } catch (orderErr) {
+                    console.warn("Fallback to get without order:", orderErr);
+                    snapshot = await eventosRef.get();
+                }
+
                 let events = [];
 
                 // Process each event with participant stats
                 for (const doc of snapshot.docs) {
                     const data = doc.data();
-                    const evtHotel = data.hotel || "Guadiana"; // Legacy fallback
+                    const evtHotel = (data.hotel || "Guadiana").toLowerCase().includes("cumbria") ? "Cumbria" : "Guadiana";
 
                     if (evtHotel === currentHotel) {
                         const eventData = { id: doc.id, ...data };
 
                         // Fetch participants for this event to calculate totalPax
-                        const participantsSnapshot = await participantesRef.where("eventoId", "==", doc.id).get();
-                        let totalPax = 0;
+                        try {
+                            const participantsSnapshot = await participantesRef.where("eventoId", "==", doc.id).get();
+                            let totalPax = 0;
 
-                        participantsSnapshot.forEach(pDoc => {
-                            const p = pDoc.data();
-                            // Only count active participants
-                            const isAnulado = p.estado && p.estado.startsWith('anulado');
-                            if (!isAnulado) {
-                                totalPax += (parseInt(p.adultos) || 0) + (parseInt(p.ninos) || 0);
-                            }
-                        });
+                            participantsSnapshot.forEach(pDoc => {
+                                const p = pDoc.data();
+                                // Only count active participants
+                                const isAnulado = p.estado && p.estado.startsWith('anulado');
+                                if (!isAnulado) {
+                                    totalPax += (parseInt(p.adultos) || 0) + (parseInt(p.ninos) || 0);
+                                }
+                            });
 
-                        // Add stats to event object
-                        eventData.stats = { totalPax };
+                            eventData.stats = { totalPax };
+                        } catch (pErr) {
+                            console.warn("Error participants for event", doc.id, pErr);
+                            eventData.stats = { totalPax: 0 };
+                        }
                         events.push(eventData);
                     }
                 }
+
+                events.sort((a, b) => (b.fecha || "").localeCompare(a.fecha || ""));
 
                 return events;
             } catch (e) {
@@ -232,17 +306,16 @@
         }
 
         async function createEvent(eventData) {
-            if (!initAPI()) return;
-            const prefix = eventData.nombre.substring(0, 3).toUpperCase();
-            const cleanDate = eventData.fecha.replace(/-/g, '');
+            if (!initAPI()) throw new Error("Base de datos no inicializada");
+            const prefix = (eventData.nombre || "EVT").trim().substring(0, 3).toUpperCase().padEnd(3, 'X');
+            const cleanDate = (eventData.fecha || "").replace(/-/g, '');
             const ref = `${prefix}${cleanDate}-GE${Math.floor(Math.random() * 1000)}`;
 
             const newEvent = {
                 ...eventData,
                 referencia: ref,
                 estado: 'abierto',
-                // [FIX] Assign current hotel
-                hotel: state.hotelInfo.id || "Guadiana",
+                hotel: eventData.hotel || state.hotelInfo.id || "Guadiana",
                 createdAt: firebase.firestore.FieldValue.serverTimestamp()
             };
 
@@ -564,8 +637,25 @@
 
         $('listStatusFilter')?.addEventListener('change', refreshEventsList);
         $('listDateFilter')?.addEventListener('change', refreshEventsList);
+        $('listSearch')?.addEventListener('input', () => refreshEventsList());
         $('filterParticipants')?.addEventListener('change', renderParticipantsTable);
-        // $('listSearch')?.addEventListener('input', debounce(refreshEventsList, 500)); // Debounce manually implemented if needed
+
+        $('hotelSwitcherSelect')?.addEventListener('change', (e) => {
+            syncHotelState(e.target.value);
+            updateHeaderHotelDisplay();
+            refreshEventsList();
+        });
+
+        window.addEventListener("storage", (e) => {
+            if (e.key === "mesaChef_hotel" && e.newValue) {
+                const newNorm = e.newValue.toLowerCase().includes("cumbria") ? "Cumbria" : "Guadiana";
+                if (newNorm !== state.hotelInfo.id) {
+                    syncHotelState(newNorm);
+                    updateHeaderHotelDisplay();
+                    refreshEventsList();
+                }
+            }
+        });
 
         ['pAdults', 'pKids', 'pCollectionDate'].forEach(id => {
             $(id)?.addEventListener('input', recalcModalFinancials);
@@ -1173,13 +1263,11 @@
     // --- MAIN.JS ---
     async function init() {
         console.log("Grandes Eventos Module (Bundled) Init");
+        initAPI();
         initEventListeners();
 
-        // [FIX] Update Header UI
-        const headerName = $('headerHotelName');
-        const headerLogo = $('headerHotelLogo');
-        if (headerName) headerName.textContent = state.hotelInfo.name;
-        if (headerLogo) headerLogo.src = state.hotelInfo.logo;
+        // Update Header UI
+        updateHeaderHotelDisplay();
 
         // Ensure defaults
         const viewList = $('view-list');
@@ -1188,71 +1276,93 @@
         if (viewDetail) viewDetail.classList.add('hidden');
 
         try {
-            const events = await API.fetchEvents();
-            renderEventsList(events);
+            await refreshEventsList();
         } catch (e) { console.warn("Error fetching events or DB not ready", e); }
+    }
+
+    function startApp() {
+        ensureAuth(() => {
+            init();
+        });
     }
 
     // Initialize when DOM ready
     if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', init);
+        document.addEventListener('DOMContentLoaded', startApp);
     } else {
-        init();
+        startApp();
     }
 
-    // Placeholders for creating event
+    // Logic for creating event
     async function handleCreateNewEvent() {
-        const sName = $('newEvtSalon').value;
+        const sName = $('newEvtSalon')?.value;
+        const eName = $('newEvtName')?.value?.trim();
+        const eDate = $('newEvtDate')?.value;
+
+        if (!eName || !eDate || !sName) {
+            return alert("Por favor, completa todos los campos (Nombre, Fecha y Salón).");
+        }
+
         const salonObj = cachedSalonsForNewEvent.find(s => s.name === sName);
         const defaultCap = salonObj ? (parseInt(salonObj.pax) || 0) : 0;
+        const currentHotel = state.hotelInfo.id || "Guadiana";
 
         const data = {
-            nombre: $('newEvtName').value,
-            fecha: $('newEvtDate').value,
-            hotel: state.hotelInfo.id || "Guadiana", // [FIX] Store Hotel
+            nombre: eName,
+            fecha: eDate,
+            hotel: currentHotel,
             salonId: sName,
-            // [FIX] Auto-fill capacity
             capacidad: defaultCap,
             precioAdulto: 0,
             precioNino: 0
         };
-        if (!data.nombre || !data.fecha) return alert("Faltan datos");
+
         try {
             const id = await API.createEvent(data);
+            if (!id) {
+                throw new Error("No se pudo obtener el identificador del nuevo evento.");
+            }
 
-            // [FIX] Create Blocking Reservation in Salones
+            // Create Blocking Reservation in Salones
             if (window.db) {
                 console.log("Creando bloqueo de salón para Gran Evento...");
-                await window.db.collection("reservas_salones").add({
-                    hotel: state.hotelInfo.id || "Guadiana",
-                    salon: sName,
-                    cliente: data.nombre,
-                    fecha: data.fecha,
-                    estado: 'confirmada', // Blocked
-                    revisado: true,
-                    tipoEvento: "Gran Evento",
-                    eventoId: id,
-                    origen: 'grandes_eventos',
-                    referenciaPresupuesto: 'GE-' + id.substring(0, 4),
-                    contact: { tel: "", email: "" },
-                    detalles: {
-                        jornada: "todo", // Block full day
-                        montaje: "banquete",
-                        hora: "12:00",
-                        pax_adultos: 0,
-                        pax_ninos: 0
-                    },
-                    notas: {
-                        interna: "Bloqueo automático por Gran Evento",
-                        cliente: ""
-                    },
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                });
+                try {
+                    await window.db.collection("reservas_salones").add({
+                        hotel: currentHotel,
+                        salon: sName,
+                        cliente: eName,
+                        fecha: eDate,
+                        estado: 'confirmada',
+                        revisado: true,
+                        tipoEvento: "Gran Evento",
+                        eventoId: id,
+                        origen: 'grandes_eventos',
+                        referenciaPresupuesto: 'GE-' + id.substring(0, 4),
+                        contact: { tel: "", email: "" },
+                        detalles: {
+                            jornada: "todo",
+                            montaje: "banquete",
+                            hora: "12:00",
+                            pax_adultos: 0,
+                            pax_ninos: 0
+                        },
+                        notas: {
+                            interna: "Bloqueo automático por Gran Evento",
+                            cliente: ""
+                        },
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                } catch (resErr) {
+                    console.warn("Advertencia: No se pudo crear el bloqueo en reservas_salones:", resErr);
+                }
             }
 
             $('modalNewEvent').classList.add('hidden');
-            loadEventDetail(id);
-        } catch (e) { console.error(e); alert("Error creando evento"); }
+            await loadEventDetail(id);
+        } catch (e) {
+            console.error("Error creando evento:", e);
+            alert("Error creando evento: " + (e.message || "Error desconocido"));
+        }
     }
 
     // Logic to open New Event Modal and Populate Salons
@@ -1260,40 +1370,55 @@
 
     $('btnNewEventParams')?.addEventListener('click', async () => {
         $('modalNewEvent').classList.remove('hidden');
+        if ($('newEvtName')) $('newEvtName').value = '';
+        if ($('newEvtDate')) $('newEvtDate').value = '';
+
         // Populate Salons
         const sel = $('newEvtSalon');
         if (sel) {
-            sel.innerHTML = '<option>Cargando...</option>';
+            sel.innerHTML = '<option value="">Cargando salones...</option>';
             const config = await API.fetchSalonConfig();
-            sel.innerHTML = ''; // Clear
+            sel.innerHTML = '';
 
-            // Determine key based on hotel ID
-            // ID = "Guadiana" or "Cumbria" usually.
-            // fallback if ID is not matching exact keys
-            let hotelKey = "Guadiana";
-            if (state.hotelInfo.id === "Cumbria" || (state.hotelInfo.name && state.hotelInfo.name.includes("Cumbria"))) {
-                hotelKey = "Cumbria";
+            const hotelKey = state.hotelInfo.id || "Guadiana";
+            let salons = [];
+
+            if (config && Array.isArray(config[hotelKey]) && config[hotelKey].length > 0) {
+                salons = config[hotelKey].filter(s => s && s.active !== false && s.name);
             }
 
-            let salons = [];
-            if (config && config[hotelKey]) {
-                // [FIX] Filter inactive and store logic
-                salons = config[hotelKey].filter(s => s.active !== false);
-            } else {
-                // Fallback
+            // Real fallbacks per hotel if config is unavailable
+            if (!salons || salons.length === 0) {
                 if (hotelKey === "Cumbria") {
-                    salons = [{ name: "Salón A", pax: 100 }, { name: "Salón B", pax: 100 }, { name: "Terraza", pax: 50 }];
+                    salons = [
+                        { name: "Salón Mercurio", pax: 90 },
+                        { name: "Salón Venus (sala de Gym)", pax: 90 },
+                        { name: "Salón La Tierra", pax: 70 },
+                        { name: "Salón Marte", pax: 90 },
+                        { name: "Salón Saturno", pax: 70 },
+                        { name: "Desp 12", pax: 10 }
+                    ];
                 } else {
-                    salons = [{ name: "Gran Salón", pax: 300 }, { name: "Salón Venus", pax: 150 }, { name: "Salón Marte", pax: 80 }, { name: "Salón Júpiter", pax: 80 }];
+                    salons = [
+                        { name: "Puerta de Alarcos", pax: 800 },
+                        { name: "Puerta de Calatrava (Buffet)", pax: 135 },
+                        { name: "Puerta del Carmen", pax: 120 },
+                        { name: "Puerta de Ciruela", pax: 20 },
+                        { name: "Puerta de Granada", pax: 135 },
+                        { name: "Puerta de Santa María", pax: 80 },
+                        { name: "Puerta de Toledo", pax: 160 }
+                    ];
                 }
             }
 
-            cachedSalonsForNewEvent = salons; // Save for capacity lookup
+            cachedSalonsForNewEvent = salons;
 
-            salons.forEach(s => {
+            salons.forEach((s, idx) => {
                 const opt = document.createElement('option');
                 opt.value = s.name;
-                opt.textContent = s.name;
+                const paxText = (s.pax && s.pax > 0) ? ` (Aforo: ${s.pax})` : '';
+                opt.textContent = `${s.name}${paxText}`;
+                if (idx === 0) opt.selected = true;
                 sel.appendChild(opt);
             });
         }
@@ -1390,13 +1515,35 @@
         try {
             const events = await API.fetchEvents();
 
-            // Simple Client Filter based on UI State
             const statusFilter = $('listStatusFilter')?.value || 'todos';
+            const dateFilter = $('listDateFilter')?.value || '';
+            const searchVal = ($('listSearch')?.value || '').toLowerCase().trim();
 
             const filtered = events.filter(e => {
-                if (statusFilter === 'abierto') return e.estado !== 'completo' && e.estado !== 'cerrado' && e.estado !== 'anulado';
-                if (statusFilter === 'completo') return e.estado === 'completo' || e.estado === 'cerrado';
-                if (statusFilter === 'anulado') return e.estado === 'anulado';
+                // Status Filter
+                if (statusFilter === 'abierto') {
+                    if (e.estado === 'completo' || e.estado === 'cerrado' || e.estado === 'anulado') return false;
+                } else if (statusFilter === 'completo') {
+                    if (e.estado !== 'completo' && e.estado !== 'cerrado') return false;
+                } else if (statusFilter === 'anulado') {
+                    if (e.estado !== 'anulado') return false;
+                }
+
+                // Date Filter
+                if (dateFilter && e.fecha !== dateFilter) {
+                    return false;
+                }
+
+                // Search Filter
+                if (searchVal) {
+                    const ref = (e.referencia || '').toLowerCase();
+                    const name = (e.nombre || '').toLowerCase();
+                    const salon = (e.salonId || '').toLowerCase();
+                    if (!ref.includes(searchVal) && !name.includes(searchVal) && !salon.includes(searchVal)) {
+                        return false;
+                    }
+                }
+
                 return true;
             });
 
