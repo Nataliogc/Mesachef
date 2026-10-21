@@ -432,7 +432,7 @@
         }
 
         return {
-            fetchEvents, fetchEventDetails, fetchParticipants, createEvent, updateEvent, saveParticipant, cancelParticipant, recoverParticipant, cancelEvent, fetchSalonConfig
+            initAPI, fetchEvents, fetchEventDetails, fetchParticipants, createEvent, updateEvent, saveParticipant, cancelParticipant, recoverParticipant, cancelEvent, fetchSalonConfig
         };
     })();
 
@@ -1261,9 +1261,11 @@
     }
 
     // --- MAIN.JS ---
+    let isAppInitialized = false;
     async function init() {
+        if (isAppInitialized) return;
+        isAppInitialized = true;
         console.log("Grandes Eventos Module (Bundled) Init");
-        initAPI();
         initEventListeners();
 
         // Update Header UI
@@ -1600,12 +1602,7 @@
         }
     }
 
-    // [FIX] Ensure init is called
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', init);
-    } else {
-        init();
-    }
+// Trailing init removed - handled by startApp
 
     // Unsaved changes warning for browser close/refresh
     window.addEventListener('beforeunload', (e) => {
