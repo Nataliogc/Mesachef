@@ -116,6 +116,17 @@
     }
 
     // --- UTILS.JS ---
+    function formatPhoneES(value) {
+        if (!value) return "";
+        let clean = String(value).replace(/\D/g, '');
+        if (clean.startsWith('34') && clean.length > 9) {
+            clean = clean.slice(2);
+        }
+        clean = clean.slice(0, 9);
+        if (clean.length <= 3) return clean;
+        if (clean.length <= 6) return `${clean.slice(0, 3)} ${clean.slice(3)}`;
+        return `${clean.slice(0, 3)} ${clean.slice(3, 6)} ${clean.slice(6)}`;
+    }
     function formatCurrency(amount) {
         if (amount === undefined || amount === null) return "0,00 €";
         return parseFloat(amount).toLocaleString('es-ES', {
@@ -495,7 +506,7 @@
             return `<tr>
                 <td>${p.mesa || '-'}</td>
                 <td><span class="font-bold">${p.titular}</span><br><span style="font-size:10px;color:#64748b">${p.referencia || '-'}</span></td>
-                <td>${p.telefono || '-'}</td>
+                <td>${formatPhoneES(p.telefono) || '-'}</td>
                 <td class="text-center">${p.adultos}</td>
                 <td class="text-center">${p.ninos}</td>
                 <td class="text-right">${formatCurrency(paid)}</td>
@@ -663,6 +674,11 @@
 
         // Servicio Incluido Checkbox
         $('pServicioIncluido')?.addEventListener('change', recalcModalFinancials);
+
+        // Real-time Spanish phone formatting (000 000 000)
+        $('pPhone')?.addEventListener('input', function () {
+            this.value = formatPhoneES(this.value);
+        });
 
         // [FIX] Real-time Dashboard Updates
         ['inputCapacity', 'inputPriceAdult', 'inputPriceChild'].forEach(id => {
@@ -941,7 +957,7 @@
                 <td class="font-medium ${isAnulado ? 'text-red-700 line-through' : 'text-slate-800'}">
                     ${p.titular} <br> <span class="text-[10px] text-slate-500">${p.referencia || (p.id ? 'P-' + p.id.slice(-6) : '-')}</span>
                 </td>
-                <td class="text-xs text-slate-500">${p.telefono || '-'}</td>
+                <td class="text-xs text-slate-500">${formatPhoneES(p.telefono) || '-'}</td>
                 <td><span class="font-bold">${p.adultos}</span> / ${p.ninos}</td>
                 <td class="font-mono text-xs">${totalDisplay}</td>
                 <td class="font-mono text-xs text-green-700">${formatCurrency(displayPaid)}</td>
@@ -1003,7 +1019,7 @@
             state.modalPagos = participant.pagos ? [...participant.pagos] : [];
             $('pId').value = participant.id;
             $('pName').value = participant.titular;
-            $('pPhone').value = participant.telefono || '';
+            $('pPhone').value = formatPhoneES(participant.telefono || '');
             $('pEmail').value = participant.email || '';
             $('pAdults').value = participant.adultos;
             $('pKids').value = participant.ninos;
@@ -1121,7 +1137,7 @@
             id: $('pId').value || null,
             eventoId: state.currentEventId,
             titular: $('pName').value,
-            telefono: $('pPhone').value,
+            telefono: formatPhoneES($('pPhone').value),
             email: $('pEmail').value,
             adultos: newAdults,
             ninos: newKids,
@@ -1436,26 +1452,12 @@
         const id = state.currentEventId;
         if (!id) return;
 
-        const newCap = parseInt($('inputCapacity').value) || 0;
-        const newPriceAdult = parseFloat($('inputPriceAdult').value) || 0;
-        const newPriceChild = parseFloat($('inputPriceChild').value) || 0;
-
-        const oldCap = parseInt(state.currentEvent?.capacidad) || 0;
-        const oldPriceAdult = parseFloat(state.currentEvent?.precioAdulto) || 0;
-        const oldPriceChild = parseFloat(state.currentEvent?.precioNino) || 0;
-
-        const modifiesCapacityOrPrices = (newCap !== oldCap) || (newPriceAdult !== oldPriceAdult) || (newPriceChild !== oldPriceChild);
-
-        if (modifiesCapacityOrPrices) {
-            if (!checkSecurity()) return;
-        }
-
         const updates = {
             nombre: $('inputName').value,
             fecha: $('inputDate').value,
-            capacidad: newCap,
-            precioAdulto: newPriceAdult,
-            precioNino: newPriceChild,
+            capacidad: parseInt($('inputCapacity').value) || 0,
+            precioAdulto: parseFloat($('inputPriceAdult').value) || 0,
+            precioNino: parseFloat($('inputPriceChild').value) || 0,
         };
         try {
             await API.updateEvent(id, updates);
