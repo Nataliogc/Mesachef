@@ -1,34 +1,30 @@
-# 📋 Registro de Versiones y Control de Cambios - MesaChef
+# 📋 Registro de Versiones del Sistema MesaChef
 
-Este documento mantiene el historial oficial de versiones, módulos y fechas de actualización del sistema MesaChef.
+Este documento mantiene el registro y control de versiones **único y global** para todo el sistema MesaChef.
 
-> **Regla de mantenimiento:** Cada vez que se realice cualquier modificación en un módulo del sistema (HTML, JS, CSS, lógica o interfaz), es **obligatorio**:
-> 1. Incrementar el número de versión del módulo correspondiente (y en su cabecera visible si aplica).
-> 2. Actualizar la fecha en este registro.
-> 3. Añadir una entrada detallada en la sección de historial de cambios.
-
----
-
-## 📌 Estado Actual por Módulo
-
-| Módulo | Archivo(s) Principal(es) | Versión Actual | Última Actualización | Estado |
-| :--- | :--- | :---: | :---: | :---: |
-| **Inicio / Dashboard** | `index.html` | `v6.0.0` | 27/10/2026 | Operativo |
-| **Restaurante (El Diario)** | `restaurante.html`, `js/restaurante.js` | `v6.0.0` | 27/10/2026 | Operativo |
-| **Planning de Salones (Torre de Control)** | `salones.html`, `js/salones.js` | `v6.0.0` | 27/10/2026 | Operativo |
-| **Presupuestos (Comercial)** | `presupuestos.html`, `js/presupuestos.js` | `v6.0.0` | 27/10/2026 | Operativo |
-| **Grandes Eventos (Tickets y Cotillones)**| `grandes-eventos.html`, `js/grandes-eventos-bundled.js` | `v6.0.1` | 22/10/2026 | Operativo |
-| **Administración y Configuración** | `admin.html`, `js/admin.js` | `v6.0.0` | 27/10/2026 | Operativo |
-| **Orden de Servicio** | `orden-servicio.html` | `v6.0.0` | 27/10/2026 | Operativo |
-| **Plano de Evento** | `plano-evento.html` | `v6.0.0` | 27/10/2026 | Operativo |
-| **Centro de Ayuda / Manual** | `ayuda.html`, `MANUAL_USUARIO.md` | `v10.0.0` | 27/10/2026 | Operativo |
+> **Regla del Sistema:** Existe **una única versión global** para todo el sistema.
+> Cada vez que se realice cualquier modificación en cualquier módulo, pantalla, lógica o estilo:
+> 1. Se incrementa el número de versión global del sistema.
+> 2. Se actualiza la fecha a la fecha en curso.
+> 3. Se registra en este documento la nueva versión, la fecha, los módulos afectados y el detalle de los cambios.
+> 4. Se refleja la nueva versión en `package.json` y en las etiquetas de versión visibles de la interfaz (`Matrix vX.Y.Z`).
 
 ---
 
-## 📝 Historial Detallado de Modificaciones
+## 📌 Versión Actual del Sistema
 
-### [27/10/2026]
-- **Inicialización del Registro Oficial de Versiones**:
-  - Creación del archivo `REGISTRO_VERSIONES.md`.
-  - Establecimiento de la norma de versionado automático por módulo para cualquier cambio futuro.
-  - Sincronización de la línea base de versiones según el estado actual del repositorio.
+- **Versión:** `v10.0.0`
+- **Última Actualización:** 27/10/2026
+- **Estado General:** Operativo en Producción (Matrix)
+
+---
+
+## 📝 Historial de Versiones
+
+### [v10.0.0] - 27/10/2026
+- **Módulos:** Sistema Completo
+- **Tipo de cambio:** Unificación de versión
+- **Descripción:** 
+  - Establecimiento de versión única global para todos los módulos de MesaChef (`v10.0.0`).
+  - Creación del registro centralizado de versiones y control de cambios.
+  - Definición de política de incremento de versión global ante cualquier cambio en cualquier módulo.
