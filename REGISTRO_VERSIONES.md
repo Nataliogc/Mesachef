@@ -13,13 +13,19 @@ Este documento mantiene el registro y control de versiones **único y global** p
 
 ## 📌 Versión Actual del Sistema
 
-- **Versión:** `v10.0.0`
+- **Versión:** `v10.0.1`
 - **Última Actualización:** 27/10/2026
 - **Estado General:** Operativo en Producción (Matrix)
 
 ---
 
 ## 📝 Historial de Versiones
+
+### [v10.0.1] - 27/10/2026
+- **Módulos:** Varios módulos
+- **Tipo de cambio:** PATCH
+- **Descripción:**
+  - Prueba de bump automático
 
 ### [v10.0.0] - 27/10/2026
 - **Módulos:** Sistema Completo

@@ -1,6 +1,6 @@
-# 📘 Manual de Operaciones Integral - MesaChef Matrix v10.0.0
+# 📘 Manual de Operaciones Integral - MesaChef Matrix v10.0.1
 
-**Versión del Documento:** 10.0.0 Updated  
+**Versión del Documento:** 10.0.1 Updated  
 **Confidencialidad:** Uso Interno Grupo Guadiana & Cumbria  
 **Filosofía:** "Dato que no está en la Matrix, evento que no existe."
 Bienvenida
