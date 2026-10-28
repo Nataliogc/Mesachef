@@ -680,6 +680,87 @@
             this.value = formatPhoneES(this.value);
         });
 
+        // PayGold Charge Date change listener
+        $('pChargeDate')?.addEventListener('input', updateChargeAlertBadge);
+        $('pChargeDate')?.addEventListener('change', updateChargeAlertBadge);
+
+        // Card Last 4 digits only
+        $('pCardLast4')?.addEventListener('input', function () {
+            this.value = this.value.replace(/\D/g, '').slice(0, 4);
+        });
+
+        // Card Expiry auto-slash (MM/AA)
+        $('pCardExpiry')?.addEventListener('input', function (e) {
+            let v = this.value.replace(/\D/g, '').slice(0, 4);
+            if (v.length >= 3) {
+                this.value = v.slice(0, 2) + '/' + v.slice(2);
+            } else {
+                this.value = v;
+            }
+        });
+
+        // Copy Paygold Ref button
+        $('btnCopyPaygoldRef')?.addEventListener('click', () => {
+            const ref = $('pPaygoldRef')?.value;
+            if (ref) {
+                navigator.clipboard.writeText(ref).then(() => {
+                    const btn = $('btnCopyPaygoldRef');
+                    btn.textContent = '✅ Copiado!';
+                    setTimeout(() => btn.textContent = '📋 Copiar', 2000);
+                }).catch(() => alert('Código Pedido: ' + ref));
+            }
+        });
+
+        // Send WhatsApp PayGold button
+        $('btnSendWhatsAppPaygold')?.addEventListener('click', () => {
+            const phoneRaw = $('pPhone')?.value || '';
+            let phone = phoneRaw.replace(/\s+/g, '').replace(/[^\d]/g, '');
+            if (!phone) {
+                alert('⚠️ Introduce o revisa el teléfono del participante para enviar el WhatsApp.');
+                return;
+            }
+            if (phone.length === 9 && !phone.startsWith('34')) {
+                phone = '34' + phone;
+            }
+
+            const titular = $('pName')?.value || 'Cliente';
+            const adults = $('pAdults')?.value || '1';
+            const kids = $('pKids')?.value || '0';
+            const eventTitle = $('inputTitle')?.value || 'Gran Evento';
+            const total = $('pTotalCalc')?.value || '0.00';
+            const pending = $('pPendingCalc')?.value || '0.00';
+            const chargeDate = $('pChargeDate')?.value ? formatDate($('pChargeDate').value) : '';
+            const paygoldRef = $('pPaygoldRef')?.value || '';
+            const paygoldLink = $('pPaygoldLink')?.value || '';
+            const cardLast4 = $('pCardLast4')?.value || '';
+
+            let msg = 'Hola ' + titular + ', le confirmamos su reserva en Sercotel Guadiana para el evento "' + eventTitle + '".\n\n';
+            msg += '👥 Asistentes: ' + adults + ' adulto(s)' + (parseInt(kids) > 0 ? ', ' + kids + ' niño(s)' : '') + '.\n';
+            msg += '💶 Importe total: ' + total + ' € (Pendiente: ' + pending + ' €).\n\n';
+
+            if (paygoldLink) {
+                msg += '💳 Para formalizar su garantía bancaria oficial mediante Eurocaja Rural (TPV Seguro PayGold), por favor acceda al siguiente enlace:\n' + paygoldLink + '\n\n';
+            } else if (cardLast4) {
+                msg += '💳 Garantía bancaria registrada: Tarjeta terminada en •••• ' + cardLast4 + '.\n';
+            }
+
+            if (chargeDate) {
+                msg += '📅 Fecha límite / cargo previsto: ' + chargeDate + '.\n';
+            }
+            if (paygoldRef) {
+                msg += '🔖 Ref. de pedido: ' + paygoldRef + '.\n\n';
+            }
+
+            msg += 'Si tiene cualquier duda o necesita realizar alguna modificación, responda a este mensaje.\n¡Muchas gracias!';
+
+            const url = 'https://api.whatsapp.com/send?phone=' + phone + '&text=' + encodeURIComponent(msg);
+            window.open(url, '_blank');
+
+            if ($('pPaygoldStatus') && $('pPaygoldStatus').value === 'pendiente') {
+                $('pPaygoldStatus').value = 'enlace_enviado';
+            }
+        });
+
         // [FIX] Real-time Dashboard Updates
         ['inputCapacity', 'inputPriceAdult', 'inputPriceChild'].forEach(id => {
             $(id)?.addEventListener('input', updateDashboard);
@@ -952,10 +1033,30 @@
             // Total always shows real amount
             const totalDisplay = total > 0 ? formatCurrency(total) : '-';
 
+            // Guadiana PayGold & Charge Date badges
+            const isGuadiana = (state.hotelInfo.id || getActiveHotel()) === 'Guadiana';
+            let chargeBadges = '';
+            if (isGuadiana && !isAnulado) {
+                if (p.chargeDate && pending > 0) {
+                    const todayStr = new Date().toISOString().split('T')[0];
+                    if (p.chargeDate < todayStr) {
+                        chargeBadges += '<span class="inline-block mt-0.5 px-1.5 py-0.5 text-[9px] font-bold rounded bg-red-100 text-red-700 border border-red-200" title="Cargo vencido el ' + formatDate(p.chargeDate) + '">⚠️ Vencido: ' + formatDate(p.chargeDate) + '</span>';
+                    } else if (p.chargeDate === todayStr) {
+                        chargeBadges += '<span class="inline-block mt-0.5 px-1.5 py-0.5 text-[9px] font-bold rounded bg-amber-100 text-amber-800 border border-amber-300 animate-pulse" title="Cargo programado para HOY">🔔 Cobrar HOY</span>';
+                    } else {
+                        chargeBadges += '<span class="inline-block mt-0.5 px-1.5 py-0.5 text-[9px] font-medium rounded bg-emerald-50 text-emerald-700 border border-emerald-200" title="Fecha prevista de cargo">📅 Cargo: ' + formatDate(p.chargeDate) + '</span>';
+                    }
+                }
+                if (p.cardLast4) {
+                    chargeBadges += '<span class="inline-block mt-0.5 ml-1 px-1.5 py-0.5 text-[9px] font-mono rounded bg-slate-100 text-slate-700 border border-slate-200">💳 •••• ' + p.cardLast4 + '</span>';
+                }
+            }
+
             tr.innerHTML = `
                 <td class="font-mono text-xs">${p.mesa || '-'}</td>
                 <td class="font-medium ${isAnulado ? 'text-red-700 line-through' : 'text-slate-800'}">
                     ${p.titular} <br> <span class="text-[10px] text-slate-500">${p.referencia || (p.id ? 'P-' + p.id.slice(-6) : '-')}</span>
+                    ${chargeBadges ? '<div class="mt-0.5 flex flex-wrap gap-1 items-center">' + chargeBadges + '</div>' : ''}
                 </td>
                 <td class="text-xs text-slate-500">${formatPhoneES(p.telefono) || '-'}</td>
                 <td><span class="font-bold">${p.adultos}</span> / ${p.ninos}</td>
@@ -1012,6 +1113,38 @@
         $('lblAvailableSeats').style.color = stats.available < 0 ? '#ef4444' : '#0f172a';
     }
 
+    function updateChargeAlertBadge() {
+        const badge = $('pChargeAlertBadge');
+        const input = $('pChargeDate');
+        if (!badge || !input) return;
+        const val = input.value;
+        if (!val) {
+            badge.style.display = 'none';
+            return;
+        }
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const [y, m, d] = val.split('-').map(Number);
+        const target = new Date(y, m - 1, d);
+        const diffTime = target.getTime() - today.getTime();
+        const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
+
+        badge.style.display = 'block';
+        if (diffDays < 0) {
+            badge.style.color = '#b91c1c';
+            badge.innerHTML = '<span style="background:#fee2e2; padding:2px 6px; border-radius:4px; border:1px solid #fca5a5;">⚠️ Cargo Vencido hace ' + Math.abs(diffDays) + ' día(s)</span>';
+        } else if (diffDays === 0) {
+            badge.style.color = '#b45309';
+            badge.innerHTML = '<span style="background:#fef3c7; padding:2px 6px; border-radius:4px; border:1px solid #fcd34d; font-weight:700;">🔔 ¡Cargo programado para HOY!</span>';
+        } else if (diffDays === 1) {
+            badge.style.color = '#b45309';
+            badge.innerHTML = '<span style="background:#fef3c7; padding:2px 6px; border-radius:4px; border:1px solid #fcd34d;">⏰ Cargo mañana</span>';
+        } else {
+            badge.style.color = '#15803d';
+            badge.innerHTML = '<span style="background:#dcfce7; padding:2px 6px; border-radius:4px; border:1px solid #86efac;">🟢 En plazo (en ' + diffDays + ' días)</span>';
+        }
+    }
+
     function openParticipantModal(participant = null) {
         const modal = $('modalParticipant');
         modal.classList.remove('hidden');
@@ -1035,6 +1168,16 @@
             // [FIX] Store Old Pax to avoid calculation errors on save
             const oldTotal = (parseInt(participant.adultos) || 0) + (parseInt(participant.ninos) || 0);
             $('pOldPax').value = oldTotal;
+            // Guadiana PayGold fields
+            if ($('pPaygoldRef')) {
+                $('pPaygoldRef').value = participant.paygoldRef || ('GE-' + (participant.referencia || (participant.id ? participant.id.slice(-6).toUpperCase() : Math.floor(100000 + Math.random() * 900000))));
+            }
+            if ($('pChargeDate')) $('pChargeDate').value = participant.chargeDate || '';
+            if ($('pPaygoldStatus')) $('pPaygoldStatus').value = participant.paygoldStatus || 'pendiente';
+            if ($('pCardLast4')) $('pCardLast4').value = participant.cardLast4 || '';
+            if ($('pCardExpiry')) $('pCardExpiry').value = participant.cardExpiry || '';
+            if ($('pCardBrand')) $('pCardBrand').value = participant.cardBrand || 'Visa';
+            if ($('pPaygoldLink')) $('pPaygoldLink').value = participant.paygoldLink || '';
 
             const btnCancel = $('btnShowCancel');
             if (participant.estado && participant.estado.startsWith('anulado')) {
@@ -1061,6 +1204,14 @@
             $('pServicioIncluido').checked = false;
             $('pCreatedAt').value = 'No disponible';
             $('pUpdatedAt').value = 'No disponible';
+            // Guadiana PayGold defaults
+            if ($('pPaygoldRef')) $('pPaygoldRef').value = 'GE-' + Math.floor(100000 + Math.random() * 900000);
+            if ($('pChargeDate')) $('pChargeDate').value = '';
+            if ($('pPaygoldStatus')) $('pPaygoldStatus').value = 'pendiente';
+            if ($('pCardLast4')) $('pCardLast4').value = '';
+            if ($('pCardExpiry')) $('pCardExpiry').value = '';
+            if ($('pCardBrand')) $('pCardBrand').value = 'Visa';
+            if ($('pPaygoldLink')) $('pPaygoldLink').value = '';
         }
 
         // [FIX] Set Default Date to Today
@@ -1068,6 +1219,11 @@
 
         renderModalPayments();
         recalcModalFinancials();
+        // Toggle Guadiana Paygold Section visibility
+        const isGuadianaModal = (state.hotelInfo.id || getActiveHotel()) === 'Guadiana';
+        const secGuadiana = $('sectionGuadianaPaygold');
+        if (secGuadiana) secGuadiana.style.display = isGuadianaModal ? 'block' : 'none';
+        updateChargeAlertBadge();
     }
 
     function recalcModalFinancials() {
@@ -1143,7 +1299,15 @@
             ninos: newKids,
             observaciones: $('pObservaciones').value || '',
             pagos: state.modalPagos,
-            servicioIncluido: $('pServicioIncluido')?.checked || false
+            servicioIncluido: $('pServicioIncluido')?.checked || false,
+            // Guadiana PayGold & Card fields
+            paygoldRef: $('pPaygoldRef')?.value || '',
+            chargeDate: $('pChargeDate')?.value || '',
+            paygoldStatus: $('pPaygoldStatus')?.value || 'pendiente',
+            cardLast4: $('pCardLast4')?.value ? $('pCardLast4').value.replace(/\D/g, '').slice(-4) : '',
+            cardExpiry: $('pCardExpiry')?.value || '',
+            cardBrand: $('pCardBrand')?.value || 'Visa',
+            paygoldLink: $('pPaygoldLink')?.value || ''
         };
         try {
             await API.saveParticipant(data);

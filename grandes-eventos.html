@@ -229,7 +229,7 @@
             <img src="Img/logo_mesa_chef.png" class="h-8 w-auto object-contain drop-shadow-sm" alt="MesaChef">
             <div class="flex flex-col leading-none">
               <h1 class="text-slate-800 font-bold text-lg tracking-tight">MesaChef</h1>
-              <span class="text-[10px] text-blue-600 font-bold uppercase tracking-widest -mt-0.5">Matrix v10.0.1</span>
+              <span class="text-[10px] text-blue-600 font-bold uppercase tracking-widest -mt-0.5">Matrix v10.1.0</span>
             </div>
           </a>
           <div class="h-6 w-px bg-slate-200"></div>
@@ -619,7 +619,7 @@
 
   <!-- MODAL PARTICIPANT -->
   <div id="modalParticipant" class="modal-overlay hidden">
-    <div class="modal-content" style="max-width: 600px; position: relative;">
+    <div class="modal-content" style="max-width: 620px; max-height: 90vh; overflow-y: auto; position: relative;">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
         <h3 style="margin:0;">Gestionar Participante</h3>
         <span id="pStatusBadge" class="status-badge status-open" style="display:none;">Activo</span>
@@ -669,6 +669,98 @@
           <label class="form-label">Observaciones</label>
           <textarea id="pObservaciones" class="form-input" rows="2"
             placeholder="Notas internas sobre el participante..." style="resize: vertical; font-size: 13px;"></textarea>
+        </div>
+
+        <!-- SECCION GARANTIA Y PAGO PAYGOLD (EUROCAJA RURAL - EXCLUSIVO GUADIANA) -->
+        <div id="sectionGuadianaPaygold" style="background:#f0fdf4; border:1px solid #86efac; border-radius:8px; padding:12px; margin-top:4px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; border-bottom:1px solid #bbf7d0; padding-bottom:6px;">
+            <div style="display:flex; align-items:center; gap:6px;">
+              <span style="font-size:16px;">🏦</span>
+              <strong style="font-size:12px; color:#14532d;">Garantía y Pago PayGold (Eurocaja Rural)</strong>
+              <span style="font-size:10px; background:#dcfce7; color:#15803d; padding:1px 6px; border-radius:4px; font-weight:700; border:1px solid #86efac;">168355840-001</span>
+            </div>
+            <span style="font-size:10px; color:#15803d; font-weight:600; display:flex; align-items:center; gap:3px;">
+              🛡️ PCI-DSS Seguro
+            </span>
+          </div>
+
+          <!-- Fila: Cod. Pedido, Fecha Prevista de Cargo, Estado -->
+          <div class="header-grid" style="grid-template-columns: 1.1fr 1.3fr 1.1fr; gap:10px; margin-bottom:8px;">
+            <div class="form-group">
+              <label class="form-label" style="font-size:10px; color:#166534; display:flex; justify-content:space-between; align-items:center;">
+                <span>Cód. Pedido PayGold</span>
+                <button type="button" id="btnCopyPaygoldRef" style="background:none; border:none; color:#2563eb; cursor:pointer; font-size:10px; padding:0; text-decoration:underline;">📋 Copiar</button>
+              </label>
+              <input type="text" id="pPaygoldRef" class="form-input font-mono font-bold" style="background:#ffffff; color:#0f172a; height:32px; font-size:11px;" placeholder="GE-XXXXX" readonly>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" style="font-size:10px; color:#166534;">Fecha Cargo Previsto</label>
+              <input type="date" id="pChargeDate" class="form-input font-semibold" style="background:#ffffff; height:32px; font-size:11px;">
+              <div id="pChargeAlertBadge" style="margin-top:3px; font-size:10px; font-weight:600; display:none;"></div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" style="font-size:10px; color:#166534;">Estado Garantía</label>
+              <select id="pPaygoldStatus" class="form-input font-medium" style="background:#ffffff; height:32px; font-size:11px;">
+                <option value="pendiente">⏳ Pendiente</option>
+                <option value="enlace_enviado">📤 Enlace Enviado</option>
+                <option value="garantizado">✅ Garantizado / Pagado</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Tarjeta Segura (Referencia ultimos 4 digitos) -->
+          <div style="background:#ffffff; padding:8px; border-radius:6px; border:1px solid #dcfce7; margin-bottom:8px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+              <span style="font-size:10px; font-weight:700; color:#334155;">Datos de Referencia de Tarjeta</span>
+              <span style="font-size:9px; color:#64748b;">(Solo guardar últimos 4 dígitos como referencia)</span>
+            </div>
+            <div class="header-grid" style="grid-template-columns: 1.4fr 1fr 1fr; gap:8px;">
+              <div class="form-group">
+                <label class="form-label" style="font-size:9px; color:#64748b; margin-bottom:2px;">Últimos 4 dígitos</label>
+                <div style="display:flex; align-items:center; gap:3px;">
+                  <span class="font-mono text-xs text-slate-400 select-none">•••• •••• ••••</span>
+                  <input type="text" id="pCardLast4" class="form-input font-mono font-bold" maxlength="4" style="height:28px; font-size:11px; text-align:center;" placeholder="0004">
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label" style="font-size:9px; color:#64748b; margin-bottom:2px;">Caducidad</label>
+                <input type="text" id="pCardExpiry" class="form-input font-mono text-center" maxlength="5" style="height:28px; font-size:11px;" placeholder="MM/AA">
+              </div>
+              <div class="form-group">
+                <label class="form-label" style="font-size:9px; color:#64748b; margin-bottom:2px;">Marca / Tipo</label>
+                <select id="pCardBrand" class="form-input text-xs" style="height:28px; font-size:11px; padding:2px 4px;">
+                  <option value="Visa">Visa</option>
+                  <option value="Mastercard">Mastercard</option>
+                  <option value="Amex">Amex</option>
+                  <option value="Otra">Otra</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- Enlace de Pago PayGold -->
+          <div class="form-group" style="margin-bottom:8px;">
+            <label class="form-label" style="font-size:10px; color:#166534; margin-bottom:2px;">Enlace PayGold generado en Eurocaja (Opcional)</label>
+            <input type="url" id="pPaygoldLink" class="form-input text-xs font-mono" placeholder="https://sis.redsys.es/sis/paygold/..." style="background:#ffffff; height:30px; font-size:11px;">
+          </div>
+
+          <!-- Acciones: Enlace a Eurocaja y Boton WhatsApp -->
+          <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; margin-top:6px; padding-top:6px; border-top:1px solid #bbf7d0;">
+            <a href="https://sis.redsys.es/canales/inicio.do" target="_blank" rel="noopener noreferrer" 
+               class="text-xs font-medium text-emerald-800 hover:text-emerald-950 flex items-center gap-1" style="text-decoration:none; font-size:11px;">
+              <span>🌐 Abrir TPV Eurocaja Rural</span>
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+              </svg>
+            </a>
+
+            <button type="button" id="btnSendWhatsAppPaygold" class="btn-action" 
+                    style="background:#25D366; color:#ffffff; border:none; font-weight:700; font-size:11px; padding:6px 12px; border-radius:6px; display:flex; align-items:center; gap:6px; cursor:pointer; box-shadow:0 1px 2px rgba(0,0,0,0.1);">
+              <span>📱 WhatsApp PayGold</span>
+            </button>
+          </div>
         </div>
 
         <!-- ROW 4: PAYMENTS HISTORY (bg-gray) -->

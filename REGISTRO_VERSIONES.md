@@ -13,13 +13,19 @@ Este documento mantiene el registro y control de versiones **único y global** p
 
 ## 📌 Versión Actual del Sistema
 
-- **Versión:** `v10.0.1`
-- **Última Actualización:** 27/10/2026
+- **Versión:** `v10.1.0`
+- **Última Actualización:** 28/10/2026
 - **Estado General:** Operativo en Producción (Matrix)
 
 ---
 
 ## 📝 Historial de Versiones
+
+### [v10.1.0] - 28/10/2026
+- **Módulos:** Grandes Eventos
+- **Tipo de cambio:** MINOR
+- **Descripción:**
+  - Integración de Garantía y Pago PayGold (Eurocaja Rural) con fecha de cargo, avisos en tiempo real, protección PCI-DSS y confirmación por WhatsApp para Sercotel Guadiana
 
 ### [v10.0.1] - 27/10/2026
 - **Módulos:** Varios módulos
