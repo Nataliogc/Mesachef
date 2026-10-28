@@ -683,6 +683,7 @@
         // PayGold Charge Date change listener
         $('pChargeDate')?.addEventListener('input', updateChargeAlertBadge);
         $('pChargeDate')?.addEventListener('change', updateChargeAlertBadge);
+        $('pPaygoldStatus')?.addEventListener('change', updatePaygoldStatusStyle);
 
         // Card Last 4 digits only
         $('pCardLast4')?.addEventListener('input', function () {
@@ -1183,6 +1184,26 @@
         }
     }
 
+    
+    function updatePaygoldStatusStyle() {
+        const sel = $('pPaygoldStatus');
+        if (!sel) return;
+        const val = sel.value;
+        if (val === 'garantizado') {
+            sel.style.backgroundColor = '#dcfce7';
+            sel.style.borderColor = '#16a34a';
+            sel.style.color = '#15803d';
+        } else if (val === 'enlace_enviado') {
+            sel.style.backgroundColor = '#eff6ff';
+            sel.style.borderColor = '#3b82f6';
+            sel.style.color = '#1d4ed8';
+        } else {
+            sel.style.backgroundColor = '#fffbeb';
+            sel.style.borderColor = '#f59e0b';
+            sel.style.color = '#b45309';
+        }
+    }
+    
     function openParticipantModal(participant = null) {
         const modal = $('modalParticipant');
         modal.classList.remove('hidden');
@@ -1262,6 +1283,7 @@
         const secGuadiana = $('sectionGuadianaPaygold');
         if (secGuadiana) secGuadiana.style.display = isGuadianaModal ? 'block' : 'none';
         updateChargeAlertBadge();
+        updatePaygoldStatusStyle();
     }
 
     function recalcModalFinancials() {

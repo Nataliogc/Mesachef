@@ -13,13 +13,19 @@ Este documento mantiene el registro y control de versiones **único y global** p
 
 ## 📌 Versión Actual del Sistema
 
-- **Versión:** `v10.2.0`
+- **Versión:** `v10.2.1`
 - **Última Actualización:** 28/10/2026
 - **Estado General:** Operativo en Producción (Matrix)
 
 ---
 
 ## 📝 Historial de Versiones
+
+### [v10.2.1] - 28/10/2026
+- **Módulos:** Grandes Eventos
+- **Tipo de cambio:** PATCH
+- **Descripción:**
+  - Ampliación del modal de participante a 1260px y corrección de visibilidad y estilos con colores dinámicos en el selector de Estado Garantía
 
 ### [v10.2.0] - 28/10/2026
 - **Módulos:** Grandes Eventos
