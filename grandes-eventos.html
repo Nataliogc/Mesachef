@@ -229,7 +229,7 @@
             <img src="Img/logo_mesa_chef.png" class="h-8 w-auto object-contain drop-shadow-sm" alt="MesaChef">
             <div class="flex flex-col leading-none">
               <h1 class="text-slate-800 font-bold text-lg tracking-tight">MesaChef</h1>
-              <span class="text-[10px] text-blue-600 font-bold uppercase tracking-widest -mt-0.5">Matrix v10.3.7</span>
+              <span class="text-[10px] text-blue-600 font-bold uppercase tracking-widest -mt-0.5">Matrix v10.3.8</span>
             </div>
           </a>
           <div class="h-6 w-px bg-slate-200"></div>
@@ -349,7 +349,27 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
               </svg>
             </a>
-          </div>
+          
+            <!-- Botón Ver Menú Fin de Año en HTML -->
+            <a href="menu-fin-de-ano-2026.html" target="_blank" id="btnLinkMenuFinAno"
+              class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-amber-50 text-amber-900 hover:bg-amber-100 border border-amber-300 rounded-lg text-xs font-bold transition shadow-sm"
+              title="Ver Menú Fin de Año 2026 interactivo">
+              <span>🍽️ Menú Fin de Año</span>
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 text-amber-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+              </svg>
+            </a>
+
+            <!-- Botón Enviar Menú por WhatsApp -->
+            <button type="button" id="btnSendMenuWhatsApp"
+              class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition shadow-sm cursor-pointer border-none"
+              title="Enviar el enlace del Menú de Fin de Año por WhatsApp a clientes">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 fill-current" viewBox="0 0 16 16">
+                <path d="M13.601 2.326A7.854 7.854 0 0 0 7.994 0C3.627 0 .068 3.558.064 7.926c0 1.399.366 2.76 1.057 3.965L0 16l4.204-1.102a7.933 7.933 0 0 0 3.79.965h.004c4.368 0 7.926-3.558 7.93-7.93A7.898 7.898 0 0 0 13.6 2.326zM7.994 14.521a6.573 6.573 0 0 1-3.356-.92l-.24-.144-2.494.654.666-2.433-.156-.251a6.56 6.56 0 0 1-1.007-3.505c0-3.626 2.957-6.584 6.591-6.584a6.56 6.56 0 0 1 4.66 1.931 6.557 6.557 0 0 1 1.928 4.66c-.004 3.639-2.961 6.592-6.592 6.592z"/>
+              </svg>
+              <span>📱 Menú WhatsApp</span>
+            </button>
+</div>
           <span id="eventStatusBadge"
             class="status-badge status-open px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wide">Abierto</span>
         </div>
@@ -1015,7 +1035,54 @@
       }
     });
   </script>
-  <script src="js/grandes-eventos-bundled.js?v=10.3.7"></script>
+  <script src="js/grandes-eventos-bundled.js?v=10.3.8"></script>
+
+  <!-- MODAL ENVIAR MENÚ WHATSAPP -->
+  <div id="modalSendMenuWhatsApp" class="modal-overlay hidden">
+    <div class="modal-content" style="max-width: 540px; width: 92%; padding: 0; border-radius: 18px; overflow: hidden; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35);">
+      <div style="background:linear-gradient(135deg, #15803d 0%, #166534 100%); color:#ffffff; padding:18px 22px; display:flex; justify-content:space-between; align-items:center;">
+        <div style="display:flex; align-items:center; gap:10px;">
+          <span style="font-size:22px;">📱</span>
+          <div>
+            <h3 style="margin:0; font-size:16px; font-weight:800; color:#ffffff;">Enviar Menú Fin de Año 2026</h3>
+            <p style="margin:0; font-size:11px; color:#dcfce7;">Sercotel Hotel Guadiana • Envío directo por WhatsApp</p>
+          </div>
+        </div>
+        <button type="button" id="btnCloseMenuWhatsApp" style="background:none; border:none; color:#ffffff; font-size:26px; line-height:1; cursor:pointer;" title="Cerrar">&times;</button>
+      </div>
+
+      <div style="padding:22px;">
+        <div style="margin-bottom:14px;">
+          <label class="form-label text-xs font-bold text-slate-700 uppercase" style="margin-bottom:6px; display:block;">
+            Teléfono del Cliente (opcional):
+          </label>
+          <input type="tel" id="inputMenuWaPhone" class="form-input text-sm" placeholder="Ej: 612 345 678 (o déjalo vacío para abrir WhatsApp y elegir contacto)" style="width:100%; height:40px;">
+          <span style="font-size:11px; color:#64748b; margin-top:4px; display:block;">Si no introduces teléfono, WhatsApp se abrirá directamente con el mensaje listo para compartir a cualquier chat.</span>
+        </div>
+
+        <div style="margin-bottom:14px;">
+          <label class="form-label text-xs font-bold text-slate-700 uppercase" style="margin-bottom:6px; display:block;">
+            Mensaje con el Enlace Web del Menú:
+          </label>
+          <textarea id="txtMenuWaMessage" rows="8" class="form-input text-xs" style="width:100%; line-height:1.45; font-family:sans-serif; resize:vertical; background:#f8fafc;"></textarea>
+        </div>
+
+        <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; margin-top:16px; padding-top:12px; border-top:1px solid #e2e8f0;">
+          <button type="button" id="btnCopyMenuWaText" class="btn-action" style="display:flex; align-items:center; gap:6px; font-size:12px;">
+            <span>📋</span> Copiar Texto y Enlace
+          </button>
+          <div style="display:flex; gap:8px;">
+            <button type="button" id="btnCancelMenuWhatsApp" class="btn-action" style="font-size:12px;">
+              Cancelar
+            </button>
+            <button type="button" id="btnConfirmSendMenuWa" class="btn-primary" style="background:#25D366; border-color:#20ba59; color:#ffffff; display:flex; align-items:center; gap:6px; font-weight:800; cursor:pointer;">
+              <span>📱 Abrir en WhatsApp</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 </body>
 
 </html>

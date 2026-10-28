@@ -13,13 +13,22 @@ Este documento mantiene el registro y control de versiones **único y global** p
 
 ## 📌 Versión Actual del Sistema
 
-- **Versión:** `v10.3.7`
+- **Versión:** `v10.3.8`
 - **Última Actualización:** 28/10/2026
 - **Estado General:** Operativo en Producción (Matrix)
 
 ---
 
 ## 📝 Historial de Versiones
+
+### [v10.3.8] - 28/10/2026
+- **Módulos:** Grandes Eventos / Menú Fin de Año 2026 & WhatsApp
+- **Tipo de cambio:** MINOR
+- **Descripción:**
+  - Creación de la página web oficial responsive e interactiva del menú de gala: `menu-fin-de-ano-2026.html`, basada en el documento oficial *"Menu Fin de Año Guadiana 2026.docx"* con imágenes, alérgenos, bodega, cotillón con DJ, menú infantil y descarga en PDF.
+  - Inclusión en la barra de configuración del evento en `grandes-eventos.html` de los botones:
+    - `🍽️ Menú Fin de Año`: Acceso directo para visualizar la carta digital.
+    - `📱 Menú WhatsApp`: Modal integrado para enviar el enlace y ficha del menú directamente por WhatsApp a cualquier cliente o grupo.
 
 ### [v10.3.7] - 28/10/2026
 - **Módulos:** Grandes Eventos / Modal de Participante & PayGold

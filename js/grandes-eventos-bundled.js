@@ -1015,6 +1015,57 @@
         $('btnCloseNewEvent')?.addEventListener('click', () => $('modalNewEvent').classList.add('hidden'));
         $('btnCreateNewEvent')?.addEventListener('click', handleCreateNewEvent);
 
+        // Setup Modal Enviar Menú WhatsApp
+        $('btnSendMenuWhatsApp')?.addEventListener('click', () => {
+            const baseUrl = window.location.href.split('?')[0].replace(/[^/]*$/, '');
+            const menuUrl = baseUrl + 'menu-fin-de-ano-2026.html';
+            const evtName = state.currentEvent?.nombre || 'Cena Fin de Año 2026';
+            const priceAd = state.currentEvent?.precioAdulto || '120';
+            const priceCh = state.currentEvent?.precioNino || '30';
+
+            const defaultMsg = `¡Hola! Le enviamos el Menú Oficial de la Gran ${evtName} en Sercotel Hotel Guadiana:\n\n` +
+                `🍽️ Consulte el menú interactivo aquí:\n${menuUrl}\n\n` +
+                `✨ Incluye aperitivos de gala, ensalada de marisco con bogavante, lomito de rodaballo, lingote de cochinillo crujiente, postre de autor, bodega incluida, uvas de la suerte, cotillón y fiesta con DJ.\n` +
+                `• Menú Adulto: ${priceAd} € (IVA inc.)\n` +
+                `• Menú Infantil: ${priceCh} € (IVA inc.)\n\n` +
+                `Para cualquier duda o confirmar su reserva, puede responder a este mensaje o llamarnos al 926 22 33 13.`;
+
+            if ($('txtMenuWaMessage')) $('txtMenuWaMessage').value = defaultMsg;
+            if ($('inputMenuWaPhone')) $('inputMenuWaPhone').value = '';
+            $('modalSendMenuWhatsApp')?.classList.remove('hidden');
+        });
+
+        $('btnCloseMenuWhatsApp')?.addEventListener('click', () => $('modalSendMenuWhatsApp')?.classList.add('hidden'));
+        $('btnCancelMenuWhatsApp')?.addEventListener('click', () => $('modalSendMenuWhatsApp')?.classList.add('hidden'));
+
+        $('btnCopyMenuWaText')?.addEventListener('click', () => {
+            const txt = $('txtMenuWaMessage')?.value || '';
+            if (txt) {
+                navigator.clipboard.writeText(txt).then(() => {
+                    const btn = $('btnCopyMenuWaText');
+                    if (btn) {
+                        const orig = btn.innerHTML;
+                        btn.innerHTML = '<span>✅</span> ¡Copiado!';
+                        setTimeout(() => { btn.innerHTML = orig; }, 2000);
+                    }
+                });
+            }
+        });
+
+        $('btnConfirmSendMenuWa')?.addEventListener('click', () => {
+            const rawPhone = $('inputMenuWaPhone')?.value.replace(/\D/g, '') || '';
+            let phone = '';
+            if (rawPhone.length >= 9) {
+                phone = rawPhone.length === 9 ? '34' + rawPhone : rawPhone;
+            }
+            const msg = encodeURIComponent($('txtMenuWaMessage')?.value || '');
+            const waUrl = phone
+                ? `https://api.whatsapp.com/send?phone=${phone}&text=${msg}`
+                : `https://api.whatsapp.com/send?text=${msg}`;
+            window.open(waUrl, '_blank');
+            $('modalSendMenuWhatsApp')?.classList.add('hidden');
+        });
+
         // Setup global cancel toggler
         window.toggleCancelForm = function () {
             const form = $('divCancelForm');
