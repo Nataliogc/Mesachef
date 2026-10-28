@@ -13,13 +13,19 @@ Este documento mantiene el registro y control de versiones **único y global** p
 
 ## 📌 Versión Actual del Sistema
 
-- **Versión:** `v10.3.0`
+- **Versión:** `v10.3.1`
 - **Última Actualización:** 28/10/2026
 - **Estado General:** Operativo en Producción (Matrix)
 
 ---
 
 ## 📝 Historial de Versiones
+
+### [v10.3.1] - 28/10/2026
+- **Módulos:** Grandes Eventos
+- **Tipo de cambio:** PATCH
+- **Descripción:**
+  - Corrección en el modal de reserva: eliminación del atributo HTML `required` en el campo del enlace PayGold para permitir guardar y dar de alta la reserva antes de entrar al TPV de Eurocaja Rural. La validación obligatoria se mantiene activa exclusivamente al pulsar el botón de envío de WhatsApp PayGold.
 
 ### [v10.3.0] - 28/10/2026
 - **Módulos:** Backend (Cloud Functions) / Grandes Eventos / PayGold Eurocaja
