@@ -725,6 +725,46 @@
             }).catch(() => alert('Descripción: ' + desc));
         });
 
+        // Copy Webhook Notification URL button
+        $('btnCopyWebhookUrl')?.addEventListener('click', () => {
+            const url = 'https://europe-west1-mesa-chef-prod.cloudfunctions.net/redsysWebhook';
+            navigator.clipboard.writeText(url).then(() => {
+                const btn = $('btnCopyWebhookUrl');
+                if (btn) {
+                    const orig = btn.innerHTML;
+                    btn.innerHTML = '✅ ¡URL Copiada!';
+                    setTimeout(() => { btn.innerHTML = orig; }, 2000);
+                }
+            }).catch(() => alert('URL Notificación: ' + url));
+        });
+
+        
+        // Regenerate PayGold Ref for new link / modification of guests
+        $('btnRegenPaygoldRef')?.addEventListener('click', () => {
+            const curRef = ($('pPaygoldRef')?.value || '').trim();
+            let newRef = '';
+            const match = curRef.match(/^(GE-\d+)(?:-(\d+))?$/);
+            if (match) {
+                const base = match[1];
+                const ver = parseInt(match[2] || '1', 10) + 1;
+                newRef = base + '-' + ver;
+            } else {
+                newRef = 'GE-' + Math.floor(100000 + Math.random() * 900000);
+            }
+            if ($('pPaygoldRef')) $('pPaygoldRef').value = newRef;
+            if ($('pPaygoldLink')) $('pPaygoldLink').value = '';
+            if ($('pPaygoldStatus')) {
+                $('pPaygoldStatus').value = 'pendiente';
+                updatePaygoldStatusStyle();
+            }
+            const btn = $('btnRegenPaygoldRef');
+            if (btn) {
+                const orig = btn.textContent;
+                btn.textContent = '✅ ¡Generado!';
+                setTimeout(() => { btn.textContent = orig; }, 2000);
+            }
+        });
+
         $('btnCopyPaygoldRef')?.addEventListener('click', () => {
             const ref = $('pPaygoldRef')?.value;
             if (ref) {

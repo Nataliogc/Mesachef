@@ -86,10 +86,13 @@ exports.redsysWebhook = onRequest({ cors: true, invoker: 'public' }, async (req,
     const participantesRef = db.collection('participantes_eventos');
     let matchedDoc = null;
 
-    // Estrategia de búsqueda flexible: coincidencia exacta, con prefijo GE- o sin prefijo GE-
+    // Estrategia de búsqueda flexible: coincidencia exacta, sufijos de versión (-2, -3), con prefijo GE- o sin prefijo
+    const baseOrder = order.replace(/-\d+$/, '');
     const candidates = [
       order,
       order.startsWith('GE-') ? order.replace('GE-', '') : `GE-${order}`,
+      baseOrder,
+      baseOrder.startsWith('GE-') ? baseOrder.replace('GE-', '') : `GE-${baseOrder}`,
       order.replace(/\D/g, '') // Solo dígitos si aplica
     ].filter(Boolean);
 

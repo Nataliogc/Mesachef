@@ -13,13 +13,21 @@ Este documento mantiene el registro y control de versiones **único y global** p
 
 ## 📌 Versión Actual del Sistema
 
-- **Versión:** `v10.3.1`
+- **Versión:** `v10.3.2`
 - **Última Actualización:** 28/10/2026
 - **Estado General:** Operativo en Producción (Matrix)
 
 ---
 
 ## 📝 Historial de Versiones
+
+### [v10.3.2] - 28/10/2026
+- **Módulos:** Grandes Eventos / Backend Webhook
+- **Tipo de cambio:** PATCH
+- **Descripción:**
+  - Inclusión en el modal de reserva de la URL de Notificación Online oficial del Webhook Redsys con botón de copiado rápido (`btnCopyWebhookUrl`) para configurar el TPV de Eurocaja Rural.
+  - Implementación del botón `🔄 Nuevo Cód.` (`btnRegenPaygoldRef`) para generar automáticamente nuevos códigos o versiones correlativas (`GE-XXXXXX-2`) ante ampliaciones de comensales o reenvíos de enlaces sin colisionar con pedidos anteriores en Redsys.
+  - Mejora en la Cloud Function del Webhook para resolver pedidos con sufijo de versión de forma flexible sin perder la trazabilidad de la reserva.
 
 ### [v10.3.1] - 28/10/2026
 - **Módulos:** Grandes Eventos
