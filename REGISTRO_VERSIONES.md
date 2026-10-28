@@ -13,13 +13,21 @@ Este documento mantiene el registro y control de versiones **único y global** p
 
 ## 📌 Versión Actual del Sistema
 
-- **Versión:** `v10.3.9`
+- **Versión:** `v10.3.10`
 - **Última Actualización:** 28/10/2026
 - **Estado General:** Operativo en Producción (Matrix)
 
 ---
 
 ## 📝 Historial de Versiones
+
+### [v10.3.10] - 28/10/2026
+- **Módulos:** Grandes Eventos / Menú Fin de Año en PDF & WhatsApp
+- **Tipo de cambio:** PATCH
+- **Descripción:**
+  - Conversión directa y nativa del documento Word oficial *"Menu Fin de Año Guadiana 2026.docx"* a PDF de alta resolución (`Menu_Fin_de_Ano_Guadiana_2026.pdf`).
+  - Actualización de los botones de la barra de configuración del evento para enlazar y descargar directamente el PDF oficial (`📄 Menú Fin de Año (PDF)`).
+  - Configuración del envío por WhatsApp para adjuntar y enlazar directamente el documento PDF oficial a los clientes.
 
 ### [v10.3.9] - 28/10/2026
 - **Módulos:** Grandes Eventos / Informes de Impresión (Listado de Participantes)

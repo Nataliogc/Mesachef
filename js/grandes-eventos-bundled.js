@@ -1024,13 +1024,13 @@
         // Setup Modal Enviar Menú WhatsApp
         $('btnSendMenuWhatsApp')?.addEventListener('click', () => {
             const baseUrl = window.location.href.split('?')[0].replace(/[^/]*$/, '');
-            const menuUrl = baseUrl + 'menu-fin-de-ano-2026.html';
+            const menuUrl = baseUrl + 'docs/Menu_Fin_de_Ano_Guadiana_2026.pdf';
             const evtName = state.currentEvent?.nombre || 'Cena Fin de Año 2026';
             const priceAd = state.currentEvent?.precioAdulto || '120';
             const priceCh = state.currentEvent?.precioNino || '30';
 
             const defaultMsg = `¡Hola! Le enviamos el Menú Oficial de la Gran ${evtName} en Sercotel Hotel Guadiana:\n\n` +
-                `🍽️ Consulte el menú interactivo aquí:\n${menuUrl}\n\n` +
+                `📄 Descargue y consulte el menú oficial en PDF aquí:\n${menuUrl}\n\n` +
                 `✨ Incluye aperitivos de gala, ensalada de marisco con bogavante, lomito de rodaballo, lingote de cochinillo crujiente, postre de autor, bodega incluida, uvas de la suerte, cotillón y fiesta con DJ.\n` +
                 `• Menú Adulto: ${priceAd} € (IVA inc.)\n` +
                 `• Menú Infantil: ${priceCh} € (IVA inc.)\n\n` +
