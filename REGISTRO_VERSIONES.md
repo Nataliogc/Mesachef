@@ -13,13 +13,19 @@ Este documento mantiene el registro y control de versiones **único y global** p
 
 ## 📌 Versión Actual del Sistema
 
-- **Versión:** `v10.2.1`
+- **Versión:** `v10.2.2`
 - **Última Actualización:** 28/10/2026
 - **Estado General:** Operativo en Producción (Matrix)
 
 ---
 
 ## 📝 Historial de Versiones
+
+### [v10.2.2] - 28/10/2026
+- **Módulos:** Grandes Eventos
+- **Tipo de cambio:** PATCH
+- **Descripción:**
+  - Enlace directo al manual de recepción en cabecera de evento, política estricta de caducidad exacta y sección de seguridad anti-filtraciones RGPD/PCI-DSS
 
 ### [v10.2.1] - 28/10/2026
 - **Módulos:** Grandes Eventos

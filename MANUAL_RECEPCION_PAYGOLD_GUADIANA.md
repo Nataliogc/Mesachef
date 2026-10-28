@@ -42,6 +42,22 @@ sequenceDiagram
 
 ---
 
+
+---
+
+## 🛡️ Seguridad Total: ¿Por qué es Vital Utilizar el Enlace PayGold?
+
+La razón primordial por la que **NUNCA debemos pedir ni escribir tarjetas de crédito completas de 16 dígitos en notas ni en el campo de "Observaciones"** es proteger legalmente al hotel y a cada uno de los empleados de recepción:
+
+1. **Prevención de Filtraciones y Responsabilidad Legal (RGPD & PCI-DSS):**  
+   Almacenar datos completos de tarjetas en texto plano en ordenadores o libretas incumple la normativa bancaria internacional PCI-DSS y el RGPD. Ante cualquier filtración, inspección o brecha de seguridad, el hotel se enfrenta a **sanciones de hasta el 4% de la facturación y multas de Visa/Mastercard de hasta 100.000 €**, además de la cancelación inmediata del TPV. Con PayGold, **el hotel nunca almacena la tarjeta**, por lo que no existe ningún dato que pueda filtrarse.
+
+2. **Blindaje contra Fraudes y Falsas Devoluciones (3D Secure / PSD2):**  
+   Si el hotel cobrase una tarjeta manualmente tecleando los números en el datáfono, el cliente puede llamar a su banco al día siguiente diciendo *"yo no autoricé este cobro"*. Por ley, el banco siempre le devuelve el dinero al cliente y el hotel pierde el dinero de la cena. Con el enlace PayGold, **el cliente autoriza en su propia app bancaria (con huella, Face ID o SMS)**. Legalmente se produce el traspaso de responsabilidad (*Liability Shift*) y **el cliente NO puede repudiar el cobro**.
+
+3. **Tranquilidad para el Personal de Recepción:**  
+   Al no ver ni guardar tarjetas de clientes, ningún recepcionista puede ser jamás objeto de sospecha si a ese cliente le clonan la tarjeta en otro comercio. En MesaChef solo dejamos constancia de los últimos 4 dígitos (ej. `•••• 2525`) como simple referencia visual.
+
 ## 📝 Procedimiento Paso a Paso
 
 ### PASO 1: Apertura de la Ficha en MesaChef
@@ -82,7 +98,7 @@ sequenceDiagram
    * **Importe:** Pulsa **`💰 Copiar Importe`** en MesaChef y pégalo aquí (`Ctrl + V`). *(Ejemplo: `120.00`)*.
    * **Descripción:** Pulsa **`📝 Copiar Descripción`** en MesaChef y pégalo aquí (`Ctrl + V`).  
      *Formato oficial:* `Cena Fin de Año - [Nombre del Cliente]` *(Ej: `Cena Fin de Año 2026 - Natalio Fernandez`)*.
-3. En **Caducidad del enlace**, selecciona la fecha límite acordada o déjala por defecto.
+3. **Caducidad del enlace (OBLIGATORIO):** Marca la opción **"Hora exacta"** e introduce **exactamente la misma Fecha Límite de Pago** fijada en MesaChef para este evento (ej. `Fecha: 28-12-2026`, `Hora: 23:59`). **NUNCA dejar las 24 horas por defecto**, para que el enlace expire exactamente el día acordado.
 4. Pulsa el botón **Aceptar / Enviar**: el banco generará el enlace oficial seguro (ej. `https://sis.redsys.es/sis/p2f?t=...`).
 5. **Copia ese enlace.**
 

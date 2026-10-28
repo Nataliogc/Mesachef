@@ -320,6 +320,37 @@
       </div>
     </div>
 
+    <!-- SECCIÓN 2: SEGURIDAD Y PREVENCIÓN DE FILTRACIONES -->
+    <div style="background: #fef2f2; border: 2px solid #fecaca; border-radius: 12px; padding: 20px; margin: 25px 0;">
+      <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px;">
+        <span style="font-size: 24px;">🛡️</span>
+        <h2 style="font-size: 18px; font-weight: 800; color: #991b1b; margin: 0;">2. SEGURIDAD TOTAL: ¿POR QUÉ ES TAN VITAL EL ENLACE PAYGOLD?</h2>
+      </div>
+      <p style="font-size: 13.5px; color: #7f1d1d; margin-bottom: 12px; font-weight: 500;">
+        La razón primordial por la que <strong>NUNCA debemos pedir ni escribir tarjetas de crédito completas de 16 dígitos en notas ni en el campo de "Observaciones"</strong> es proteger legalmente al hotel y a cada uno de los empleados de recepción:
+      </p>
+      <div style="display: flex; flex-direction: column; gap: 10px;">
+        <div style="background: white; padding: 12px 14px; border-radius: 8px; border: 1px solid #fca5a5;">
+          <strong style="color: #991b1b; font-size: 13.5px;">⚠️ Prevención de Filtraciones y Responsabilidad Legal (RGPD & PCI-DSS):</strong>
+          <p style="font-size: 13px; color: #334155; margin-top: 3px;">
+            Almacenar datos completos de tarjetas en texto plano en ordenadores o libretas incumple la normativa bancaria internacional PCI-DSS y el RGPD. Ante cualquier filtración, inspección o brecha de seguridad, el hotel se enfrenta a <strong>sanciones de hasta el 4% de la facturación y multas de Visa/Mastercard de hasta 100.000 €</strong>, además del bloqueo del TPV. Con PayGold, <strong>el hotel nunca almacena la tarjeta</strong>, por lo que no existe ningún dato que pueda filtrarse.
+          </p>
+        </div>
+        <div style="background: white; padding: 12px 14px; border-radius: 8px; border: 1px solid #fca5a5;">
+          <strong style="color: #991b1b; font-size: 13.5px;">🔒 Protección Total contra Fraudes y Falsas Devoluciones (3D Secure / PSD2):</strong>
+          <p style="font-size: 13px; color: #334155; margin-top: 3px;">
+            Si el hotel cobrase una tarjeta manualmente tecleando los números en el datáfono, el cliente puede llamar a su banco al día siguiente diciendo <em>"yo no autoricé este cobro"</em>. Por ley, el banco siempre le devuelve el dinero al cliente y el hotel pierde el dinero de la cena. Con el enlace PayGold, <strong>el cliente autoriza en su propia app bancaria (con huella, Face ID o SMS)</strong>. Legalmente se produce el traspaso de responsabilidad (Liability Shift) y <strong>el cliente NO puede repudiar el cobro</strong>.
+          </p>
+        </div>
+        <div style="background: white; padding: 12px 14px; border-radius: 8px; border: 1px solid #fca5a5;">
+          <strong style="color: #991b1b; font-size: 13.5px;">🤝 Tranquilidad para el Personal de Recepción:</strong>
+          <p style="font-size: 13px; color: #334155; margin-top: 3px;">
+            Al no ver ni guardar tarjetas de clientes, ningún recepcionista puede ser jamás objeto de sospecha si a ese cliente le clonan la tarjeta en otro comercio. En MesaChef solo dejamos constancia de los últimos 4 dígitos (ej. <span class="code-chip">•••• 2525</span>) como simple referencia visual.
+          </p>
+        </div>
+      </div>
+    </div>
+
     <!-- PASO 1 -->
     <div class="step-box">
       <div class="step-header">
@@ -380,7 +411,7 @@
               <li><strong>Descripción:</strong> Pulsa <code>📝 Copiar Descripción</code> en MesaChef y pégalo aquí (<kbd>Ctrl + V</kbd>). Debe seguir el formato: <code>Cena Fin de año - [Nombre Cliente]</code>.</li>
             </ul>
           </li>
-          <li>En <strong>Caducidad del enlace</strong>, puedes seleccionar fecha exacta o dejar las 24 horas por defecto.</li>
+          <li><strong>Caducidad del enlace (OBLIGATORIO):</strong> Marca la opción <strong>"Hora exacta"</strong> e introduce <u>exactamente la misma Fecha Límite de Pago</u> fijada en MesaChef para este evento (ej. <code>Fecha: 28-12-2026</code>, <code>Hora: 23:59</code>). <span style="color: var(--danger); font-weight: 700;">NUNCA dejar las 24 horas por defecto</span>, para que el enlace expire exactamente en la fecha acordada con el cliente.</li>
           <li>Pulsa <strong>Aceptar / Enviar</strong> y el banco generará el enlace seguro. <strong>Copia ese enlace</strong>.</li>
         </ul>
       </div>
