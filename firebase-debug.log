@@ -1,0 +1,460 @@
+[debug] [2026-10-28T16:11:33.056Z] ----------------------------------------------------------------------
+[debug] [2026-10-28T16:11:33.057Z] Command:       C:\Program Files\nodejs\node.exe C:\Users\comun\AppData\Roaming\npm\node_modules\firebase-tools\lib\bin\firebase.js deploy --only functions
+[debug] [2026-10-28T16:11:33.058Z] CLI Version:   15.28.2
+[debug] [2026-10-28T16:11:33.058Z] Platform:      win32
+[debug] [2026-10-28T16:11:33.058Z] Node Version:  v24.13.0
+[debug] [2026-10-28T16:11:33.058Z] Detected Agent: antigravity
+[debug] [2026-10-28T16:11:33.058Z] Time:          Wed Oct 28 2026 17:11:33 GMT+0100 (hora estándar de Europa central)
+[debug] [2026-10-28T16:11:33.058Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2026-10-28T16:11:52.964Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-10-28T16:11:52.964Z] > authorizing via signed-in user (nataliohoteles@gmail.com)
+[debug] [2026-10-28T16:11:52.964Z] [iam] checking project mesa-chef-prod for permissions ["cloudfunctions.functions.create","cloudfunctions.functions.delete","cloudfunctions.functions.get","cloudfunctions.functions.list","cloudfunctions.functions.update","cloudfunctions.operations.get","firebase.projects.get"]
+[debug] [2026-10-28T16:11:52.971Z] Checked if tokens are valid: true, expires at: 1793207465482
+[debug] [2026-10-28T16:11:52.972Z] Checked if tokens are valid: true, expires at: 1793207465482
+[debug] [2026-10-28T16:11:52.972Z] >>> [apiv2][query] POST https://cloudresourcemanager.googleapis.com/v1/projects/mesa-chef-prod:testIamPermissions [none]
+[debug] [2026-10-28T16:11:52.972Z] >>> [apiv2][(partial)header] POST https://cloudresourcemanager.googleapis.com/v1/projects/mesa-chef-prod:testIamPermissions  x-goog-user-project=mesa-chef-prod
+[debug] [2026-10-28T16:11:52.972Z] >>> [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/mesa-chef-prod:testIamPermissions {"permissions":["cloudfunctions.functions.create","cloudfunctions.functions.delete","cloudfunctions.functions.get","cloudfunctions.functions.list","cloudfunctions.functions.update","cloudfunctions.operations.get","firebase.projects.get"]}
+[debug] [2026-10-28T16:11:53.216Z] <<< [apiv2][status] POST https://cloudresourcemanager.googleapis.com/v1/projects/mesa-chef-prod:testIamPermissions 200
+[debug] [2026-10-28T16:11:53.216Z] <<< [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/mesa-chef-prod:testIamPermissions {"permissions":["cloudfunctions.functions.create","cloudfunctions.functions.delete","cloudfunctions.functions.get","cloudfunctions.functions.list","cloudfunctions.functions.update","cloudfunctions.operations.get","firebase.projects.get"]}
+[debug] [2026-10-28T16:11:53.216Z] Checked if tokens are valid: true, expires at: 1793207465482
+[debug] [2026-10-28T16:11:53.216Z] Checked if tokens are valid: true, expires at: 1793207465482
+[debug] [2026-10-28T16:11:53.217Z] >>> [apiv2][query] POST https://iam.googleapis.com/v1/projects/mesa-chef-prod/serviceAccounts/mesa-chef-prod@appspot.gserviceaccount.com:testIamPermissions [none]
+[debug] [2026-10-28T16:11:53.217Z] >>> [apiv2][body] POST https://iam.googleapis.com/v1/projects/mesa-chef-prod/serviceAccounts/mesa-chef-prod@appspot.gserviceaccount.com:testIamPermissions {"permissions":["iam.serviceAccounts.actAs"]}
+[debug] [2026-10-28T16:11:54.223Z] <<< [apiv2][status] POST https://iam.googleapis.com/v1/projects/mesa-chef-prod/serviceAccounts/mesa-chef-prod@appspot.gserviceaccount.com:testIamPermissions 404
+[debug] [2026-10-28T16:11:54.224Z] <<< [apiv2][body] POST https://iam.googleapis.com/v1/projects/mesa-chef-prod/serviceAccounts/mesa-chef-prod@appspot.gserviceaccount.com:testIamPermissions {"error":{"code":404,"message":"Unknown service account","status":"NOT_FOUND"}}
+[debug] [2026-10-28T16:11:54.224Z] [functions] service account IAM check errored, deploy may fail: Request to https://iam.googleapis.com/v1/projects/mesa-chef-prod/serviceAccounts/mesa-chef-prod@appspot.gserviceaccount.com:testIamPermissions had HTTP Error: 404, Unknown service account {"name":"FirebaseError","children":[],"context":{"body":{"error":{"code":404,"message":"Unknown service account","status":"NOT_FOUND"}},"response":{"statusCode":404}},"exit":1,"message":"Request to https://iam.googleapis.com/v1/projects/mesa-chef-prod/serviceAccounts/mesa-chef-prod@appspot.gserviceaccount.com:testIamPermissions had HTTP Error: 404, Unknown service account","status":404}
+[info] 
+[info] === Deploying to 'mesa-chef-prod'...
+[info] 
+[info] i  deploying functions 
+[debug] [2026-10-28T16:11:54.226Z] Checked if tokens are valid: true, expires at: 1793207465482
+[debug] [2026-10-28T16:11:54.226Z] Checked if tokens are valid: true, expires at: 1793207465482
+[debug] [2026-10-28T16:11:54.226Z] >>> [apiv2][query] GET https://cloudresourcemanager.googleapis.com/v1/projects/mesa-chef-prod [none]
+[debug] [2026-10-28T16:11:54.405Z] <<< [apiv2][status] GET https://cloudresourcemanager.googleapis.com/v1/projects/mesa-chef-prod 200
+[debug] [2026-10-28T16:11:54.406Z] <<< [apiv2][body] GET https://cloudresourcemanager.googleapis.com/v1/projects/mesa-chef-prod {"projectNumber":"43170330072","projectId":"mesa-chef-prod","lifecycleState":"ACTIVE","name":"mesa-chef-prod","createTime":"2025-12-06T15:33:24.583542Z","parent":{"type":"organization","id":"798787328578"}}
+[info] i  functions: preparing codebase default for deployment 
+[info] i  functions: ensuring required API cloudfunctions.googleapis.com is enabled... 
+[debug] [2026-10-28T16:11:54.406Z] Checked if tokens are valid: true, expires at: 1793207465482
+[debug] [2026-10-28T16:11:54.407Z] Checked if tokens are valid: true, expires at: 1793207465482
+[debug] [2026-10-28T16:11:54.407Z] Checked if tokens are valid: true, expires at: 1793207465482
+[debug] [2026-10-28T16:11:54.407Z] Checked if tokens are valid: true, expires at: 1793207465482
+[info] i  functions: ensuring required API cloudbuild.googleapis.com is enabled... 
+[debug] [2026-10-28T16:11:54.407Z] Checked if tokens are valid: true, expires at: 1793207465482
+[debug] [2026-10-28T16:11:54.407Z] Checked if tokens are valid: true, expires at: 1793207465482
+[info] i  artifactregistry: ensuring required API artifactregistry.googleapis.com is enabled... 
+[debug] [2026-10-28T16:11:54.407Z] Checked if tokens are valid: true, expires at: 1793207465482
+[debug] [2026-10-28T16:11:54.407Z] Checked if tokens are valid: true, expires at: 1793207465482
+[debug] [2026-10-28T16:11:54.407Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/mesa-chef-prod/services/cloudfunctions.googleapis.com [none]
+[debug] [2026-10-28T16:11:54.407Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/mesa-chef-prod/services/cloudfunctions.googleapis.com  x-goog-user-project=mesa-chef-prod
+[debug] [2026-10-28T16:11:54.408Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/mesa-chef-prod/services/runtimeconfig.googleapis.com [none]
+[debug] [2026-10-28T16:11:54.408Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/mesa-chef-prod/services/runtimeconfig.googleapis.com  x-goog-user-project=mesa-chef-prod
+[debug] [2026-10-28T16:11:54.409Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/mesa-chef-prod/services/cloudbuild.googleapis.com [none]
+[debug] [2026-10-28T16:11:54.409Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/mesa-chef-prod/services/cloudbuild.googleapis.com  x-goog-user-project=mesa-chef-prod
+[debug] [2026-10-28T16:11:54.410Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/mesa-chef-prod/services/artifactregistry.googleapis.com [none]
+[debug] [2026-10-28T16:11:54.410Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/mesa-chef-prod/services/artifactregistry.googleapis.com  x-goog-user-project=mesa-chef-prod
+[debug] [2026-10-28T16:11:55.249Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/mesa-chef-prod/services/cloudbuild.googleapis.com 200
+[debug] [2026-10-28T16:11:55.249Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/mesa-chef-prod/services/cloudbuild.googleapis.com [omitted]
+[warn] !  functions: missing required API cloudbuild.googleapis.com. Enabling now... 
+[debug] [2026-10-28T16:11:55.250Z] Checked if tokens are valid: true, expires at: 1793207465482
+[debug] [2026-10-28T16:11:55.250Z] Checked if tokens are valid: true, expires at: 1793207465482
+[debug] [2026-10-28T16:11:55.250Z] >>> [apiv2][query] POST https://serviceusage.googleapis.com/v1/projects/mesa-chef-prod/services/cloudbuild.googleapis.com:enable [none]
+[debug] [2026-10-28T16:11:55.250Z] >>> [apiv2][(partial)header] POST https://serviceusage.googleapis.com/v1/projects/mesa-chef-prod/services/cloudbuild.googleapis.com:enable  x-goog-user-project=mesa-chef-prod
+[debug] [2026-10-28T16:11:55.256Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/mesa-chef-prod/services/runtimeconfig.googleapis.com 200
+[debug] [2026-10-28T16:11:55.256Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/mesa-chef-prod/services/runtimeconfig.googleapis.com [omitted]
+[debug] [2026-10-28T16:11:55.268Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/mesa-chef-prod/services/cloudfunctions.googleapis.com 200
+[debug] [2026-10-28T16:11:55.268Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/mesa-chef-prod/services/cloudfunctions.googleapis.com [omitted]
+[warn] !  functions: missing required API cloudfunctions.googleapis.com. Enabling now... 
+[debug] [2026-10-28T16:11:55.269Z] Checked if tokens are valid: true, expires at: 1793207465482
+[debug] [2026-10-28T16:11:55.269Z] Checked if tokens are valid: true, expires at: 1793207465482
+[debug] [2026-10-28T16:11:55.269Z] >>> [apiv2][query] POST https://serviceusage.googleapis.com/v1/projects/mesa-chef-prod/services/cloudfunctions.googleapis.com:enable [none]
+[debug] [2026-10-28T16:11:55.269Z] >>> [apiv2][(partial)header] POST https://serviceusage.googleapis.com/v1/projects/mesa-chef-prod/services/cloudfunctions.googleapis.com:enable  x-goog-user-project=mesa-chef-prod
+[debug] [2026-10-28T16:11:55.340Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/mesa-chef-prod/services/artifactregistry.googleapis.com 200
+[debug] [2026-10-28T16:11:55.340Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/mesa-chef-prod/services/artifactregistry.googleapis.com [omitted]
+[warn] !  artifactregistry: missing required API artifactregistry.googleapis.com. Enabling now... 
+[debug] [2026-10-28T16:11:55.341Z] Checked if tokens are valid: true, expires at: 1793207465482
+[debug] [2026-10-28T16:11:55.341Z] Checked if tokens are valid: true, expires at: 1793207465482
+[debug] [2026-10-28T16:11:55.341Z] >>> [apiv2][query] POST https://serviceusage.googleapis.com/v1/projects/mesa-chef-prod/services/artifactregistry.googleapis.com:enable [none]
+[debug] [2026-10-28T16:11:55.341Z] >>> [apiv2][(partial)header] POST https://serviceusage.googleapis.com/v1/projects/mesa-chef-prod/services/artifactregistry.googleapis.com:enable  x-goog-user-project=mesa-chef-prod
+[debug] [2026-10-28T16:11:56.011Z] <<< [apiv2][status] POST https://serviceusage.googleapis.com/v1/projects/mesa-chef-prod/services/cloudfunctions.googleapis.com:enable 200
+[debug] [2026-10-28T16:11:56.011Z] <<< [apiv2][body] POST https://serviceusage.googleapis.com/v1/projects/mesa-chef-prod/services/cloudfunctions.googleapis.com:enable [omitted]
+[debug] [2026-10-28T16:11:56.367Z] <<< [apiv2][status] POST https://serviceusage.googleapis.com/v1/projects/mesa-chef-prod/services/cloudbuild.googleapis.com:enable 200
+[debug] [2026-10-28T16:11:56.367Z] <<< [apiv2][body] POST https://serviceusage.googleapis.com/v1/projects/mesa-chef-prod/services/cloudbuild.googleapis.com:enable [omitted]
+[debug] [2026-10-28T16:11:56.510Z] <<< [apiv2][status] POST https://serviceusage.googleapis.com/v1/projects/mesa-chef-prod/services/artifactregistry.googleapis.com:enable 200
+[debug] [2026-10-28T16:11:56.510Z] <<< [apiv2][body] POST https://serviceusage.googleapis.com/v1/projects/mesa-chef-prod/services/artifactregistry.googleapis.com:enable [omitted]
+[debug] [2026-10-28T16:12:06.517Z] Checked if tokens are valid: true, expires at: 1793207465482
+[debug] [2026-10-28T16:12:06.517Z] Checked if tokens are valid: true, expires at: 1793207465482
+[debug] [2026-10-28T16:12:06.517Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/mesa-chef-prod/adminSdkConfig [none]
+[debug] [2026-10-28T16:12:06.888Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/mesa-chef-prod/adminSdkConfig 200
+[debug] [2026-10-28T16:12:06.888Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects/mesa-chef-prod/adminSdkConfig {"projectId":"mesa-chef-prod","storageBucket":"mesa-chef-prod.firebasestorage.app"}
+[debug] [2026-10-28T16:12:06.889Z] Checked if tokens are valid: true, expires at: 1793207465482
+[debug] [2026-10-28T16:12:06.889Z] Checked if tokens are valid: true, expires at: 1793207465482
+[debug] [2026-10-28T16:12:06.889Z] >>> [apiv2][query] GET https://runtimeconfig.googleapis.com/v1beta1/projects/mesa-chef-prod/configs [none]
+[debug] [2026-10-28T16:12:07.235Z] <<< [apiv2][status] GET https://runtimeconfig.googleapis.com/v1beta1/projects/mesa-chef-prod/configs 200
+[debug] [2026-10-28T16:12:07.235Z] <<< [apiv2][body] GET https://runtimeconfig.googleapis.com/v1beta1/projects/mesa-chef-prod/configs {}
+[debug] [2026-10-28T16:12:07.236Z] Validating nodejs source
+[warn] !  functions: Runtime Node.js 20 was deprecated on 2026-04-30 and will be decommissioned on 2026-10-30, after which you will not be able to deploy without upgrading. Consider upgrading now to avoid disruption. See https://cloud.google.com/functions/docs/runtime-support for full details on the lifecycle policy 
+[warn] !  functions: package.json indicates an outdated version of firebase-functions. Please upgrade using npm install --save firebase-functions@latest in your functions directory. 
+[warn] !  functions: Please note that there will be breaking changes when you upgrade. 
+[debug] [2026-10-28T16:12:08.096Z] > [functions] package.json contents: {
+  "name": "mesachef-functions",
+  "version": "1.0.0",
+  "description": "Firebase Cloud Functions para Webhook Redsys PayGold MesaChef",
+  "main": "index.js",
+  "scripts": {
+    "serve": "firebase emulators:start --only functions",
+    "shell": "firebase functions:shell",
+    "start": "npm run shell",
+    "deploy": "firebase deploy --only functions",
+    "logs": "firebase functions:log"
+  },
+  "engines": {
+    "node": "20"
+  },
+  "dependencies": {
+    "firebase-admin": "^12.0.0",
+    "firebase-functions": "^5.0.0"
+  },
+  "private": true
+}
+[debug] [2026-10-28T16:12:08.096Z] Building nodejs source
+[info] i  functions: Loading and analyzing source code for codebase default to determine what to deploy 
+[debug] [2026-10-28T16:12:08.097Z] Could not find functions.yaml. Must use http discovery
+[debug] [2026-10-28T16:12:08.103Z] Found firebase-functions binary at 'C:\Users\comun\Documents\GitHub\Mesachef\functions\node_modules\.bin\firebase-functions'
+[info] Serving at port 8166
+
+[debug] [2026-10-28T16:12:08.591Z] Got response from /__/functions.yaml {"endpoints":{"redsysWebhook":{"platform":"gcfv1","availableMemoryMb":null,"timeoutSeconds":null,"minInstances":null,"maxInstances":null,"ingressSettings":null,"serviceAccountEmail":null,"vpc":null,"httpsTrigger":{},"entryPoint":"redsysWebhook"}},"specVersion":"v1alpha1","requiredAPIs":[],"extensions":{}}
+[debug] [2026-10-28T16:12:11.615Z] Checked if tokens are valid: true, expires at: 1793207465482
+[debug] [2026-10-28T16:12:11.616Z] Checked if tokens are valid: true, expires at: 1793207465482
+[debug] [2026-10-28T16:12:11.616Z] >>> [apiv2][query] GET https://cloudfunctions.googleapis.com/v1/projects/mesa-chef-prod/locations/-/functions [none]
+[debug] [2026-10-28T16:12:12.311Z] <<< [apiv2][status] GET https://cloudfunctions.googleapis.com/v1/projects/mesa-chef-prod/locations/-/functions 200
+[debug] [2026-10-28T16:12:12.311Z] <<< [apiv2][body] GET https://cloudfunctions.googleapis.com/v1/projects/mesa-chef-prod/locations/-/functions {}
+[debug] [2026-10-28T16:12:12.311Z] Checked if tokens are valid: true, expires at: 1793207465482
+[debug] [2026-10-28T16:12:12.311Z] Checked if tokens are valid: true, expires at: 1793207465482
+[debug] [2026-10-28T16:12:12.312Z] >>> [apiv2][query] GET https://cloudfunctions.googleapis.com/v2/projects/mesa-chef-prod/locations/-/functions filter=environment%3D%22GEN_2%22
+[debug] [2026-10-28T16:12:13.388Z] <<< [apiv2][status] GET https://cloudfunctions.googleapis.com/v2/projects/mesa-chef-prod/locations/-/functions 200
+[debug] [2026-10-28T16:12:13.388Z] <<< [apiv2][body] GET https://cloudfunctions.googleapis.com/v2/projects/mesa-chef-prod/locations/-/functions {}
+[info] i  extensions: ensuring required API firebaseextensions.googleapis.com is enabled... 
+[debug] [2026-10-28T16:12:13.389Z] Checked if tokens are valid: true, expires at: 1793207465482
+[debug] [2026-10-28T16:12:13.389Z] Checked if tokens are valid: true, expires at: 1793207465482
+[debug] [2026-10-28T16:12:13.389Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/mesa-chef-prod/services/firebaseextensions.googleapis.com [none]
+[debug] [2026-10-28T16:12:13.389Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/mesa-chef-prod/services/firebaseextensions.googleapis.com  x-goog-user-project=mesa-chef-prod
+[debug] [2026-10-28T16:12:14.311Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/mesa-chef-prod/services/firebaseextensions.googleapis.com 200
+[debug] [2026-10-28T16:12:14.311Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/mesa-chef-prod/services/firebaseextensions.googleapis.com [omitted]
+[warn] !  extensions: missing required API firebaseextensions.googleapis.com. Enabling now... 
+[debug] [2026-10-28T16:12:14.311Z] Checked if tokens are valid: true, expires at: 1793207465482
+[debug] [2026-10-28T16:12:14.311Z] Checked if tokens are valid: true, expires at: 1793207465482
+[debug] [2026-10-28T16:12:14.311Z] >>> [apiv2][query] POST https://serviceusage.googleapis.com/v1/projects/mesa-chef-prod/services/firebaseextensions.googleapis.com:enable [none]
+[debug] [2026-10-28T16:12:14.311Z] >>> [apiv2][(partial)header] POST https://serviceusage.googleapis.com/v1/projects/mesa-chef-prod/services/firebaseextensions.googleapis.com:enable  x-goog-user-project=mesa-chef-prod
+[debug] [2026-10-28T16:12:15.512Z] <<< [apiv2][status] POST https://serviceusage.googleapis.com/v1/projects/mesa-chef-prod/services/firebaseextensions.googleapis.com:enable 200
+[debug] [2026-10-28T16:12:15.512Z] <<< [apiv2][body] POST https://serviceusage.googleapis.com/v1/projects/mesa-chef-prod/services/firebaseextensions.googleapis.com:enable [omitted]
+[debug] [2026-10-28T16:12:25.525Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-10-28T16:12:25.525Z] > authorizing via signed-in user (nataliohoteles@gmail.com)
+[debug] [2026-10-28T16:12:25.525Z] [iam] checking project mesa-chef-prod for permissions ["firebase.projects.get","firebaseextensions.instances.list"]
+[debug] [2026-10-28T16:12:25.525Z] Checked if tokens are valid: true, expires at: 1793207465482
+[debug] [2026-10-28T16:12:25.525Z] Checked if tokens are valid: true, expires at: 1793207465482
+[debug] [2026-10-28T16:12:25.526Z] >>> [apiv2][query] POST https://cloudresourcemanager.googleapis.com/v1/projects/mesa-chef-prod:testIamPermissions [none]
+[debug] [2026-10-28T16:12:25.526Z] >>> [apiv2][(partial)header] POST https://cloudresourcemanager.googleapis.com/v1/projects/mesa-chef-prod:testIamPermissions  x-goog-user-project=mesa-chef-prod
+[debug] [2026-10-28T16:12:25.526Z] >>> [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/mesa-chef-prod:testIamPermissions {"permissions":["firebase.projects.get","firebaseextensions.instances.list"]}
+[debug] [2026-10-28T16:12:26.176Z] <<< [apiv2][status] POST https://cloudresourcemanager.googleapis.com/v1/projects/mesa-chef-prod:testIamPermissions 200
+[debug] [2026-10-28T16:12:26.177Z] <<< [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/mesa-chef-prod:testIamPermissions {"permissions":["firebase.projects.get","firebaseextensions.instances.list"]}
+[debug] [2026-10-28T16:12:26.177Z] Checked if tokens are valid: true, expires at: 1793207465482
+[debug] [2026-10-28T16:12:26.177Z] Checked if tokens are valid: true, expires at: 1793207465482
+[debug] [2026-10-28T16:12:26.177Z] >>> [apiv2][query] GET https://firebaseextensions.googleapis.com/v1beta/projects/mesa-chef-prod/instances pageSize=100&pageToken=
+[debug] [2026-10-28T16:12:28.150Z] <<< [apiv2][status] GET https://firebaseextensions.googleapis.com/v1beta/projects/mesa-chef-prod/instances 200
+[debug] [2026-10-28T16:12:28.151Z] <<< [apiv2][body] GET https://firebaseextensions.googleapis.com/v1beta/projects/mesa-chef-prod/instances {}
+[debug] [2026-10-28T16:12:28.151Z] Attempting to merge .env secret bindings {} into declared secrets...)}
+[debug] [2026-10-28T16:12:28.151Z] redsysWebhook declared secrets: undefined
+[info] i  functions: preparing functions directory for uploading... 
+[info] i  functions: packaged C:\Users\comun\Documents\GitHub\Mesachef\functions (34.47 KB) for uploading 
+[debug] [2026-10-28T16:12:28.175Z] Checked if tokens are valid: true, expires at: 1793207465482
+[debug] [2026-10-28T16:12:28.175Z] Checked if tokens are valid: true, expires at: 1793207465482
+[debug] [2026-10-28T16:12:28.175Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/mesa-chef-prod/services/cloudbilling.googleapis.com [none]
+[debug] [2026-10-28T16:12:28.175Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/mesa-chef-prod/services/cloudbilling.googleapis.com  x-goog-user-project=mesa-chef-prod
+[debug] [2026-10-28T16:12:29.039Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/mesa-chef-prod/services/cloudbilling.googleapis.com 200
+[debug] [2026-10-28T16:12:29.039Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/mesa-chef-prod/services/cloudbilling.googleapis.com [omitted]
+[debug] [2026-10-28T16:12:29.039Z] Checked if tokens are valid: true, expires at: 1793207465482
+[debug] [2026-10-28T16:12:29.039Z] Checked if tokens are valid: true, expires at: 1793207465482
+[debug] [2026-10-28T16:12:29.039Z] >>> [apiv2][query] POST https://serviceusage.googleapis.com/v1/projects/mesa-chef-prod/services/cloudbilling.googleapis.com:enable [none]
+[debug] [2026-10-28T16:12:29.039Z] >>> [apiv2][(partial)header] POST https://serviceusage.googleapis.com/v1/projects/mesa-chef-prod/services/cloudbilling.googleapis.com:enable  x-goog-user-project=mesa-chef-prod
+[debug] [2026-10-28T16:12:29.837Z] <<< [apiv2][status] POST https://serviceusage.googleapis.com/v1/projects/mesa-chef-prod/services/cloudbilling.googleapis.com:enable 200
+[debug] [2026-10-28T16:12:29.837Z] <<< [apiv2][body] POST https://serviceusage.googleapis.com/v1/projects/mesa-chef-prod/services/cloudbilling.googleapis.com:enable [omitted]
+[debug] [2026-10-28T16:12:39.855Z] Checked if tokens are valid: true, expires at: 1793207465482
+[debug] [2026-10-28T16:12:39.855Z] Checked if tokens are valid: true, expires at: 1793207465482
+[debug] [2026-10-28T16:12:39.855Z] >>> [apiv2][query] GET https://cloudbilling.googleapis.com/v1/projects/mesa-chef-prod/billingInfo [none]
+[debug] [2026-10-28T16:12:39.855Z] >>> [apiv2][(partial)header] GET https://cloudbilling.googleapis.com/v1/projects/mesa-chef-prod/billingInfo  x-goog-user-project=mesa-chef-prod
+[debug] [2026-10-28T16:12:40.638Z] <<< [apiv2][status] GET https://cloudbilling.googleapis.com/v1/projects/mesa-chef-prod/billingInfo 200
+[debug] [2026-10-28T16:12:40.638Z] <<< [apiv2][body] GET https://cloudbilling.googleapis.com/v1/projects/mesa-chef-prod/billingInfo {"name":"projects/mesa-chef-prod/billingInfo","projectId":"mesa-chef-prod","billingAccountName":"billingAccounts/0106AB-05C3FC-ABA697","billingEnabled":true}
+[debug] [2026-10-28T16:12:40.639Z] [functions] found 1 new HTTP functions, testing setIamPolicy permission...
+[debug] [2026-10-28T16:12:40.639Z] Checked if tokens are valid: true, expires at: 1793207465482
+[debug] [2026-10-28T16:12:40.639Z] Checked if tokens are valid: true, expires at: 1793207465482
+[debug] [2026-10-28T16:12:40.639Z] >>> [apiv2][query] POST https://cloudresourcemanager.googleapis.com/v1/projects/mesa-chef-prod:testIamPermissions [none]
+[debug] [2026-10-28T16:12:40.639Z] >>> [apiv2][(partial)header] POST https://cloudresourcemanager.googleapis.com/v1/projects/mesa-chef-prod:testIamPermissions  x-goog-user-project=mesa-chef-prod
+[debug] [2026-10-28T16:12:40.639Z] >>> [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/mesa-chef-prod:testIamPermissions {"permissions":["cloudfunctions.functions.setIamPolicy"]}
+[debug] [2026-10-28T16:12:41.305Z] <<< [apiv2][status] POST https://cloudresourcemanager.googleapis.com/v1/projects/mesa-chef-prod:testIamPermissions 200
+[debug] [2026-10-28T16:12:41.305Z] <<< [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/mesa-chef-prod:testIamPermissions {"permissions":["cloudfunctions.functions.setIamPolicy"]}
+[debug] [2026-10-28T16:12:41.305Z] [functions] found setIamPolicy permission, proceeding with deploy
+[debug] [2026-10-28T16:12:41.305Z] Checked if tokens are valid: true, expires at: 1793207465482
+[debug] [2026-10-28T16:12:41.305Z] Checked if tokens are valid: true, expires at: 1793207465482
+[debug] [2026-10-28T16:12:41.305Z] >>> [apiv2][query] POST https://cloudfunctions.googleapis.com/v1/projects/mesa-chef-prod/locations/us-central1/functions:generateUploadUrl [none]
+[debug] [2026-10-28T16:12:41.305Z] >>> [apiv2][body] POST https://cloudfunctions.googleapis.com/v1/projects/mesa-chef-prod/locations/us-central1/functions:generateUploadUrl {}
+[debug] [2026-10-28T16:12:48.713Z] <<< [apiv2][status] POST https://cloudfunctions.googleapis.com/v1/projects/mesa-chef-prod/locations/us-central1/functions:generateUploadUrl 200
+[debug] [2026-10-28T16:12:48.713Z] <<< [apiv2][body] POST https://cloudfunctions.googleapis.com/v1/projects/mesa-chef-prod/locations/us-central1/functions:generateUploadUrl {"uploadUrl":"https://storage.googleapis.com/uploads-580001066126.us-central1.cloudfunctions.appspot.com/72d1c7d5-5352-4778-937c-0cd3730a6e8e.zip?GoogleAccessId=service-43170330072@gcf-admin-robot.iam.gserviceaccount.com&Expires=1793205768&Signature=YtC70gYmU9O92N5hcVmySXQyeCfki%2BY1or2Zus3rEk2ddZqDzXtCoY7I7f45m7VtMLHcZJKtecDoD2mld%2FfEgbvi%2FhQAKSwk2D8HvnQmd%2FzHXGOv2Ebuvc%2FpCoqTJtYgwd1RQtAnzjPTzKNm8du%2FGBb61P29QbxcO%2F%2FijV9VVM%2Bg%2BnQqe97DY3iiRhXuj1FtP1OXqa5U%2BtIq41gSsMOYiWjDKtpJTfC1BDL%2FWQ4CUHSQcOWppJUpv9r%2BHyD1JRksOAn8Ckw4ZVJlKLBTJLgVb9ayP4m87936F6MUYCmq8i2nU0Rou0%2FoAV6ffDYmDlnbI8qVvEfn3M9wYLfvzrq6qQ%3D%3D"}
+[debug] [2026-10-28T16:12:48.714Z] >>> [apiv2][query] PUT https://storage.googleapis.com/uploads-580001066126.us-central1.cloudfunctions.appspot.com/72d1c7d5-5352-4778-937c-0cd3730a6e8e.zip GoogleAccessId=service-43170330072%40gcf-admin-robot.iam.gserviceaccount.com&Expires=1793205768&Signature=YtC70gYmU9O92N5hcVmySXQyeCfki%2BY1or2Zus3rEk2ddZqDzXtCoY7I7f45m7VtMLHcZJKtecDoD2mld%2FfEgbvi%2FhQAKSwk2D8HvnQmd%2FzHXGOv2Ebuvc%2FpCoqTJtYgwd1RQtAnzjPTzKNm8du%2FGBb61P29QbxcO%2F%2FijV9VVM%2Bg%2BnQqe97DY3iiRhXuj1FtP1OXqa5U%2BtIq41gSsMOYiWjDKtpJTfC1BDL%2FWQ4CUHSQcOWppJUpv9r%2BHyD1JRksOAn8Ckw4ZVJlKLBTJLgVb9ayP4m87936F6MUYCmq8i2nU0Rou0%2FoAV6ffDYmDlnbI8qVvEfn3M9wYLfvzrq6qQ%3D%3D
+[debug] [2026-10-28T16:12:48.715Z] >>> [apiv2][body] PUT https://storage.googleapis.com/uploads-580001066126.us-central1.cloudfunctions.appspot.com/72d1c7d5-5352-4778-937c-0cd3730a6e8e.zip [stream]
+[debug] [2026-10-28T16:12:49.358Z] <<< [apiv2][status] PUT https://storage.googleapis.com/uploads-580001066126.us-central1.cloudfunctions.appspot.com/72d1c7d5-5352-4778-937c-0cd3730a6e8e.zip 200
+[debug] [2026-10-28T16:12:49.358Z] <<< [apiv2][body] PUT https://storage.googleapis.com/uploads-580001066126.us-central1.cloudfunctions.appspot.com/72d1c7d5-5352-4778-937c-0cd3730a6e8e.zip [omitted]
+[info] +  functions: functions source uploaded successfully 
+[info] i  functions: creating Node.js 20 (1st Gen) function redsysWebhook(us-central1)... 
+[debug] [2026-10-28T16:12:49.361Z] Checked if tokens are valid: true, expires at: 1793207465482
+[debug] [2026-10-28T16:12:49.361Z] Checked if tokens are valid: true, expires at: 1793207465482
+[debug] [2026-10-28T16:12:49.361Z] >>> [apiv2][query] POST https://cloudfunctions.googleapis.com/v1/projects/mesa-chef-prod/locations/us-central1/functions [none]
+[debug] [2026-10-28T16:12:49.361Z] >>> [apiv2][body] POST https://cloudfunctions.googleapis.com/v1/projects/mesa-chef-prod/locations/us-central1/functions {"name":"projects/mesa-chef-prod/locations/us-central1/functions/redsysWebhook","sourceUploadUrl":"https://storage.googleapis.com/uploads-580001066126.us-central1.cloudfunctions.appspot.com/72d1c7d5-5352-4778-937c-0cd3730a6e8e.zip?GoogleAccessId=service-43170330072@gcf-admin-robot.iam.gserviceaccount.com&Expires=1793205768&Signature=YtC70gYmU9O92N5hcVmySXQyeCfki%2BY1or2Zus3rEk2ddZqDzXtCoY7I7f45m7VtMLHcZJKtecDoD2mld%2FfEgbvi%2FhQAKSwk2D8HvnQmd%2FzHXGOv2Ebuvc%2FpCoqTJtYgwd1RQtAnzjPTzKNm8du%2FGBb61P29QbxcO%2F%2FijV9VVM%2Bg%2BnQqe97DY3iiRhXuj1FtP1OXqa5U%2BtIq41gSsMOYiWjDKtpJTfC1BDL%2FWQ4CUHSQcOWppJUpv9r%2BHyD1JRksOAn8Ckw4ZVJlKLBTJLgVb9ayP4m87936F6MUYCmq8i2nU0Rou0%2FoAV6ffDYmDlnbI8qVvEfn3M9wYLfvzrq6qQ%3D%3D","entryPoint":"redsysWebhook","runtime":"nodejs20","dockerRegistry":"ARTIFACT_REGISTRY","labels":{"deployment-tool":"cli-firebase","firebase-functions-hash":"11e0fc16044f2017fae027f7588e97de7882fb87"},"httpsTrigger":{"securityLevel":"SECURE_ALWAYS"},"minInstances":null,"maxInstances":null,"ingressSettings":null,"environmentVariables":{"FIREBASE_CONFIG":"{\"projectId\":\"mesa-chef-prod\",\"storageBucket\":\"mesa-chef-prod.firebasestorage.app\"}","GCLOUD_PROJECT":"mesa-chef-prod","EVENTARC_CLOUD_EVENT_SOURCE":"projects/mesa-chef-prod/locations/us-central1/functions/redsysWebhook"},"serviceAccountEmail":null,"availableMemoryMb":null,"timeout":null,"vpcConnector":null,"vpcConnectorEgressSettings":null,"buildEnvironmentVariables":{"GOOGLE_NODE_RUN_SCRIPTS":""}}
+[debug] [2026-10-28T16:12:50.094Z] <<< [apiv2][status] POST https://cloudfunctions.googleapis.com/v1/projects/mesa-chef-prod/locations/us-central1/functions 403
+[debug] [2026-10-28T16:12:50.094Z] <<< [apiv2][body] POST https://cloudfunctions.googleapis.com/v1/projects/mesa-chef-prod/locations/us-central1/functions {"error":{"code":403,"message":"Failed to create 1st Gen function projects/mesa-chef-prod/locations/us-central1/functions/redsysWebhook: Unable to retrieve the repository metadata for projects/mesa-chef-prod/locations/us-central1/repositories/gcf-artifacts. Ensure that the Cloud Functions service account has 'artifactregistry.repositories.list' and 'artifactregistry.repositories.get' permissions. You can add the permissions by granting the role 'roles/artifactregistry.reader'.","status":"PERMISSION_DENIED"}}
+[warn] !  functions: failed to create function projects/mesa-chef-prod/locations/us-central1/functions/redsysWebhook 
+[error] Failed to create function projects/mesa-chef-prod/locations/us-central1/functions/redsysWebhook
+[warn] !  functions: Deploys failed. Skipping deletes. 
+[debug] [2026-10-28T16:12:50.096Z] Total Function Deployment time: 735
+[debug] [2026-10-28T16:12:50.096Z] 1 Functions Deployed
+[debug] [2026-10-28T16:12:50.096Z] 1 Functions Errored
+[debug] [2026-10-28T16:12:50.096Z] 0 Function Deployments Aborted
+[debug] [2026-10-28T16:12:50.096Z] Average Function Deployment time: 734
+[info] 
+[info] Functions deploy had errors with the following functions:
+	redsysWebhook(us-central1)
+[debug] [2026-10-28T16:12:50.097Z] Not printing URL for HTTPS function. Typically this means it didn't match a filter or we failed deployment
+[debug] [2026-10-28T16:12:50.097Z] Checked if tokens are valid: true, expires at: 1793207465482
+[debug] [2026-10-28T16:12:50.097Z] Checked if tokens are valid: true, expires at: 1793207465482
+[debug] [2026-10-28T16:12:50.097Z] >>> [apiv2][query] GET https://artifactregistry.googleapis.com/v1/projects/mesa-chef-prod/locations/us-central1/repositories/gcf-artifacts [none]
+[debug] [2026-10-28T16:12:50.942Z] <<< [apiv2][status] GET https://artifactregistry.googleapis.com/v1/projects/mesa-chef-prod/locations/us-central1/repositories/gcf-artifacts 404
+[debug] [2026-10-28T16:12:50.942Z] <<< [apiv2][body] GET https://artifactregistry.googleapis.com/v1/projects/mesa-chef-prod/locations/us-central1/repositories/gcf-artifacts {"error":{"code":404,"message":"Requested entity was not found.","status":"NOT_FOUND"}}
+[debug] [2026-10-28T16:12:50.943Z] Failed to check artifact cleanup policy for region us-central1: Request to https://artifactregistry.googleapis.com/v1/projects/mesa-chef-prod/locations/us-central1/repositories/gcf-artifacts had HTTP Error: 404, Requested entity was not found. {"name":"FirebaseError","children":[],"context":{"body":{"error":{"code":404,"message":"Requested entity was not found.","status":"NOT_FOUND"}},"response":{"statusCode":404}},"exit":1,"message":"Request to https://artifactregistry.googleapis.com/v1/projects/mesa-chef-prod/locations/us-central1/repositories/gcf-artifacts had HTTP Error: 404, Requested entity was not found.","status":404}
+[debug] [2026-10-28T16:12:50.943Z] Functions deploy failed.
+[debug] [2026-10-28T16:12:50.943Z] {
+  "endpoint": {
+    "id": "redsysWebhook",
+    "project": "mesa-chef-prod",
+    "region": "us-central1",
+    "entryPoint": "redsysWebhook",
+    "platform": "gcfv1",
+    "runtime": "nodejs20",
+    "httpsTrigger": {},
+    "serviceAccount": null,
+    "ingressSettings": null,
+    "availableMemoryMb": null,
+    "timeoutSeconds": null,
+    "maxInstances": null,
+    "minInstances": null,
+    "vpc": null,
+    "environmentVariables": {
+      "FIREBASE_CONFIG": "{\"projectId\":\"mesa-chef-prod\",\"storageBucket\":\"mesa-chef-prod.firebasestorage.app\"}",
+      "GCLOUD_PROJECT": "mesa-chef-prod",
+      "EVENTARC_CLOUD_EVENT_SOURCE": "projects/mesa-chef-prod/locations/us-central1/functions/redsysWebhook"
+    },
+    "codebase": "default",
+    "targetedByOnly": false,
+    "hash": "11e0fc16044f2017fae027f7588e97de7882fb87",
+    "labels": {
+      "deployment-tool": "cli-firebase"
+    }
+  },
+  "op": "create",
+  "original": {
+    "name": "FirebaseError",
+    "children": [],
+    "context": {
+      "function": "projects/mesa-chef-prod/locations/us-central1/functions/redsysWebhook"
+    },
+    "exit": 1,
+    "message": "Failed to create function projects/mesa-chef-prod/locations/us-central1/functions/redsysWebhook",
+    "original": {
+      "name": "FirebaseError",
+      "children": [],
+      "context": {
+        "body": {
+          "error": {
+            "code": 403,
+            "message": "Failed to create 1st Gen function projects/mesa-chef-prod/locations/us-central1/functions/redsysWebhook: Unable to retrieve the repository metadata for projects/mesa-chef-prod/locations/us-central1/repositories/gcf-artifacts. Ensure that the Cloud Functions service account has 'artifactregistry.repositories.list' and 'artifactregistry.repositories.get' permissions. You can add the permissions by granting the role 'roles/artifactregistry.reader'.",
+            "status": "PERMISSION_DENIED"
+          }
+        },
+        "response": {
+          "statusCode": 403
+        }
+      },
+      "exit": 1,
+      "message": "Request to https://cloudfunctions.googleapis.com/v1/projects/mesa-chef-prod/locations/us-central1/functions had HTTP Error: 403, Failed to create 1st Gen function projects/mesa-chef-prod/locations/us-central1/functions/redsysWebhook: Unable to retrieve the repository metadata for projects/mesa-chef-prod/locations/us-central1/repositories/gcf-artifacts. Ensure that the Cloud Functions service account has 'artifactregistry.repositories.list' and 'artifactregistry.repositories.get' permissions. You can add the permissions by granting the role 'roles/artifactregistry.reader'.",
+      "status": 403
+    },
+    "status": 403,
+    "code": 403
+  }
+}
+[debug] [2026-10-28T16:12:50.944Z] Error: Failed to create function redsysWebhook in region us-central1
+    at C:\Users\comun\AppData\Roaming\npm\node_modules\firebase-tools\lib\deploy\functions\release\fabricator.js:57:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async Fabricator.createV1Function (C:\Users\comun\AppData\Roaming\npm\node_modules\firebase-tools\lib\deploy\functions\release\fabricator.js:327:32)
+    at async Fabricator.createEndpoint (C:\Users\comun\AppData\Roaming\npm\node_modules\firebase-tools\lib\deploy\functions\release\fabricator.js:270:13)
+    at async Fabricator.wrapOperation (C:\Users\comun\AppData\Roaming\npm\node_modules\firebase-tools\lib\deploy\functions\release\fabricator.js:258:13)
+    at async Promise.all (index 0)
+    at async Promise.allSettled (index 0)
+    at async Fabricator.applyPlan (C:\Users\comun\AppData\Roaming\npm\node_modules\firebase-tools\lib\deploy\functions\release\fabricator.js:175:45)
+    at async release (C:\Users\comun\AppData\Roaming\npm\node_modules\firebase-tools\lib\deploy\functions\release\index.js:89:21)
+    at async chain (C:\Users\comun\AppData\Roaming\npm\node_modules\firebase-tools\lib\deploy\index.js:114:9)
+[error] 
+[error] Error: There was an error deploying functions
+[debug] [2026-10-28T16:13:51.428Z] ----------------------------------------------------------------------
+[debug] [2026-10-28T16:13:51.430Z] Command:       C:\Program Files\nodejs\node.exe C:\Users\comun\AppData\Roaming\npm\node_modules\firebase-tools\lib\bin\firebase.js deploy --only functions
+[debug] [2026-10-28T16:13:51.431Z] CLI Version:   15.28.2
+[debug] [2026-10-28T16:13:51.431Z] Platform:      win32
+[debug] [2026-10-28T16:13:51.431Z] Node Version:  v24.13.0
+[debug] [2026-10-28T16:13:51.431Z] Detected Agent: antigravity
+[debug] [2026-10-28T16:13:51.431Z] Time:          Wed Oct 28 2026 17:13:51 GMT+0100 (hora estándar de Europa central)
+[debug] [2026-10-28T16:13:51.431Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2026-10-28T16:13:52.558Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-10-28T16:13:52.558Z] > authorizing via signed-in user (nataliohoteles@gmail.com)
+[debug] [2026-10-28T16:13:52.558Z] [iam] checking project mesa-chef-prod for permissions ["cloudfunctions.functions.create","cloudfunctions.functions.delete","cloudfunctions.functions.get","cloudfunctions.functions.list","cloudfunctions.functions.update","cloudfunctions.operations.get","firebase.projects.get"]
+[debug] [2026-10-28T16:13:52.565Z] Checked if tokens are valid: true, expires at: 1793207465482
+[debug] [2026-10-28T16:13:52.566Z] Checked if tokens are valid: true, expires at: 1793207465482
+[debug] [2026-10-28T16:13:52.566Z] >>> [apiv2][query] POST https://cloudresourcemanager.googleapis.com/v1/projects/mesa-chef-prod:testIamPermissions [none]
+[debug] [2026-10-28T16:13:52.566Z] >>> [apiv2][(partial)header] POST https://cloudresourcemanager.googleapis.com/v1/projects/mesa-chef-prod:testIamPermissions  x-goog-user-project=mesa-chef-prod
+[debug] [2026-10-28T16:13:52.566Z] >>> [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/mesa-chef-prod:testIamPermissions {"permissions":["cloudfunctions.functions.create","cloudfunctions.functions.delete","cloudfunctions.functions.get","cloudfunctions.functions.list","cloudfunctions.functions.update","cloudfunctions.operations.get","firebase.projects.get"]}
+[debug] [2026-10-28T16:13:52.796Z] <<< [apiv2][status] POST https://cloudresourcemanager.googleapis.com/v1/projects/mesa-chef-prod:testIamPermissions 200
+[debug] [2026-10-28T16:13:52.796Z] <<< [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/mesa-chef-prod:testIamPermissions {"permissions":["cloudfunctions.functions.create","cloudfunctions.functions.delete","cloudfunctions.functions.get","cloudfunctions.functions.list","cloudfunctions.functions.update","cloudfunctions.operations.get","firebase.projects.get"]}
+[debug] [2026-10-28T16:13:52.796Z] Checked if tokens are valid: true, expires at: 1793207465482
+[debug] [2026-10-28T16:13:52.796Z] Checked if tokens are valid: true, expires at: 1793207465482
+[debug] [2026-10-28T16:13:52.796Z] >>> [apiv2][query] POST https://iam.googleapis.com/v1/projects/mesa-chef-prod/serviceAccounts/mesa-chef-prod@appspot.gserviceaccount.com:testIamPermissions [none]
+[debug] [2026-10-28T16:13:52.796Z] >>> [apiv2][body] POST https://iam.googleapis.com/v1/projects/mesa-chef-prod/serviceAccounts/mesa-chef-prod@appspot.gserviceaccount.com:testIamPermissions {"permissions":["iam.serviceAccounts.actAs"]}
+[debug] [2026-10-28T16:13:53.510Z] <<< [apiv2][status] POST https://iam.googleapis.com/v1/projects/mesa-chef-prod/serviceAccounts/mesa-chef-prod@appspot.gserviceaccount.com:testIamPermissions 200
+[debug] [2026-10-28T16:13:53.510Z] <<< [apiv2][body] POST https://iam.googleapis.com/v1/projects/mesa-chef-prod/serviceAccounts/mesa-chef-prod@appspot.gserviceaccount.com:testIamPermissions {"permissions":["iam.serviceAccounts.actAs"]}
+[info] 
+[info] === Deploying to 'mesa-chef-prod'...
+[info] 
+[info] i  deploying functions 
+[debug] [2026-10-28T16:13:53.512Z] Checked if tokens are valid: true, expires at: 1793207465482
+[debug] [2026-10-28T16:13:53.512Z] Checked if tokens are valid: true, expires at: 1793207465482
+[debug] [2026-10-28T16:13:53.512Z] >>> [apiv2][query] GET https://cloudresourcemanager.googleapis.com/v1/projects/mesa-chef-prod [none]
+[debug] [2026-10-28T16:13:53.708Z] <<< [apiv2][status] GET https://cloudresourcemanager.googleapis.com/v1/projects/mesa-chef-prod 200
+[debug] [2026-10-28T16:13:53.708Z] <<< [apiv2][body] GET https://cloudresourcemanager.googleapis.com/v1/projects/mesa-chef-prod {"projectNumber":"43170330072","projectId":"mesa-chef-prod","lifecycleState":"ACTIVE","name":"mesa-chef-prod","createTime":"2025-12-06T15:33:24.583542Z","parent":{"type":"organization","id":"798787328578"}}
+[info] i  functions: preparing codebase default for deployment 
+[info] i  functions: ensuring required API cloudfunctions.googleapis.com is enabled... 
+[info] i  functions: ensuring required API cloudbuild.googleapis.com is enabled... 
+[info] i  artifactregistry: ensuring required API artifactregistry.googleapis.com is enabled... 
+[debug] [2026-10-28T16:13:53.709Z] Checked if tokens are valid: true, expires at: 1793207465482
+[debug] [2026-10-28T16:13:53.710Z] Checked if tokens are valid: true, expires at: 1793207465482
+[debug] [2026-10-28T16:13:53.710Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/mesa-chef-prod/adminSdkConfig [none]
+[debug] [2026-10-28T16:13:54.038Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/mesa-chef-prod/adminSdkConfig 200
+[debug] [2026-10-28T16:13:54.038Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects/mesa-chef-prod/adminSdkConfig {"projectId":"mesa-chef-prod","storageBucket":"mesa-chef-prod.firebasestorage.app"}
+[debug] [2026-10-28T16:13:54.038Z] Checked if tokens are valid: true, expires at: 1793207465482
+[debug] [2026-10-28T16:13:54.038Z] Checked if tokens are valid: true, expires at: 1793207465482
+[debug] [2026-10-28T16:13:54.038Z] >>> [apiv2][query] GET https://runtimeconfig.googleapis.com/v1beta1/projects/mesa-chef-prod/configs [none]
+[debug] [2026-10-28T16:13:54.457Z] <<< [apiv2][status] GET https://runtimeconfig.googleapis.com/v1beta1/projects/mesa-chef-prod/configs 200
+[debug] [2026-10-28T16:13:54.457Z] <<< [apiv2][body] GET https://runtimeconfig.googleapis.com/v1beta1/projects/mesa-chef-prod/configs {}
+[debug] [2026-10-28T16:13:54.458Z] Validating nodejs source
+[warn] !  functions: Runtime Node.js 20 was deprecated on 2026-04-30 and will be decommissioned on 2026-10-30, after which you will not be able to deploy without upgrading. Consider upgrading now to avoid disruption. See https://cloud.google.com/functions/docs/runtime-support for full details on the lifecycle policy 
+[warn] !  functions: package.json indicates an outdated version of firebase-functions. Please upgrade using npm install --save firebase-functions@latest in your functions directory. 
+[warn] !  functions: Please note that there will be breaking changes when you upgrade. 
+[debug] [2026-10-28T16:13:55.125Z] > [functions] package.json contents: {
+  "name": "mesachef-functions",
+  "version": "1.0.0",
+  "description": "Firebase Cloud Functions para Webhook Redsys PayGold MesaChef",
+  "main": "index.js",
+  "scripts": {
+    "serve": "firebase emulators:start --only functions",
+    "shell": "firebase functions:shell",
+    "start": "npm run shell",
+    "deploy": "firebase deploy --only functions",
+    "logs": "firebase functions:log"
+  },
+  "engines": {
+    "node": "20"
+  },
+  "dependencies": {
+    "firebase-admin": "^12.0.0",
+    "firebase-functions": "^5.0.0"
+  },
+  "private": true
+}
+[debug] [2026-10-28T16:13:55.126Z] Building nodejs source
+[info] i  functions: Loading and analyzing source code for codebase default to determine what to deploy 
+[debug] [2026-10-28T16:13:55.127Z] Could not find functions.yaml. Must use http discovery
+[debug] [2026-10-28T16:13:55.134Z] Found firebase-functions binary at 'C:\Users\comun\Documents\GitHub\Mesachef\functions\node_modules\.bin\firebase-functions'
+[info] Serving at port 8786
+
+[debug] [2026-10-28T16:13:55.643Z] Got response from /__/functions.yaml {"endpoints":{"redsysWebhook":{"availableMemoryMb":null,"timeoutSeconds":null,"minInstances":null,"maxInstances":10,"ingressSettings":null,"concurrency":null,"serviceAccountEmail":null,"vpc":null,"platform":"gcfv2","region":["europe-west1"],"labels":{},"httpsTrigger":{"invoker":["public"]},"entryPoint":"redsysWebhook"}},"specVersion":"v1alpha1","requiredAPIs":[],"extensions":{}}
+[debug] [2026-10-28T16:13:58.681Z] Checked if tokens are valid: true, expires at: 1793207465482
+[debug] [2026-10-28T16:13:58.681Z] Checked if tokens are valid: true, expires at: 1793207465482
+[debug] [2026-10-28T16:13:58.681Z] >>> [apiv2][query] GET https://cloudfunctions.googleapis.com/v1/projects/mesa-chef-prod/locations/-/functions [none]
+[debug] [2026-10-28T16:13:59.311Z] <<< [apiv2][status] GET https://cloudfunctions.googleapis.com/v1/projects/mesa-chef-prod/locations/-/functions 200
+[debug] [2026-10-28T16:13:59.311Z] <<< [apiv2][body] GET https://cloudfunctions.googleapis.com/v1/projects/mesa-chef-prod/locations/-/functions {}
+[debug] [2026-10-28T16:13:59.311Z] Checked if tokens are valid: true, expires at: 1793207465482
+[debug] [2026-10-28T16:13:59.312Z] Checked if tokens are valid: true, expires at: 1793207465482
+[debug] [2026-10-28T16:13:59.312Z] >>> [apiv2][query] GET https://cloudfunctions.googleapis.com/v2/projects/mesa-chef-prod/locations/-/functions filter=environment%3D%22GEN_2%22
+[debug] [2026-10-28T16:14:00.334Z] <<< [apiv2][status] GET https://cloudfunctions.googleapis.com/v2/projects/mesa-chef-prod/locations/-/functions 200
+[debug] [2026-10-28T16:14:00.334Z] <<< [apiv2][body] GET https://cloudfunctions.googleapis.com/v2/projects/mesa-chef-prod/locations/-/functions {}
+[info] i  extensions: ensuring required API firebaseextensions.googleapis.com is enabled... 
+[debug] [2026-10-28T16:14:00.335Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-10-28T16:14:00.335Z] > authorizing via signed-in user (nataliohoteles@gmail.com)
+[debug] [2026-10-28T16:14:00.335Z] [iam] checking project mesa-chef-prod for permissions ["firebase.projects.get","firebaseextensions.instances.list"]
+[debug] [2026-10-28T16:14:00.335Z] Checked if tokens are valid: true, expires at: 1793207465482
+[debug] [2026-10-28T16:14:00.335Z] Checked if tokens are valid: true, expires at: 1793207465482
+[debug] [2026-10-28T16:14:00.335Z] >>> [apiv2][query] POST https://cloudresourcemanager.googleapis.com/v1/projects/mesa-chef-prod:testIamPermissions [none]
+[debug] [2026-10-28T16:14:00.335Z] >>> [apiv2][(partial)header] POST https://cloudresourcemanager.googleapis.com/v1/projects/mesa-chef-prod:testIamPermissions  x-goog-user-project=mesa-chef-prod
+[debug] [2026-10-28T16:14:00.335Z] >>> [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/mesa-chef-prod:testIamPermissions {"permissions":["firebase.projects.get","firebaseextensions.instances.list"]}
+[debug] [2026-10-28T16:14:00.562Z] <<< [apiv2][status] POST https://cloudresourcemanager.googleapis.com/v1/projects/mesa-chef-prod:testIamPermissions 200
+[debug] [2026-10-28T16:14:00.562Z] <<< [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/mesa-chef-prod:testIamPermissions {"permissions":["firebase.projects.get","firebaseextensions.instances.list"]}
+[debug] [2026-10-28T16:14:00.562Z] Checked if tokens are valid: true, expires at: 1793207465482
+[debug] [2026-10-28T16:14:00.562Z] Checked if tokens are valid: true, expires at: 1793207465482
+[debug] [2026-10-28T16:14:00.562Z] >>> [apiv2][query] GET https://firebaseextensions.googleapis.com/v1beta/projects/mesa-chef-prod/instances pageSize=100&pageToken=
+[debug] [2026-10-28T16:14:01.317Z] <<< [apiv2][status] GET https://firebaseextensions.googleapis.com/v1beta/projects/mesa-chef-prod/instances 200
+[debug] [2026-10-28T16:14:01.318Z] <<< [apiv2][body] GET https://firebaseextensions.googleapis.com/v1beta/projects/mesa-chef-prod/instances {}
+[debug] [2026-10-28T16:14:01.318Z] Attempting to merge .env secret bindings {} into declared secrets...)}
+[debug] [2026-10-28T16:14:01.318Z] redsysWebhook declared secrets: undefined
+[info] i  functions: preparing functions directory for uploading... 
+[info] i  functions: packaged C:\Users\comun\Documents\GitHub\Mesachef\functions (34.26 KB) for uploading 
+[info] i  functions: ensuring required API run.googleapis.com is enabled... 
+[debug] [2026-10-28T16:14:01.339Z] Checked if tokens are valid: true, expires at: 1793207465482
+[debug] [2026-10-28T16:14:01.339Z] Checked if tokens are valid: true, expires at: 1793207465482
+[info] i  functions: ensuring required API eventarc.googleapis.com is enabled... 
+[debug] [2026-10-28T16:14:01.340Z] Checked if tokens are valid: true, expires at: 1793207465482
+[debug] [2026-10-28T16:14:01.340Z] Checked if tokens are valid: true, expires at: 1793207465482
+[info] i  functions: ensuring required API pubsub.googleapis.com is enabled... 
+[debug] [2026-10-28T16:14:01.340Z] Checked if tokens are valid: true, expires at: 1793207465482
+[debug] [2026-10-28T16:14:01.340Z] Checked if tokens are valid: true, expires at: 1793207465482
+[info] i  functions: ensuring required API storage.googleapis.com is enabled... 
+[debug] [2026-10-28T16:14:01.340Z] Checked if tokens are valid: true, expires at: 1793207465482
+[debug] [2026-10-28T16:14:01.340Z] Checked if tokens are valid: true, expires at: 1793207465482
+[debug] [2026-10-28T16:14:01.340Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/43170330072/services/run.googleapis.com [none]
+[debug] [2026-10-28T16:14:01.340Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/43170330072/services/run.googleapis.com  x-goog-user-project=43170330072
+[debug] [2026-10-28T16:14:01.341Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/43170330072/services/eventarc.googleapis.com [none]
+[debug] [2026-10-28T16:14:01.341Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/43170330072/services/eventarc.googleapis.com  x-goog-user-project=43170330072
+[debug] [2026-10-28T16:14:01.342Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/43170330072/services/pubsub.googleapis.com [none]
+[debug] [2026-10-28T16:14:01.342Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/43170330072/services/pubsub.googleapis.com  x-goog-user-project=43170330072
+[debug] [2026-10-28T16:14:01.342Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/43170330072/services/storage.googleapis.com [none]
+[debug] [2026-10-28T16:14:01.342Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/43170330072/services/storage.googleapis.com  x-goog-user-project=43170330072
+[debug] [2026-10-28T16:14:02.146Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/43170330072/services/eventarc.googleapis.com 200
+[debug] [2026-10-28T16:14:02.146Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/43170330072/services/eventarc.googleapis.com [omitted]
+[warn] !  functions: missing required API eventarc.googleapis.com. Enabling now... 
+[debug] [2026-10-28T16:14:02.147Z] Checked if tokens are valid: true, expires at: 1793207465482
+[debug] [2026-10-28T16:14:02.147Z] Checked if tokens are valid: true, expires at: 1793207465482
+[debug] [2026-10-28T16:14:02.147Z] >>> [apiv2][query] POST https://serviceusage.googleapis.com/v1/projects/43170330072/services/eventarc.googleapis.com:enable [none]
+[debug] [2026-10-28T16:14:02.147Z] >>> [apiv2][(partial)header] POST https://serviceusage.googleapis.com/v1/projects/43170330072/services/eventarc.googleapis.com:enable  x-goog-user-project=43170330072
+[debug] [2026-10-28T16:14:02.210Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/43170330072/services/pubsub.googleapis.com 200
+[debug] [2026-10-28T16:14:02.210Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/43170330072/services/pubsub.googleapis.com [omitted]
+[info] +  functions: required API pubsub.googleapis.com is enabled 
+[debug] [2026-10-28T16:14:02.216Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/43170330072/services/storage.googleapis.com 200
+[debug] [2026-10-28T16:14:02.216Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/43170330072/services/storage.googleapis.com [omitted]
+[info] +  functions: required API storage.googleapis.com is enabled 
+[debug] [2026-10-28T16:14:02.224Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/43170330072/services/run.googleapis.com 200
+[debug] [2026-10-28T16:14:02.224Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/43170330072/services/run.googleapis.com [omitted]
+[warn] !  functions: missing required API run.googleapis.com. Enabling now... 
+[debug] [2026-10-28T16:14:02.224Z] Checked if tokens are valid: true, expires at: 1793207465482
+[debug] [2026-10-28T16:14:02.224Z] Checked if tokens are valid: true, expires at: 1793207465482
+[debug] [2026-10-28T16:14:02.224Z] >>> [apiv2][query] POST https://serviceusage.googleapis.com/v1/projects/43170330072/services/run.googleapis.com:enable [none]
+[debug] [2026-10-28T16:14:02.224Z] >>> [apiv2][(partial)header] POST https://serviceusage.googleapis.com/v1/projects/43170330072/services/run.googleapis.com:enable  x-goog-user-project=43170330072
+[debug] [2026-10-28T16:14:02.942Z] <<< [apiv2][status] POST https://serviceusage.googleapis.com/v1/projects/43170330072/services/run.googleapis.com:enable 200
+[debug] [2026-10-28T16:14:02.942Z] <<< [apiv2][body] POST https://serviceusage.googleapis.com/v1/projects/43170330072/services/run.googleapis.com:enable [omitted]
+[debug] [2026-10-28T16:14:03.321Z] <<< [apiv2][status] POST https://serviceusage.googleapis.com/v1/projects/43170330072/services/eventarc.googleapis.com:enable 200
+[debug] [2026-10-28T16:14:03.321Z] <<< [apiv2][body] POST https://serviceusage.googleapis.com/v1/projects/43170330072/services/eventarc.googleapis.com:enable [omitted]
