@@ -51,14 +51,50 @@ def create_manual_docx():
     run_title.font.color.rgb = RGBColor(0x0F, 0x17, 0x2A) # Slate 900
 
     p_intro = doc.add_paragraph()
-    p_intro.paragraph_format.space_after = Pt(14)
+    p_intro.paragraph_format.space_after = Pt(10)
     r_intro = p_intro.add_run(
-        "Procedimiento oficial para registrar reservas en MesaChef Matrix v10.3.0, generar enlaces bancarios seguros "
-        "en Eurocaja Rural (Redsys PayGold), enviar confirmaciones con cláusula de cancelación por WhatsApp, "
-        "la sincronización automática online mediante Webhook y la conciliación contable con Administración."
+        "Procedimiento oficial para registrar reservas en MesaChef Matrix v10.3.3, generar enlaces bancarios seguros "
+        "en Eurocaja Rural (Redsys PayGold), configurar la URL de notificación online automática, enviar confirmaciones con cláusula de cancelación por WhatsApp, "
+        "la sincronización automática en tiempo real y la conciliación contable con Administración."
     )
-    r_intro.font.size = Pt(10.5)
+    r_intro.font.size = Pt(10)
     r_intro.font.color.rgb = RGBColor(0x47, 0x55, 0x69)
+
+    # Version & Novedades Box
+    nov_box = doc.add_table(rows=1, cols=1)
+    nov_box.alignment = WD_TABLE_ALIGNMENT.CENTER
+    nov_cell = nov_box.rows[0].cells[0]
+    nov_cell.width = Inches(6.8)
+    set_cell_background(nov_cell, "F0F9FF") # Sky 50
+    set_cell_margins(nov_cell, top=140, bottom=140, left=180, right=180)
+    np = nov_cell.paragraphs[0]
+    np.paragraph_format.space_after = Pt(4)
+    nr_ver = np.add_run("✨ NOVEDADES RECIENTES DE ESTA VERSIÓN (MANUAL v10.3.3 • 28/10/2026):\n")
+    nr_ver.font.bold = True
+    nr_ver.font.size = Pt(10)
+    nr_ver.font.color.rgb = RGBColor(0x03, 0x69, 0xA1) # Sky 700
+
+    nov_items = [
+        ("⚡ Notificación Automática Online (Webhook):", " Eurocaja Redsys actualiza la reserva a 🟢 Garantizado en vivo sin esperar al email."),
+        ("📍 Captura Oficial del TPV (Paso 5):", " Se muestra la pantalla exacta de Eurocaja donde se introduce la URL del Webhook."),
+        ("🔄 Botón 'Nuevo Cód.' para Modificaciones:", " Genera sufijos (GE-XXXXXX-2) si cambian personas para evitar el Error 913 (Pedido repetido)."),
+        ("💰 Copia Inteligente del Importe Pendiente:", " Si ya había un pago previo, copia solo la diferencia restante."),
+        ("📋 Copia Directa de URL en el Modal:", " Botón '📋 Copiar URL Webhook' en la propia ficha para agilizar el proceso."),
+        ("🔓 Guardado Flexible de Reserva:", " Permite guardar la reserva en blanco y añadir el enlace PayGold más tarde.")
+    ]
+    for bold_txt, norm_txt in nov_items:
+        p_item = nov_cell.add_paragraph()
+        p_item.paragraph_format.space_before = Pt(1)
+        p_item.paragraph_format.space_after = Pt(2)
+        r_b = p_item.add_run("• " + bold_txt)
+        r_b.font.bold = True
+        r_b.font.size = Pt(9)
+        r_b.font.color.rgb = RGBColor(0x0F, 0x17, 0x2A)
+        r_n = p_item.add_run(norm_txt)
+        r_n.font.size = Pt(9)
+        r_n.font.color.rgb = RGBColor(0x33, 0x41, 0x55)
+
+    doc.add_paragraph().paragraph_format.space_after = Pt(8)
 
     # Table of Key Data
     h1 = doc.add_heading(level=1)
@@ -147,7 +183,8 @@ def create_manual_docx():
                 "Accede al módulo Grandes Eventos y pulsa '+ Añadir Participante' o busca la reserva existente.",
                 "Rellena: Nombre Titular, Teléfono (9 dígitos), Comensales (Adultos y Niños).",
                 "Fecha Cargo Previsto: Selecciona la fecha pactada límite de pago (ej. 28/12/2026).",
-                "MesaChef genera automáticamente un Código de Pedido único (ej. GE-232078)."
+                "MesaChef genera automáticamente un Código de Pedido único (ej. GE-232078).",
+                "Puedes guardar la ficha en cualquier momento sin necesidad de tener el enlace todavía."
             ],
             "Img/manual/step1_mesachef.png",
             "Figura 1: Ficha del participante en MesaChef con bloque seguro PayGold"
@@ -187,7 +224,21 @@ def create_manual_docx():
             "Figura 4: Mensaje oficial de WhatsApp con enlace PayGold y condiciones de cancelación"
         ),
         (
-            "PASO 5: Sincronización Automática (Webhook) y Conciliación con Isabel",
+            "PASO 5: Dónde se Configura el Webhook en Eurocaja (Notificación Online)",
+            [
+                "Para que Eurocaja Rural notifique en tiempo real a MesaChef cada cobro, se configura una sola vez:",
+                "Accede a la administración del comercio 168355840-001 en Redsys Canales.",
+                "En la sección Parámetros del TPV Virtual > Notificación online:",
+                "Marca la casilla: ☑️ Notificar resultado a la siguiente URL.",
+                "En 'URL destino notificación', pega la URL: https://europe-west1-mesa-chef-prod.cloudfunctions.net/redsysWebhook",
+                "(En MesaChef dispones del botón '📋 Copiar URL Webhook' para copiarla con 1 clic).",
+                "Pulsa Aceptar / Guardar."
+            ],
+            "Img/manual/step_webhook_config.png",
+            "Figura 5: Casilla y campo de URL destino notificación online en el portal de Eurocaja Rural"
+        ),
+        (
+            "PASO 6: Sincronización Automática (Webhook) y Conciliación con Isabel",
             [
                 "⚡ Sincronización Automática en Tiempo Real: En cuanto el cliente paga desde su móvil (Bizum o Tarjeta), Redsys notifica al Webhook de MesaChef.",
                 "MesaChef actualiza la ficha solo: Cambia a '✅ Garantizado / Pagado', anota el pago con su código de autorización en el historial y guarda los últimos 4 dígitos.",
@@ -196,7 +247,7 @@ def create_manual_docx():
                 "Recepción ya no tiene que esperar a que Isabel reenvíe el correo para considerar la reserva formalizada."
             ],
             "Img/manual/step5_email_isabel.png",
-            "Figura 5: Justificante oficial de cobro recibido por Isabel en administración"
+            "Figura 6: Justificante oficial de cobro recibido por Isabel en administración"
         )
     ]
 
@@ -232,11 +283,34 @@ def create_manual_docx():
             r_cap.font.italic = True
             r_cap.font.color.rgb = RGBColor(0x64, 0x74, 0x8B)
 
+    # Modifications Section
+    h_mod = doc.add_heading(level=1)
+    h_mod.paragraph_format.space_before = Pt(14)
+    h_mod.paragraph_format.space_after = Pt(6)
+    r_hmod = h_mod.add_run("3. ¿Qué Hacer si el Cliente Modifica Comensales o Importes?")
+    r_hmod.font.color.rgb = RGBColor(0x1E, 0x29, 0x3B)
+
+    mod_bullets = [
+        "En Redsys NUNCA se puede repetir un número de pedido ya utilizado (Error 913: Pedido repetido).",
+        "Ajusta los comensales en MesaChef: si eran 2 personas (180 €) y pasan a ser 3 (270 €), el sistema calcula automáticamente el nuevo Pendiente: 90,00 €. Los pagos previos (180 €) se conservan intactos.",
+        "Genera una nueva versión de pedido con 1 clic: Pulsa el botón '🔄 Nuevo Cód.' junto a Cód. Pedido. El código GE-675270 pasará automáticamente a GE-675270-2.",
+        "Copia la diferencia: Pulsa '💰 Copiar Importe' (copiará solo los 90,00 € pendientes).",
+        "Crea el nuevo enlace en Eurocaja: Genera el enlace PayGold con el nuevo código correlativo (GE-675270-2) y los 90 €.",
+        "Envía el WhatsApp y guarda: Al pagar el cliente, el Webhook suma los nuevos 90 € al historial, completando los 270 € y dejando la reserva al 100% garantizada."
+    ]
+    for b in mod_bullets:
+        pb = doc.add_paragraph(style='List Bullet')
+        pb.paragraph_format.space_before = Pt(1)
+        pb.paragraph_format.space_after = Pt(2)
+        rb = pb.add_run(b)
+        rb.font.size = Pt(9.5)
+        rb.font.color.rgb = RGBColor(0x33, 0x41, 0x55)
+
     # Footer note
     p_foot = doc.add_paragraph()
     p_foot.paragraph_format.space_before = Pt(16)
     p_foot.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    r_foot = p_foot.add_run("MesaChef Matrix v10.3.0 • Sercotel Hotel Guadiana • Dpto. de Recepción & Administración")
+    r_foot = p_foot.add_run("MesaChef Matrix v10.3.3 • Sercotel Hotel Guadiana • Dpto. de Recepción & Administración")
     r_foot.font.size = Pt(8.5)
     r_foot.font.color.rgb = RGBColor(0x94, 0xA3, 0xB8)
 

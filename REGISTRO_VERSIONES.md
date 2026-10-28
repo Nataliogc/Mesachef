@@ -13,13 +13,20 @@ Este documento mantiene el registro y control de versiones **único y global** p
 
 ## 📌 Versión Actual del Sistema
 
-- **Versión:** `v10.3.2`
+- **Versión:** `v10.3.3`
 - **Última Actualización:** 28/10/2026
 - **Estado General:** Operativo en Producción (Matrix)
 
 ---
 
 ## 📝 Historial de Versiones
+
+### [v10.3.3] - 28/10/2026
+- **Módulos:** Grandes Eventos / Manuales de Usuario
+- **Tipo de cambio:** PATCH
+- **Descripción:**
+  - Incorporación en todos los manuales (Word, HTML interactivo y Markdown) del Paso 5 específico con la captura oficial de Eurocaja Rural (Redsys Canales) donde se activa la casilla "Notificar resultado a la siguiente URL" y se introduce la URL destino del Webhook.
+  - Documentación del procedimiento ante modificaciones de comensales e importes mediante el botón `🔄 Nuevo Cód.` para evitar el error de pedido repetido en Redsys.
 
 ### [v10.3.2] - 28/10/2026
 - **Módulos:** Grandes Eventos / Backend Webhook

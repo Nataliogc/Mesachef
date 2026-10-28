@@ -1,6 +1,19 @@
 # 📖 Manual Operativo para Recepción: Gestión de Pagos y Garantías PayGold (Sercotel Guadiana)
 
-Este manual detalla paso a paso el procedimiento oficial que el equipo de Recepción debe seguir para registrar reservas, generar enlaces seguros de pago en Eurocaja Rural (PayGold), enviar la confirmación por WhatsApp, la sincronización automática online y la coordinación de cobros con Administración.
+> **Versión Oficial del Manual:** `v10.3.3` • **Fecha de Actualización:** 28/10/2026 • **Estado:** Operativo en Producción
+
+Este manual detalla paso a paso el procedimiento oficial que el equipo de Recepción y Administración debe seguir para registrar reservas, generar enlaces seguros de pago en Eurocaja Rural (PayGold), configurar la notificación automática online, enviar la confirmación por WhatsApp y gestionar modificaciones o conciliaciones.
+
+---
+
+## ✨ Novedades Recientes de esta Versión (v10.3.3)
+
+* **⚡ Notificación Automática Online (Webhook):** Integración con Eurocaja Redsys para que la reserva pase automáticamente a `🟢 Garantizado / Pagado` en tiempo real al cobrar, sin que Recepción tenga que esperar el reenvío de email de Isabel.
+* **📍 Captura Oficial del TPV (Paso 5):** Se añade la imagen exacta de la pantalla de Eurocaja donde se marca la casilla *"Notificar resultado a la siguiente URL"* y se introduce la URL de MesaChef.
+* **🔄 Botón "Nuevo Cód." para Modificaciones:** Si el cliente amplía comensales o cambia importes, este botón genera un sufijo correlativo (`GE-XXXXXX-2`) para evitar el *Error 913 (Pedido repetido)* en Redsys.
+* **💰 Copia Inteligente del Importe Pendiente:** El botón *"💰 Copiar Importe"* detecta si el cliente ya abonó parte de la reserva y copia automáticamente solo la diferencia restante que falta por cobrar.
+* **📋 Copia Directa de URL en el Modal:** Se incorpora el botón *"📋 Copiar URL Webhook"* en la ficha del participante para copiar la dirección sin tener que buscarla.
+* **🔓 Guardado Flexible de Reserva:** Se permite guardar la reserva en cualquier momento sin obligar a tener el enlace PayGold de inmediato. El enlace solo se exige al pulsar *"📱 WhatsApp PayGold"*.
 
 ---
 
@@ -115,7 +128,7 @@ La razón primordial por la que **NUNCA debemos pedir ni escribir tarjetas de cr
 
 1. Vuelve a la ficha del participante en **MesaChef**.
 2. Pega el enlace en la casilla:  
-   👉 **Enlace PayGold generado en Eurocaja (Obligatorio para WhatsApp)**.
+   👉 **Enlace PayGold generado en Eurocaja**.
 3. Haz clic en el botón verde: **`📱 WhatsApp PayGold`**.
 4. Se abrirá WhatsApp Web / App con el mensaje redactado automáticamente:
    * Nombre del cliente y del evento (*Cena Fin de año 2026 en Sercotel Guadiana*).
@@ -129,12 +142,30 @@ La razón primordial por la que **NUNCA debemos pedir ni escribir tarjetas de cr
 
 ---
 
-### PASO 5: Actualización Automática (Webhook) y Conciliación Contable
+### PASO 5: Dónde se Configura el Enlace Webhook en Eurocaja (Notificación Online)
+
+Para que Eurocaja Rural avise de forma automática e inmediata a MesaChef cada vez que un cliente pague, se debe configurar una sola vez la **URL de Notificación Online**:
+
+1. En el portal de Eurocaja Rural Redsys, entra en la administración del comercio `168355840` / Terminal `001`.
+2. Localiza el apartado **"Notificación online"**:
+   * Marca la casilla: ☑️ **"Notificar resultado a la siguiente URL"**.
+   * En el recuadro **"URL destino notificación"**, introduce la URL oficial:
+     ```text
+     https://europe-west1-mesa-chef-prod.cloudfunctions.net/redsysWebhook
+     ```
+     *(Puedes copiarla con 1 clic en MesaChef pulsando el botón `📋 Copiar URL Webhook`).*
+3. Pulsa **Aceptar / Guardar**.
+
+![Dónde configurar la URL de Notificación Online en Eurocaja](Img/manual/step_webhook_config.png)
+
+---
+
+### PASO 6: Actualización Automática (Webhook) y Conciliación Contable
 
 Gracias a la integración del **Webhook Online de Redsys**, el sistema funciona ahora de manera autónoma:
 
 1. **Sincronización Automática en Tiempo Real (MesaChef):**
-   * En el instante en que el cliente completa el pago desde su teléfono (mediante Bizum o tarjeta), Eurocaja Rural envía una señal silenciosa a MesaChef.
+   * En el instante en que el cliente completa el pago desde su teléfono (mediante Bizum o tarjeta), Eurocaja Rural envía la notificación a esa URL destino.
    * **MesaChef actualiza automáticamente la ficha:**
      - Cambia el estado a **`✅ Garantizado / Pagado`**.
      - Anota el abono en el **Historial de Pagos** con la fecha y código de autorización del banco.
@@ -147,6 +178,26 @@ Gracias a la integración del **Webhook Online de Redsys**, el sistema funciona 
    * **Recepción ya no tiene que esperar el correo:** Dado que MesaChef se actualiza al segundo, Recepción puede continuar atendiendo sin demoras.
 
 ![Email de confirmación que recibe Isabel](Img/manual/step5_email_isabel.png)
+
+---
+
+## 🔄 ¿Qué Hacer si el Cliente Modifica Comensales o Importes?
+
+En Redsys **NUNCA se puede repetir un número de pedido** ya utilizado (`Error 913: Pedido repetido`). Si un cliente llama para añadir más personas (o si el enlace original caducó y necesita uno nuevo):
+
+1. **Ajusta los comensales en MesaChef:**
+   - Si eran 2 personas (180 €) y pasan a ser 3 (270 €), el sistema calcula automáticamente el nuevo **Pendiente: 90,00 €**.
+   - Los pagos realizados anteriormente (180 €) se mantienen intactos en el *Historial de Pagos*.
+2. **Genera una nueva versión de pedido con 1 clic:**
+   - En la casilla *Cód. Pedido*, pulsa el botón **`🔄 Nuevo Cód.`**:  
+     `GE-675270` pasará automáticamente a `GE-675270-2`.
+3. **Copia la diferencia:**
+   - Pulsa **`💰 Copiar Importe`**: copiará únicamente los **90,00 €** pendientes.
+4. **Crea el nuevo enlace en Eurocaja:**
+   - Genera el enlace PayGold con el nuevo código correlativo (`GE-675270-2`) y la diferencia (90 €).
+5. **Pega el enlace y envía el WhatsApp:**
+   - Pega el nuevo enlace y pulsa **`📱 WhatsApp PayGold`**.
+   - Cuando el cliente pague, el Webhook **sumará los nuevos 90 € al historial**, completando los 270 € y dejando la reserva 100% garantizada.
 
 ---
 
