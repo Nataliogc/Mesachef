@@ -13,13 +13,21 @@ Este documento mantiene el registro y control de versiones **único y global** p
 
 ## 📌 Versión Actual del Sistema
 
-- **Versión:** `v10.3.5`
+- **Versión:** `v10.3.6`
 - **Última Actualización:** 28/10/2026
 - **Estado General:** Operativo en Producción (Matrix)
 
 ---
 
 ## 📝 Historial de Versiones
+
+### [v10.3.6] - 28/10/2026
+- **Módulos:** Grandes Eventos / Informes de Impresión (Listado de Participantes)
+- **Tipo de cambio:** PATCH
+- **Descripción:**
+  - Ajuste en el resumen de cabecera y pie de página del Listado de Participantes impreso: el cómputo de "Confirmados" y "Pendientes" ahora contabiliza estrictamente el número de **personas/comensales** (pax) y no el número de reservas.
+  - Eliminación absoluta de cualquier término monetario o de pago en el Listado de Participantes; las reservas con servicio incluido o saldo cubierto se presentan limpiamente como `✅ Confirmado`.
+  - Presentación clara en cabecera: `Total Personas: X (Ad / Ni) | Personas Confirmadas: Y | Personas Pendientes: Z`.
 
 ### [v10.3.5] - 28/10/2026
 - **Módulos:** Grandes Eventos / Informes de Impresión

@@ -1,19 +1,19 @@
 # 📖 Manual Operativo para Recepción: Gestión de Pagos y Garantías PayGold (Sercotel Guadiana)
 
-> **Versión Oficial del Manual:** `v10.3.5` • **Fecha de Actualización:** 28/10/2026 • **Estado:** Operativo en Producción
+> **Versión Oficial del Manual:** `v10.3.6` • **Fecha de Actualización:** 28/10/2026 • **Estado:** Operativo en Producción
 
 Este manual detalla paso a paso el procedimiento oficial que el equipo de Recepción y Administración debe seguir para registrar reservas, generar enlaces seguros de pago en Eurocaja Rural (PayGold), configurar la notificación automática online, enviar la confirmación por WhatsApp y gestionar modificaciones o conciliaciones.
 
 ---
 
-## ✨ Novedades Recientes de esta Versión (v10.3.5)
+## ✨ Novedades Recientes de esta Versión (v10.3.6)
 
 * **⚡ Notificación Automática Online (Webhook):** Integración con Eurocaja Redsys para que la reserva pase automáticamente a `🟢 Garantizado / Pagado` en tiempo real al cobrar, sin que Recepción tenga que esperar el reenvío de email de Isabel.
 * **📍 Captura Oficial del TPV (Paso 5):** Se añade la imagen exacta de la pantalla de Eurocaja donde se marca la casilla *"Notificar resultado a la siguiente URL"* y se introduce la URL de MesaChef.
 * **🔄 Botón "Nuevo Cód." para Modificaciones:** Si el cliente amplía comensales o cambia importes, este botón genera un sufijo correlativo (`GE-XXXXXX-2`) para evitar el *Error 913 (Pedido repetido)* en Redsys.
 * **💰 Copia Inteligente del Importe Pendiente:** El botón *"💰 Copiar Importe"* detecta si el cliente ya abonó parte de la reserva y copia automáticamente solo la diferencia restante que falta por cobrar.
 * **📋 Copia Directa de URL en el Modal:** Se incorpora el botón *"📋 Copiar URL Webhook"* en la ficha del participante para copiar la dirección sin tener que buscarla.
-* **📊 Diferenciación de Informes de Impresión:** El *Listado de Participantes* para recepción/maitre no muestra importes ni dinero; refleja el estado operativo (`✅ Confirmado` / `⏳ Pendiente`), total de comensales, mesa y observaciones. Los importes económicos quedan reservados para el *Resumen Financiero*.
+* **👥 Cómputo por Personas y Cero Pagos en Lista de Puerta:** El *Listado de Participantes* para recepción/maitre no incluye datos económicos ni referencias de pago; computa en cabecera y pie el recuento real de **personas confirmadas y personas pendientes** (en lugar de reservas), y muestra el estado operativo (`✅ Confirmado` / `⏳ Pendiente`) considerando confirmados los servicios especiales. Los importes económicos y de saldo quedan reservados para el *Resumen Financiero*.
 * **🔓 Guardado Flexible de Reserva:** Se permite guardar la reserva en cualquier momento sin obligar a tener el enlace PayGold de inmediato. El enlace solo se exige al pulsar *"📱 WhatsApp PayGold"*.
 
 ---

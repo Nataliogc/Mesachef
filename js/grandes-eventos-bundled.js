@@ -512,8 +512,8 @@
 
         let totalAd = 0;
         let totalNi = 0;
-        let totalConfirmed = 0;
-        let totalPendingCount = 0;
+        let confirmedPax = 0;
+        let pendingPax = 0;
 
         const rows = parts.map(p => {
             const ad = parseInt(p.adultos) || 0;
@@ -528,14 +528,12 @@
             const paid = isIncluded ? cost : rawPaid;
             const isConfirmed = isIncluded || (cost > 0 && paid >= cost) || (p.paygoldStatus === 'garantizado');
 
-            if (isConfirmed) totalConfirmed++;
-            else totalPendingCount++;
+            if (isConfirmed) confirmedPax += totalPax;
+            else pendingPax += totalPax;
 
-            const statusBadge = isIncluded
-                ? '<span style="color:#15803d; font-weight:700;">✅ Confirmado (Incluido)</span>'
-                : (isConfirmed
-                    ? '<span style="color:#15803d; font-weight:700;">✅ Confirmado</span>'
-                    : '<span style="color:#d97706; font-weight:700;">⏳ Pendiente</span>');
+            const statusBadge = isConfirmed
+                ? '<span style="color:#15803d; font-weight:700;">✅ Confirmado</span>'
+                : '<span style="color:#d97706; font-weight:700;">⏳ Pendiente</span>';
 
             return `<tr>
                 <td style="font-weight:bold; font-size:12px;">${p.mesa ? 'Mesa ' + p.mesa : '<span style="color:#94a3b8;">Sin mesa</span>'}</td>
@@ -552,14 +550,15 @@
             </tr>`;
         }).join('');
 
+        const totalPaxGeneral = totalAd + totalNi;
+
         return `
             ${getPrintHeader("Listado de Participantes y Asistencia")}
             
             <div style="display:flex; justify-content:space-between; align-items:center; background:#f8fafc; border:1px solid #e2e8f0; border-radius:6px; padding:10px 14px; margin-bottom:14px; font-size:12px;">
-                <span><strong>Total Reservas:</strong> ${parts.length}</span>
-                <span><strong>Total Comensales:</strong> ${totalAd + totalNi} (${totalAd} Adultos / ${totalNi} Niños)</span>
-                <span><strong>Confirmados:</strong> <strong style="color:#15803d;">${totalConfirmed}</strong></span>
-                <span><strong>Pendientes:</strong> <strong style="color:#d97706;">${totalPendingCount}</strong></span>
+                <span><strong>Total Personas:</strong> ${totalPaxGeneral} (${totalAd} Adultos / ${totalNi} Niños)</span>
+                <span><strong>Personas Confirmadas:</strong> <strong style="color:#15803d; font-size:13px;">${confirmedPax}</strong></span>
+                <span><strong>Personas Pendientes:</strong> <strong style="color:#d97706; font-size:13px;">${pendingPax}</strong></span>
             </div>
 
             <table>
@@ -581,8 +580,8 @@
                         <td colspan="3" style="text-align:right;">TOTALES:</td>
                         <td class="text-center">${totalAd}</td>
                         <td class="text-center">${totalNi}</td>
-                        <td class="text-center">${totalAd + totalNi}</td>
-                        <td class="text-center" colspan="2">${totalConfirmed} Confirmados / ${totalPendingCount} Pendientes</td>
+                        <td class="text-center">${totalPaxGeneral}</td>
+                        <td class="text-center" colspan="2"><span style="color:#15803d;">${confirmedPax} Confirmadas</span> / <span style="color:#d97706;">${pendingPax} Pendientes</span></td>
                     </tr>
                 </tfoot>
             </table>
