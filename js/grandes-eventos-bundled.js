@@ -700,6 +700,30 @@
         });
 
         // Copy Paygold Ref button
+        // Copy PayGold Amount button
+        $('btnCopyPaygoldAmount')?.addEventListener('click', () => {
+            const pending = $('pPendingCalc')?.value || '0.00';
+            const total = $('pTotalCalc')?.value || '0.00';
+            const amountToCopy = parseFloat(pending) > 0 ? pending : total;
+            navigator.clipboard.writeText(amountToCopy).then(() => {
+                const btn = $('btnCopyPaygoldAmount');
+                btn.textContent = '✅ Copiado (' + amountToCopy + ' €)';
+                setTimeout(() => btn.textContent = '💰 Copiar Importe', 2000);
+            }).catch(() => alert('Importe: ' + amountToCopy));
+        });
+
+        // Copy PayGold Description button
+        $('btnCopyPaygoldDesc')?.addEventListener('click', () => {
+            const titular = $('pName')?.value || 'Cliente';
+            const evtName = ($('inputName')?.value || 'Cena Fin de Año 2026').trim();
+            const desc = (evtName + ' - ' + titular).slice(0, 125);
+            navigator.clipboard.writeText(desc).then(() => {
+                const btn = $('btnCopyPaygoldDesc');
+                btn.textContent = '✅ Copiado!';
+                setTimeout(() => btn.textContent = '📝 Copiar Descripción', 2000);
+            }).catch(() => alert('Descripción: ' + desc));
+        });
+
         $('btnCopyPaygoldRef')?.addEventListener('click', () => {
             const ref = $('pPaygoldRef')?.value;
             if (ref) {
@@ -726,7 +750,9 @@
             const titular = $('pName')?.value || 'Cliente';
             const adults = $('pAdults')?.value || '1';
             const kids = $('pKids')?.value || '0';
-            const eventTitle = $('inputTitle')?.value || 'Gran Evento';
+            const rawEventTitle = ($('inputName')?.value || 'Cena Fin de año 2026 en Sercotel Guadiana').trim();
+            const hasHotelInTitle = rawEventTitle.toLowerCase().includes('guadiana');
+            const eventTitle = rawEventTitle;
             const total = $('pTotalCalc')?.value || '0.00';
             const pending = $('pPendingCalc')?.value || '0.00';
             const chargeDate = $('pChargeDate')?.value ? formatDate($('pChargeDate').value) : '';
@@ -734,7 +760,13 @@
             const paygoldLink = $('pPaygoldLink')?.value || '';
             const cardLast4 = $('pCardLast4')?.value || '';
 
-            let msg = 'Hola ' + titular + ', le confirmamos su reserva en Sercotel Guadiana para el evento "' + eventTitle + '".\n\n';
+            let msg = hasHotelInTitle
+                ? 'Hola ' + titular + ', le confirmamos su reserva para "' + eventTitle + '".\n\n'
+                : 'Hola ' + titular + ', le confirmamos su reserva en Sercotel Guadiana para el evento "' + eventTitle + '".\n\n';
+            const evtDate = $('inputDate')?.value ? formatDate($('inputDate').value) : '';
+            if (evtDate) {
+                msg += '📅 Fecha del evento: ' + evtDate + '\n';
+            }
             msg += '👥 Asistentes: ' + adults + ' adulto(s)' + (parseInt(kids) > 0 ? ', ' + kids + ' niño(s)' : '') + '.\n';
             msg += '💶 Importe total: ' + total + ' € (Pendiente: ' + pending + ' €).\n\n';
 
@@ -745,7 +777,8 @@
             }
 
             if (chargeDate) {
-                msg += '📅 Fecha límite / cargo previsto: ' + chargeDate + '.\n';
+                msg += '📅 Fecha límite de pago: ' + chargeDate + '.\n';
+                msg += '⚠️ A partir de esta fecha la cantidad será no reembolsable. Si el pago no se recibe en esta fecha, su reserva será cancelada por falta de pago.\n\n';
             }
             if (paygoldRef) {
                 msg += '🔖 Ref. de pedido: ' + paygoldRef + '.\n\n';

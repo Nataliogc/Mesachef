@@ -13,13 +13,25 @@ Este documento mantiene el registro y control de versiones **único y global** p
 
 ## 📌 Versión Actual del Sistema
 
-- **Versión:** `v10.1.1`
+- **Versión:** `v10.1.3`
 - **Última Actualización:** 28/10/2026
 - **Estado General:** Operativo en Producción (Matrix)
 
 ---
 
 ## 📝 Historial de Versiones
+
+### [v10.1.3] - 28/10/2026
+- **Módulos:** Grandes Eventos
+- **Tipo de cambio:** PATCH
+- **Descripción:**
+  - Incorporación de política de límite de pago y cancelación no reembolsable en plantilla WhatsApp e invalidación de caché de scripts
+
+### [v10.1.2] - 28/10/2026
+- **Módulos:** Grandes Eventos
+- **Tipo de cambio:** PATCH
+- **Descripción:**
+  - Detección dinámica del nombre del evento en plantilla WhatsApp y botones de copiado rápido de importe y descripción para Eurocaja Rural PayGold
 
 ### [v10.1.1] - 28/10/2026
 - **Módulos:** Grandes Eventos
