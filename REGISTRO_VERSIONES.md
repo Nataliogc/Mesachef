@@ -13,13 +13,19 @@ Este documento mantiene el registro y control de versiones **único y global** p
 
 ## 📌 Versión Actual del Sistema
 
-- **Versión:** `v10.3.4`
+- **Versión:** `v10.3.5`
 - **Última Actualización:** 28/10/2026
 - **Estado General:** Operativo en Producción (Matrix)
 
 ---
 
 ## 📝 Historial de Versiones
+
+### [v10.3.5] - 28/10/2026
+- **Módulos:** Grandes Eventos / Informes de Impresión
+- **Tipo de cambio:** PATCH
+- **Descripción:**
+  - Corrección en los informes impresos (Lista de Participantes e Informe Financiero): los participantes marcados con "Servicio Incluido" se computan y reflejan automáticamente como `✅ Confirmado (Incluido)` y pagados al 100%, sumando correctamente a los comensales confirmados y a la recaudación sin computar como saldo pendiente.
 
 ### [v10.3.4] - 28/10/2026
 - **Módulos:** Grandes Eventos / Informes de Impresión

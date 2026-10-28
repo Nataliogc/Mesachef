@@ -1,6 +1,6 @@
 {
     "name": "mesa-chef-matrix",
-    "version": "10.3.4",
+    "version": "10.3.5",
     "description": "Gestión de Eventos y Restaurante",
     "main": "index.html",
     "scripts": {
