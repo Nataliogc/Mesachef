@@ -13,13 +13,19 @@ Este documento mantiene el registro y control de versiones **único y global** p
 
 ## 📌 Versión Actual del Sistema
 
-- **Versión:** `v10.1.0`
+- **Versión:** `v10.1.1`
 - **Última Actualización:** 28/10/2026
 - **Estado General:** Operativo en Producción (Matrix)
 
 ---
 
 ## 📝 Historial de Versiones
+
+### [v10.1.1] - 28/10/2026
+- **Módulos:** Grandes Eventos
+- **Tipo de cambio:** PATCH
+- **Descripción:**
+  - Corrección de enlace al Portal de Administración TPV Virtual Redsys Canales (Eurocaja Rural)
 
 ### [v10.1.0] - 28/10/2026
 - **Módulos:** Grandes Eventos
