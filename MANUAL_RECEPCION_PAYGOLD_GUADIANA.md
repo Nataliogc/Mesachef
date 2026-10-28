@@ -1,6 +1,6 @@
 # 📖 Manual Operativo para Recepción: Gestión de Pagos y Garantías PayGold (Sercotel Guadiana)
 
-Este manual detalla paso a paso el procedimiento oficial que el equipo de Recepción debe seguir para registrar reservas, generar enlaces seguros de pago en Eurocaja Rural (PayGold), enviar la confirmación por WhatsApp y coordinar los cobros con Administración.
+Este manual detalla paso a paso el procedimiento oficial que el equipo de Recepción debe seguir para registrar reservas, generar enlaces seguros de pago en Eurocaja Rural (PayGold), enviar la confirmación por WhatsApp, la sincronización automática online y la coordinación de cobros con Administración.
 
 ---
 
@@ -12,12 +12,14 @@ Este manual detalla paso a paso el procedimiento oficial que el equipo de Recepc
 | **Entidad Bancaria** | Eurocaja Rural (Redsys) |
 | **Usuario / Terminal TPV** | `168355840-001` |
 | **Portal de Acceso TPV** | [https://canales.redsys.es/portal](https://canales.redsys.es/portal) |
+| **URL Notificación Online (Webhook)** | `https://europe-west1-mesa-chef-prod.cloudfunctions.net/redsysWebhook` |
+| **Sincronización Automática** | Instantánea: MesaChef pasa a 🟢 Garantizado y anota el pago al momento |
 | **Email de Avisos de Pago** | `administracion@hotelguadiana.es` (Isabel) |
-| **Circuito de Confirmación** | Isabel recibe el justificante de Eurocaja y lo **reenvía a Recepción** para control. |
+| **Circuito de Conciliación** | Isabel recibe el justificante oficial de Eurocaja para control contable y facturación. |
 
 ---
 
-## 🔄 Resumen del Circuito de Cobro
+## 🔄 Resumen del Circuito de Cobro (Automático + Respaldo Contable)
 
 ```mermaid
 sequenceDiagram
@@ -26,22 +28,23 @@ sequenceDiagram
     participant MC as MesaChef
     participant TPV as Eurocaja (PayGold)
     actor Cli as Cliente
-    actor Isa as Isabel (Administración)
+    participant WH as Webhook MesaChef
+    actor Isa as Isabel (Admin)
 
-    Rec->>MC: Abre la ficha del participante y anota datos
+    Rec->>MC: Abre ficha participante y anota datos
     Rec->>MC: Copia Cód. Pedido, Importe y Descripción
-    Rec->>TPV: Accede con usuario 168355840-001 y genera enlace
+    Rec->>TPV: Accede con 168355840-001 y genera enlace PayGold
     TPV-->>Rec: Entrega enlace de pago seguro
-    Rec->>MC: Pega el enlace en MesaChef
-    Rec->>Cli: Pulsa "WhatsApp PayGold" y envía el mensaje
-    Cli->>TPV: Paga mediante Bizum / Tarjeta en Eurocaja
-    TPV->>Isa: Notificación oficial de pago por email
-    Isa->>Rec: Reenvía el email a Recepción
-    Rec->>MC: Registra el pago en el Historial y archiva ficha
+    Rec->>MC: Pega enlace y pulsa "WhatsApp PayGold"
+    Rec->>Cli: Envía mensaje con enlace y política de pago
+    Cli->>TPV: Paga desde su móvil (Bizum / Tarjeta)
+    par Actualización Automática en Tiempo Real
+        TPV->>WH: Notificación HTTP online instantánea
+        WH->>MC: Actualiza ficha a 🟢 Garantizado y anota el pago
+    and Respaldo Contable Oficial
+        TPV->>Isa: Justificante oficial por email (administracion@)
+    end
 ```
-
----
-
 
 ---
 
@@ -57,6 +60,8 @@ La razón primordial por la que **NUNCA debemos pedir ni escribir tarjetas de cr
 
 3. **Tranquilidad para el Personal de Recepción:**  
    Al no ver ni guardar tarjetas de clientes, ningún recepcionista puede ser jamás objeto de sospecha si a ese cliente le clonan la tarjeta en otro comercio. En MesaChef solo dejamos constancia de los últimos 4 dígitos (ej. `•••• 2525`) como simple referencia visual.
+
+---
 
 ## 📝 Procedimiento Paso a Paso
 
@@ -124,31 +129,39 @@ La razón primordial por la que **NUNCA debemos pedir ni escribir tarjetas de cr
 
 ---
 
-### PASO 5: Notificación y Circuito con Administración (Isabel)
+### PASO 5: Actualización Automática (Webhook) y Conciliación Contable
 
-1. Cuando el cliente realiza el pago a través del enlace de Eurocaja Rural, el banco envía automáticamente un correo electrónico de confirmación con el justificante y el código de pedido (`GE-XXXXXX`).
-2. Este aviso llega a la cuenta oficial de administración:  
-   📧 **`administracion@hotelguadiana.es`** (gestionada por **Isabel**).
+Gracias a la integración del **Webhook Online de Redsys**, el sistema funciona ahora de manera autónoma:
+
+1. **Sincronización Automática en Tiempo Real (MesaChef):**
+   * En el instante en que el cliente completa el pago desde su teléfono (mediante Bizum o tarjeta), Eurocaja Rural envía una señal silenciosa a MesaChef.
+   * **MesaChef actualiza automáticamente la ficha:**
+     - Cambia el estado a **`✅ Garantizado / Pagado`**.
+     - Anota el abono en el **Historial de Pagos** con la fecha y código de autorización del banco.
+     - Guarda los últimos 4 dígitos y caducidad para referencia del hotel.
+   * **El personal de Recepción NO necesita hacer nada a mano**: al consultar la lista de participantes verá el semáforo verde inmediatamente.
+
+2. **Control y Conciliación con Administración (Isabel):**
+   * Eurocaja Rural sigue enviando de forma paralela el correo con el justificante oficial a **`administracion@hotelguadiana.es`** (**Isabel**).
+   * **Función de este email:** Sirve a Isabel para la cuadratura contable y la conciliación mensual con el extracto bancario de Eurocaja Rural.
+   * **Recepción ya no tiene que esperar el correo:** Dado que MesaChef se actualiza al segundo, Recepción puede continuar atendiendo sin demoras.
 
 ![Email de confirmación que recibe Isabel](Img/manual/step5_email_isabel.png)
-
-3. **Acción de Isabel:** Isabel comprueba el abono y **lo reenvía de inmediato por email a Recepción** para su control operativo.
-4. **Acción final de Recepción:**
-   * Abre la ficha del participante en MesaChef buscando por el código de pedido o nombre del cliente.
-   * En el bloque **Historial de Pagos**, introduce la fecha, el importe abonado y pulsa **+ Añadir**.
-   * Cambia el desplegable de **Estado Garantía** a: `✅ Garantizado / Pagado`.
-   * Pulsa **Guardar Ficha**.
 
 ---
 
 ## ❓ Preguntas Frecuentes y Resolución de Incidencias
 
 > [!TIP]
-> **¿Qué pasa si el cliente no paga antes de la fecha límite?**
+> **¿Cómo sé si un cliente ya ha pagado sin entrar a su ficha?**  
+> En la tabla principal de participantes de Grandes Eventos, la columna **Garantía PayGold** mostrará el distintivo verde **`✅ Garantizado`** y el importe pendiente quedará a **`0,00 €`**.
+
+> [!TIP]
+> **¿Qué pasa si el cliente no paga antes de la fecha límite?**  
 > En la tabla de participantes de Grandes Eventos, la reserva mostrará la alerta roja:  
 > `⚠️ Vencido: DD/MM/AAAA`.  
 > Recepción debe llamar al cliente o, si no responde, proceder a la cancelación de la reserva por falta de pago según la política informada.
 
 > [!NOTE]
-> **¿Por qué el usuario de Eurocaja debe ser 168355840-001?**
+> **¿Por qué el usuario de Eurocaja debe ser 168355840-001?**  
 > El sufijo `-001` identifica el Terminal 1 asignado al Hotel Guadiana para cobros a distancia PayGold. Sin este sufijo, el sistema del banco no permitirá iniciar sesión.

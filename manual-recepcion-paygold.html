@@ -302,12 +302,20 @@
           <td><a href="https://canales.redsys.es/portal" target="_blank" style="color: var(--info); font-weight: 600;">https://canales.redsys.es/portal</a></td>
         </tr>
         <tr>
-          <td><strong>Email de Notificación de Cobro</strong></td>
+          <td><strong>Email Oficial de Cobro</strong></td>
           <td><code>administracion@hotelguadiana.es</code> (Bandeja de <strong>Isabel</strong>)</td>
         </tr>
         <tr>
-          <td><strong>Circuito Operativo</strong></td>
-          <td>Isabel recibe el aviso de cobro del banco y lo <strong>reenvía a Recepción</strong> para su apunte en MesaChef.</td>
+          <td><strong>URL Notificación Online (Webhook)</strong></td>
+          <td><span class="code-chip" style="font-size: 11px;">https://europe-west1-mesa-chef-prod.cloudfunctions.net/redsysWebhook</span></td>
+        </tr>
+        <tr>
+          <td><strong>Sincronización Automática</strong></td>
+          <td><span style="color: #16a34a; font-weight: 700;">Instantánea</span>: MesaChef pasa a 🟢 Garantizado y anota el pago al momento</td>
+        </tr>
+        <tr>
+          <td><strong>Circuito de Conciliación</strong></td>
+          <td>Isabel recibe el justificante oficial de Eurocaja para control contable y cuadratura mensual.</td>
         </tr>
       </tbody>
     </table>
@@ -367,7 +375,7 @@
       </div>
       <div class="img-wrapper">
         <img src="Img/manual/step1_mesachef.png" alt="Ficha del participante en MesaChef">
-        <div class="img-caption">Figura 1: Ficha panorámica de gestión de participantes en MesaChef Matrix v10.2.1</div>
+        <div class="img-caption">Figura 1: Ficha panorámica de gestión de participantes en MesaChef Matrix v10.3.0</div>
       </div>
     </div>
 
@@ -449,19 +457,22 @@
     <div class="step-box">
       <div class="step-header">
         <span class="step-pill">PASO 5</span>
-        <div class="step-title">Confirmación del Pago y Circuito con Isabel (Administración)</div>
+        <div class="step-title">Sincronización Automática (Webhook) y Conciliación con Isabel (Administración)</div>
       </div>
       <div class="step-desc">
         <ul>
-          <li>Cuando el cliente completa el pago (mediante Bizum o Tarjeta bancaria), el banco envía un email automático con el justificante.</li>
-          <li>Este aviso llega al buzón de <strong>Isabel</strong>: <span class="code-chip">administracion@hotelguadiana.es</span>.</li>
-          <li><strong>Acción de Isabel:</strong> Isabel comprueba la entrada del abono en la cuenta y <strong>reenvía el correo a Recepción</strong> con la referencia del pedido (<span class="code-chip">GE-XXXXXX</span>).</li>
-          <li><strong>Acción de Recepción:</strong>
+          <li><strong>⚡ 1. Sincronización Automática en Tiempo Real (MesaChef):</strong>
             <ul>
-              <li>Abre la reserva en MesaChef.</li>
-              <li>En el <strong>Historial de Pagos</strong>, anota el importe y pulsa <strong>+ Añadir</strong>.</li>
-              <li>Cambia el <strong>Estado Garantía</strong> a: <span style="color: #16a34a; font-weight: 700;">✅ Garantizado / Pagado</span>.</li>
-              <li>Pulsa <strong>Guardar Ficha</strong>. ¡La reserva queda formalizada y protegida al 100%!</li>
+              <li>En el instante en que el cliente paga desde su móvil (Bizum o Tarjeta), Redsys notifica al <strong>Webhook de MesaChef</strong>.</li>
+              <li>La ficha se actualiza automáticamente a <span style="color: #16a34a; font-weight: 700;">✅ Garantizado / Pagado</span> y anota el pago en el historial con su código de autorización.</li>
+              <li><strong>El personal de Recepción no tiene que hacer nada a mano</strong>; la pantalla se pone en verde sola.</li>
+            </ul>
+          </li>
+          <li style="margin-top: 8px;"><strong>📑 2. Control y Conciliación Contable (Isabel):</strong>
+            <ul>
+              <li>El banco envía en paralelo el justificante por email a <span class="code-chip">administracion@hotelguadiana.es</span> (<strong>Isabel</strong>).</li>
+              <li>Este correo sirve para el archivo contable y la conciliación bancaria mensual.</li>
+              <li>Recepción ya no necesita esperar el correo para atender al cliente o dar por cerrada la reserva.</li>
             </ul>
           </li>
         </ul>
@@ -473,7 +484,7 @@
     </div>
 
     <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid var(--border); font-size: 12px; color: var(--slate-600);">
-      MesaChef Matrix v10.2.1 • Sistema de Gestión Hotelera & Eventos • Sercotel Hotel Guadiana
+      MesaChef Matrix v10.3.0 • Sistema de Gestión Hotelera & Eventos • Sercotel Hotel Guadiana
     </div>
   </div>
 

@@ -13,13 +13,22 @@ Este documento mantiene el registro y control de versiones **único y global** p
 
 ## 📌 Versión Actual del Sistema
 
-- **Versión:** `v10.2.2`
+- **Versión:** `v10.3.0`
 - **Última Actualización:** 28/10/2026
 - **Estado General:** Operativo en Producción (Matrix)
 
 ---
 
 ## 📝 Historial de Versiones
+
+### [v10.3.0] - 28/10/2026
+- **Módulos:** Backend (Cloud Functions) / Grandes Eventos / PayGold Eurocaja
+- **Tipo de cambio:** MINOR
+- **Descripción:**
+  - Implementación de Cloud Function 2nd Gen para Webhook de notificación online asíncrona de Redsys (`redsysWebhook` en `europe-west1`).
+  - Decodificación y validación automática de parámetros `Ds_MerchantParameters` (Base64/JSON) y verificación de códigos de autorización (0000-0099).
+  - Sincronización en tiempo real con Firestore (`participantes_eventos`): cambio de estado a `garantizado`, registro contable en `pagos`, extracción segura de últimos 4 dígitos y caducidad, y guardado en colección de auditoría `auditoria_paygold`.
+  - Configuración del proyecto Firebase `mesa-chef-prod` en plan Blaze con activación de APIs Cloud Build, Cloud Functions y Artifact Registry.
 
 ### [v10.2.2] - 28/10/2026
 - **Módulos:** Grandes Eventos

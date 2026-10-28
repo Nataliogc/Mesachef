@@ -1,4 +1,4 @@
-# 📘 Manual de Operaciones Integral - MesaChef Matrix v10.2.2
+# 📘 Manual de Operaciones Integral - MesaChef Matrix v10.3.0
 
 **Versión del Documento:** 10.2.2 Updated  
 **Confidencialidad:** Uso Interno Grupo Guadiana & Cumbria  
