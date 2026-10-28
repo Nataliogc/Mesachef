@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Manual Operativo Recepción - PayGold Eurocaja Rural (Sercotel Guadiana)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #15803d;
+      --primary-dark: #166534;
+      --primary-light: #dcfce7;
+      --slate-900: #0f172a;
+      --slate-800: #1e293b;
+      --slate-700: #334155;
+      --slate-600: #475569;
+      --slate-100: #f1f5f9;
+      --slate-50: #f8fafc;
+      --border: #e2e8f0;
+      --danger: #dc2626;
+      --warning: #f59e0b;
+      --info: #2563eb;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      color: var(--slate-800);
+      background: #f8fafc;
+      line-height: 1.6;
+      padding: 30px 15px;
+    }
+
+    .container {
+      max-width: 960px;
+      margin: 0 auto;
+      background: #ffffff;
+      padding: 40px;
+      border-radius: 16px;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.03);
+      border: 1px solid var(--border);
+    }
+
+    .header-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 2px solid var(--slate-100);
+      padding-bottom: 20px;
+      margin-bottom: 30px;
+    }
+
+    .badge-hotel {
+      background: #ecfdf5;
+      color: var(--primary);
+      border: 1px solid #86efac;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      font-size: 26px;
+      font-weight: 800;
+      color: var(--slate-900);
+      margin-bottom: 6px;
+    }
+
+    .subtitle {
+      font-size: 14px;
+      color: var(--slate-600);
+      margin-bottom: 24px;
+    }
+
+    .btn-print {
+      background: var(--slate-900);
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: background 0.2s;
+    }
+
+    .btn-print:hover {
+      background: var(--slate-800);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 20px 0 35px 0;
+      font-size: 13.5px;
+      border-radius: 8px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+    }
+
+    th {
+      background: var(--primary-dark);
+      color: white;
+      text-align: left;
+      padding: 12px 16px;
+      font-weight: 700;
+      font-size: 13px;
+    }
+
+    td {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    tr:nth-child(even) td {
+      background: var(--slate-50);
+    }
+
+    .step-box {
+      margin-bottom: 35px;
+      padding-bottom: 25px;
+      border-bottom: 1px dashed var(--border);
+    }
+
+    .step-box:last-child {
+      border-bottom: none;
+      margin-bottom: 0;
+    }
+
+    .step-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .step-pill {
+      background: var(--primary-dark);
+      color: white;
+      font-size: 12px;
+      font-weight: 800;
+      padding: 4px 10px;
+      border-radius: 6px;
+      letter-spacing: 0.05em;
+    }
+
+    .step-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--slate-900);
+    }
+
+    .step-desc {
+      font-size: 14px;
+      color: var(--slate-700);
+      margin-bottom: 14px;
+    }
+
+    .step-desc ul {
+      margin-left: 24px;
+      margin-top: 8px;
+    }
+
+    .step-desc li {
+      margin-bottom: 6px;
+    }
+
+    .img-wrapper {
+      background: #f1f5f9;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 10px;
+      text-align: center;
+      margin: 14px 0;
+    }
+
+    .img-wrapper img {
+      max-width: 100%;
+      height: auto;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    }
+
+    .img-caption {
+      font-size: 12px;
+      color: var(--slate-600);
+      margin-top: 8px;
+      font-style: italic;
+    }
+
+    .alert {
+      padding: 14px 18px;
+      border-radius: 8px;
+      margin: 16px 0;
+      font-size: 13.5px;
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+    }
+
+    .alert-danger {
+      background: #fef2f2;
+      border: 1px solid #fecaca;
+      color: #991b1b;
+    }
+
+    .alert-warning {
+      background: #fffbeb;
+      border: 1px solid #fde68a;
+      color: #92400e;
+    }
+
+    .alert-success {
+      background: #f0fdf4;
+      border: 1px solid #bbf7d0;
+      color: #166534;
+    }
+
+    .code-chip {
+      font-family: 'JetBrains Mono', monospace;
+      background: #e2e8f0;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: 700;
+      color: #0f172a;
+    }
+
+    @media print {
+      body {
+        background: white;
+        padding: 0;
+      }
+      .container {
+        box-shadow: none;
+        border: none;
+        padding: 0;
+        max-width: 100%;
+      }
+      .btn-print {
+        display: none;
+      }
+      .step-box {
+        page-break-inside: avoid;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="container">
+    <div class="header-bar">
+      <div>
+        <span class="badge-hotel">Sercotel Guadiana • Recepción</span>
+        <h1 style="margin-top: 8px;">Manual Operativo: Cobros PayGold y WhatsApp</h1>
+        <div class="subtitle">Guía visual paso a paso para el registro de reservas, TPV Eurocaja Rural y circuito con Administración</div>
+      </div>
+      <div>
+        <button class="btn-print" onclick="window.print()">🖨️ Imprimir / Guardar PDF</button>
+      </div>
+    </div>
+
+    <!-- TABLA DE DATOS CLAVE -->
+    <h3 style="font-size: 16px; margin-bottom: 8px; color: var(--slate-800);">1. Datos Clave de Acceso y Configuración</h3>
+    <table>
+      <thead>
+        <tr>
+          <th style="width: 30%;">Parámetro</th>
+          <th style="width: 70%;">Valor Oficial</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Establecimiento</strong></td>
+          <td>Sercotel Hotel Guadiana</td>
+        </tr>
+        <tr>
+          <td><strong>Entidad Bancaria</strong></td>
+          <td>Eurocaja Rural (Plataforma Redsys)</td>
+        </tr>
+        <tr>
+          <td><strong>Usuario TPV Virtual</strong></td>
+          <td><span class="code-chip">168355840-001</span> (Imprescindible incluir el terminal <code>-001</code>)</td>
+        </tr>
+        <tr>
+          <td><strong>Portal de Acceso TPV</strong></td>
+          <td><a href="https://canales.redsys.es/portal" target="_blank" style="color: var(--info); font-weight: 600;">https://canales.redsys.es/portal</a></td>
+        </tr>
+        <tr>
+          <td><strong>Email de Notificación de Cobro</strong></td>
+          <td><code>administracion@hotelguadiana.es</code> (Bandeja de <strong>Isabel</strong>)</td>
+        </tr>
+        <tr>
+          <td><strong>Circuito Operativo</strong></td>
+          <td>Isabel recibe el aviso de cobro del banco y lo <strong>reenvía a Recepción</strong> para su apunte en MesaChef.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="alert alert-danger">
+      <span style="font-size: 20px;">🛡️</span>
+      <div>
+        <strong>NORMATIVA DE SEGURIDAD PCI-DSS OBLIGATORIA:</strong><br>
+        Queda terminantemente prohibido escribir números de tarjeta de 16 dígitos en el recuadro de "Observaciones". Si el cliente facilita la tarjeta por teléfono, anota <strong>únicamente los últimos 4 dígitos</strong> (ej. <code>2525</code>) en la casilla correspondiente. El pago se realiza siempre mediante el enlace oficial de Eurocaja Rural.
+      </div>
+    </div>
+
+    <!-- PASO 1 -->
+    <div class="step-box">
+      <div class="step-header">
+        <span class="step-pill">PASO 1</span>
+        <div class="step-title">Apertura y Registro de la Ficha en MesaChef</div>
+      </div>
+      <div class="step-desc">
+        <ul>
+          <li>Entra en <strong>Grandes Eventos</strong> y localiza la reserva o pulsa <strong>+ Añadir Participante</strong>.</li>
+          <li>Rellena el titular, teléfono de contacto y número de adultos y niños.</li>
+          <li>En <strong>Fecha Cargo Previsto</strong>, indica la fecha límite acordada para el cobro (ej. <code>28/12/2026</code>).</li>
+          <li>Verás generado automáticamente el <strong>Cód. Pedido PayGold</strong> (ej. <span class="code-chip">GE-232078</span>).</li>
+        </ul>
+      </div>
+      <div class="img-wrapper">
+        <img src="Img/manual/step1_mesachef.png" alt="Ficha del participante en MesaChef">
+        <div class="img-caption">Figura 1: Ficha panorámica de gestión de participantes en MesaChef Matrix v10.2.1</div>
+      </div>
+    </div>
+
+    <!-- PASO 2 -->
+    <div class="step-box">
+      <div class="step-header">
+        <span class="step-pill">PASO 2</span>
+        <div class="step-title">Acceso al Portal TPV Virtual de Eurocaja Rural</div>
+      </div>
+      <div class="step-desc">
+        <ul>
+          <li>En la misma ficha de MesaChef, pulsa el enlace <strong>🌐 Abrir TPV Eurocaja Rural</strong>.</li>
+          <li>En la pantalla de acceso introduce:
+            <ul>
+              <li><strong>Usuario:</strong> <span class="code-chip">168355840-001</span></li>
+              <li><strong>Contraseña:</strong> La clave de acceso del TPV asignada a recepción.</li>
+            </ul>
+          </li>
+          <li>Haz clic en <strong>Aceptar</strong>.</li>
+        </ul>
+      </div>
+      <div class="img-wrapper" style="max-width: 480px; margin: 14px auto;">
+        <img src="Img/manual/step2_redsys_login.png" alt="Pantalla de inicio de sesión de Redsys">
+        <div class="img-caption">Figura 2: Inicio de sesión en Redsys con el usuario 168355840-001</div>
+      </div>
+    </div>
+
+    <!-- PASO 3 -->
+    <div class="step-box">
+      <div class="step-header">
+        <span class="step-pill">PASO 3</span>
+        <div class="step-title">Generación del Enlace PayGold en Eurocaja Rural</div>
+      </div>
+      <div class="step-desc">
+        <ul>
+          <li>En el menú lateral de Eurocaja Rural, haz clic en el botón verde <strong>PayGold</strong>.</li>
+          <li>Utiliza los botones de copiado rápido de MesaChef para rellenar las 3 casillas:
+            <ul>
+              <li><strong>Código de pedido:</strong> Pulsa <code>📋 Copiar</code> en MesaChef y pégalo aquí (<kbd>Ctrl + V</kbd>).</li>
+              <li><strong>Importe (N.NN):</strong> Pulsa <code>💰 Copiar Importe</code> en MesaChef y pégalo aquí (<kbd>Ctrl + V</kbd>).</li>
+              <li><strong>Descripción:</strong> Pulsa <code>📝 Copiar Descripción</code> en MesaChef y pégalo aquí (<kbd>Ctrl + V</kbd>). Debe seguir el formato: <code>Cena Fin de año - [Nombre Cliente]</code>.</li>
+            </ul>
+          </li>
+          <li>En <strong>Caducidad del enlace</strong>, puedes seleccionar fecha exacta o dejar las 24 horas por defecto.</li>
+          <li>Pulsa <strong>Aceptar / Enviar</strong> y el banco generará el enlace seguro. <strong>Copia ese enlace</strong>.</li>
+        </ul>
+      </div>
+      <div class="img-wrapper">
+        <img src="Img/manual/step3_paygold_form.png" alt="Formulario de cobro PayGold en Eurocaja">
+        <div class="img-caption">Figura 3: Relleno de la operación PayGold en el panel oficial de Eurocaja Rural</div>
+      </div>
+    </div>
+
+    <!-- PASO 4 -->
+    <div class="step-box">
+      <div class="step-header">
+        <span class="step-pill">PASO 4</span>
+        <div class="step-title">Envío de la Confirmación por WhatsApp al Cliente</div>
+      </div>
+      <div class="step-desc">
+        <ul>
+          <li>Vuelve a la ficha de MesaChef y pega el enlace en la casilla: <strong>Enlace PayGold generado en Eurocaja (Obligatorio para WhatsApp)</strong>.</li>
+          <li>Pulsa el botón verde <strong>📱 WhatsApp PayGold</strong>.</li>
+          <li>Se abrirá WhatsApp con el mensaje oficial pre-redactado con todos los detalles del evento y la cláusula de cancelación:
+            <blockquote style="margin: 10px 0; padding: 10px 14px; background: #ecfdf5; border-left: 4px solid #10b981; border-radius: 4px; font-size: 13px;">
+              <em>"A partir de esta fecha la cantidad será no reembolsable. Si el pago no se recibe en esta fecha, su reserva será cancelada por falta de pago."</em>
+            </blockquote>
+          </li>
+          <li>Envía el mensaje al cliente y pulsa <strong>Guardar Ficha</strong> en MesaChef. El estado cambiará a <code>📤 Enlace Enviado</code>.</li>
+        </ul>
+      </div>
+      <div class="img-wrapper" style="max-width: 600px; margin: 14px auto;">
+        <img src="Img/manual/step4_whatsapp_message.png" alt="Mensaje de WhatsApp generado con enlace PayGold">
+        <div class="img-caption">Figura 4: Mensaje oficial de WhatsApp con enlace y condiciones legales</div>
+      </div>
+    </div>
+
+    <!-- PASO 5 -->
+    <div class="step-box">
+      <div class="step-header">
+        <span class="step-pill">PASO 5</span>
+        <div class="step-title">Confirmación del Pago y Circuito con Isabel (Administración)</div>
+      </div>
+      <div class="step-desc">
+        <ul>
+          <li>Cuando el cliente completa el pago (mediante Bizum o Tarjeta bancaria), el banco envía un email automático con el justificante.</li>
+          <li>Este aviso llega al buzón de <strong>Isabel</strong>: <span class="code-chip">administracion@hotelguadiana.es</span>.</li>
+          <li><strong>Acción de Isabel:</strong> Isabel comprueba la entrada del abono en la cuenta y <strong>reenvía el correo a Recepción</strong> con la referencia del pedido (<span class="code-chip">GE-XXXXXX</span>).</li>
+          <li><strong>Acción de Recepción:</strong>
+            <ul>
+              <li>Abre la reserva en MesaChef.</li>
+              <li>En el <strong>Historial de Pagos</strong>, anota el importe y pulsa <strong>+ Añadir</strong>.</li>
+              <li>Cambia el <strong>Estado Garantía</strong> a: <span style="color: #16a34a; font-weight: 700;">✅ Garantizado / Pagado</span>.</li>
+              <li>Pulsa <strong>Guardar Ficha</strong>. ¡La reserva queda formalizada y protegida al 100%!</li>
+            </ul>
+          </li>
+        </ul>
+      </div>
+      <div class="img-wrapper">
+        <img src="Img/manual/step5_email_isabel.png" alt="Email de notificación de cobro en administración">
+        <div class="img-caption">Figura 5: Correo oficial de notificación de pago recibido por Isabel</div>
+      </div>
+    </div>
+
+    <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid var(--border); font-size: 12px; color: var(--slate-600);">
+      MesaChef Matrix v10.2.1 • Sistema de Gestión Hotelera & Eventos • Sercotel Hotel Guadiana
+    </div>
+  </div>
+
+</body>
+
+</html>
