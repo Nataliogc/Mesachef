@@ -53,7 +53,7 @@ def create_manual_docx():
     p_intro = doc.add_paragraph()
     p_intro.paragraph_format.space_after = Pt(10)
     r_intro = p_intro.add_run(
-        "Procedimiento oficial para registrar reservas en MesaChef Matrix v10.3.8, generar enlaces bancarios seguros "
+        "Procedimiento oficial para registrar reservas en MesaChef Matrix v10.3.9, generar enlaces bancarios seguros "
         "en Eurocaja Rural (Redsys PayGold), configurar la URL de notificación online automática, enviar confirmaciones con cláusula de cancelación por WhatsApp, "
         "la sincronización automática en tiempo real y la conciliación contable con Administración."
     )
@@ -69,12 +69,13 @@ def create_manual_docx():
     set_cell_margins(nov_cell, top=140, bottom=140, left=180, right=180)
     np = nov_cell.paragraphs[0]
     np.paragraph_format.space_after = Pt(4)
-    nr_ver = np.add_run("✨ NOVEDADES RECIENTES DE ESTA VERSIÓN (MANUAL v10.3.8 • 28/10/2026):\n")
+    nr_ver = np.add_run("✨ NOVEDADES RECIENTES DE ESTA VERSIÓN (MANUAL v10.3.9 • 28/10/2026):\n")
     nr_ver.font.bold = True
     nr_ver.font.size = Pt(10)
     nr_ver.font.color.rgb = RGBColor(0x03, 0x69, 0xA1) # Sky 700
 
     nov_items = [
+        ("📄 Optimización de Folio A4 e Iconos Discretos:", " Impresión de participantes con márgenes reducidos a 10mm, titular al 34% e iconos discretos (✔ / ⏳) sin saltos de línea."),
         ("🍽️ Menú Digital de Fin de Año y WhatsApp:", " Nueva página interactiva del menú (menu-fin-de-ano-2026.html) con botón directo para compartir enlace y ficha por WhatsApp."),
         ("✨ Ocultación de PayGold en Servicio Incluido:", " Al marcar '✓ Servicio Incluido (sin cargo)', el bloque de PayGold y tarjeta desaparece de la ficha con un aviso explicativo."),
         ("⚡ Notificación Automática Online (Webhook):", " Eurocaja Redsys actualiza la reserva a 🟢 Garantizado en vivo sin esperar al email."),
@@ -313,7 +314,7 @@ def create_manual_docx():
     p_foot = doc.add_paragraph()
     p_foot.paragraph_format.space_before = Pt(16)
     p_foot.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    r_foot = p_foot.add_run("MesaChef Matrix v10.3.8 • Sercotel Hotel Guadiana • Dpto. de Recepción & Administración")
+    r_foot = p_foot.add_run("MesaChef Matrix v10.3.9 • Sercotel Hotel Guadiana • Dpto. de Recepción & Administración")
     r_foot.font.size = Pt(8.5)
     r_foot.font.color.rgb = RGBColor(0x94, 0xA3, 0xB8)
 

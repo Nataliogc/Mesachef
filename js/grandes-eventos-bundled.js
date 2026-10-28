@@ -459,19 +459,19 @@
                 <title>${title}</title>
                 <link rel="stylesheet" href="css/print.css">
                 <style>
-                    body { font-family: 'Segoe UI', system-ui, sans-serif; -webkit-print-color-adjust: exact; padding: 20px; }
-                     /* Fallback styles if CSS file fails to load */
-                    .print-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #0f172a; padding-bottom: 20px; margin-bottom: 30px; }
-                    .print-title { font-size: 24px; font-weight: 800; color: #0f172a; text-transform: uppercase; margin: 0; }
-                    .print-subtitle { font-size: 14px; color: #64748b; margin-top: 5px; }
-                    table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 20px; }
-                    th { background-color: #f8fafc !important; color: #475569; font-weight: 700; text-transform: uppercase; padding: 8px 12px; text-align: left; border-bottom: 2px solid #e2e8f0; }
-                    td { padding: 8px 12px; border-bottom: 1px solid #f1f5f9; color: #334155; }
+                    @page { size: A4; margin: 10mm 12mm; }
+                    body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; -webkit-print-color-adjust: exact; margin: 0; padding: 0; }
+                    .print-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #0f172a; padding-bottom: 10px; margin-bottom: 14px; }
+                    .print-title { font-size: 20px; font-weight: 800; color: #0f172a; text-transform: uppercase; margin: 0; line-height: 1.15; }
+                    .print-subtitle { font-size: 13px; color: #475569; margin-top: 4px; font-weight: 600; }
+                    table { width: 100%; border-collapse: collapse; font-size: 11.5px; margin-top: 10px; }
+                    th { background-color: #f1f5f9 !important; color: #334155; font-weight: 700; text-transform: uppercase; font-size: 11px; padding: 6px 8px; text-align: left; border-bottom: 2px solid #cbd5e1; }
+                    td { padding: 6px 8px; border-bottom: 1px solid #e2e8f0; color: #1e293b; vertical-align: middle; }
                     .text-right { text-align: right; }
                     .text-center { text-align: center; }
                     .font-bold { font-weight: 700; }
                     .section-break { page-break-before: always; }
-                    .summary-box { background: #f8fafc; border: 1px solid #e2e8f0; padding: 15px; border-radius: 6px; margin-top: 20px; page-break-inside: avoid; }
+                    .summary-box { background: #f8fafc; border: 1px solid #cbd5e1; padding: 10px 14px; border-radius: 6px; margin-top: 12px; page-break-inside: avoid; }
                 </style>
             </head>
             <body>
@@ -493,7 +493,7 @@
                     <h1 class="print-title">${title}</h1>
                     <div class="print-subtitle">${evt.nombre} · ${formatDate(evt.fecha)}</div>
                 </div>
-                <img src="${state.hotelInfo.logo}" style="height: 60px;">
+                <img src="${state.hotelInfo.logo}" style="height: 50px;">
             </div>
          `;
     }
@@ -531,22 +531,27 @@
             if (isConfirmed) confirmedPax += totalPax;
             else pendingPax += totalPax;
 
-            const statusBadge = isConfirmed
-                ? '<span style="color:#15803d; font-weight:700;">✅ Confirmado</span>'
-                : '<span style="color:#d97706; font-weight:700;">⏳ Pendiente</span>';
+            // Icono discreto para optimizar al máximo el espacio A4
+            const statusIcon = isConfirmed
+                ? '<span style="color:#16a34a; font-size:14px; font-weight:bold;" title="Confirmado">✔</span>'
+                : '<span style="color:#d97706; font-size:12px; font-weight:bold;" title="Pendiente">⏳</span>';
+
+            const mesaDisplay = p.mesa 
+                ? `<strong>Mesa ${p.mesa}</strong>`
+                : `<span style="color:#94a3b8; font-size:11px;">-</span>`;
 
             return `<tr>
-                <td style="font-weight:bold; font-size:12px;">${p.mesa ? 'Mesa ' + p.mesa : '<span style="color:#94a3b8;">Sin mesa</span>'}</td>
+                <td style="font-size:11.5px;">${mesaDisplay}</td>
                 <td>
-                    <span class="font-bold">${p.titular}</span>
+                    <span class="font-bold" style="font-size:12px; color:#0f172a;">${p.titular}</span>
                     ${p.referencia ? `<br><span style="font-size:10px; color:#64748b;">Ref: ${p.referencia}</span>` : ''}
                 </td>
-                <td>${formatPhoneES(p.telefono) || '-'}</td>
+                <td style="font-size:11.5px; white-space:nowrap;">${formatPhoneES(p.telefono) || '-'}</td>
                 <td class="text-center font-semibold">${ad}</td>
                 <td class="text-center font-semibold">${ni}</td>
-                <td class="text-center font-bold" style="font-size:13px; color:#0f172a;">${totalPax}</td>
-                <td class="text-center">${statusBadge}</td>
-                <td style="font-size:10px; color:#475569;">${p.observaciones || '-'}</td>
+                <td class="text-center font-bold" style="font-size:12.5px; color:#0f172a;">${totalPax}</td>
+                <td class="text-center" style="font-size:14px;">${statusIcon}</td>
+                <td style="font-size:11px; color:#475569;">${p.observaciones || '-'}</td>
             </tr>`;
         }).join('');
 
@@ -555,23 +560,23 @@
         return `
             ${getPrintHeader("Listado de Participantes y Asistencia")}
             
-            <div style="display:flex; justify-content:space-between; align-items:center; background:#f8fafc; border:1px solid #e2e8f0; border-radius:6px; padding:10px 14px; margin-bottom:14px; font-size:12px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; background:#f8fafc; border:1px solid #cbd5e1; border-radius:6px; padding:7px 12px; margin-bottom:10px; font-size:11.5px;">
                 <span><strong>Total Personas:</strong> ${totalPaxGeneral} (${totalAd} Adultos / ${totalNi} Niños)</span>
-                <span><strong>Personas Confirmadas:</strong> <strong style="color:#15803d; font-size:13px;">${confirmedPax}</strong></span>
-                <span><strong>Personas Pendientes:</strong> <strong style="color:#d97706; font-size:13px;">${pendingPax}</strong></span>
+                <span><span style="color:#16a34a; font-weight:800;">✔</span> <strong>Confirmadas:</strong> <strong style="color:#16a34a; font-size:12.5px;">${confirmedPax}</strong></span>
+                <span><span style="color:#d97706; font-weight:800;">⏳</span> <strong>Pendientes:</strong> <strong style="color:#d97706; font-size:12.5px;">${pendingPax}</strong></span>
             </div>
 
-            <table>
+            <table style="width:100%; table-layout:fixed;">
                 <thead>
                     <tr>
-                        <th width="12%">Mesa</th>
-                        <th width="26%">Titular</th>
-                        <th width="14%">Teléfono</th>
-                        <th class="text-center" width="6%">Ad</th>
-                        <th class="text-center" width="6%">Ni</th>
-                        <th class="text-center" width="7%">Total</th>
-                        <th class="text-center" width="13%">Estado</th>
-                        <th width="16%">Observaciones</th>
+                        <th style="width:8%;">Mesa</th>
+                        <th style="width:34%;">Titular</th>
+                        <th style="width:13%;">Teléfono</th>
+                        <th class="text-center" style="width:5%;">Ad</th>
+                        <th class="text-center" style="width:5%;">Ni</th>
+                        <th class="text-center" style="width:6%;">Total</th>
+                        <th class="text-center" style="width:6%;">Est.</th>
+                        <th style="width:23%;">Observaciones</th>
                     </tr>
                 </thead>
                 <tbody>${rows}</tbody>
@@ -581,7 +586,8 @@
                         <td class="text-center">${totalAd}</td>
                         <td class="text-center">${totalNi}</td>
                         <td class="text-center">${totalPaxGeneral}</td>
-                        <td class="text-center" colspan="2"><span style="color:#15803d;">${confirmedPax} Confirmadas</span> / <span style="color:#d97706;">${pendingPax} Pendientes</span></td>
+                        <td class="text-center"><span style="color:#16a34a;">✔</span></td>
+                        <td style="font-size:11px;"><span style="color:#16a34a;">${confirmedPax} Conf.</span> / <span style="color:#d97706;">${pendingPax} Pend.</span></td>
                     </tr>
                 </tfoot>
             </table>

@@ -13,13 +13,20 @@ Este documento mantiene el registro y control de versiones **único y global** p
 
 ## 📌 Versión Actual del Sistema
 
-- **Versión:** `v10.3.8`
+- **Versión:** `v10.3.9`
 - **Última Actualización:** 28/10/2026
 - **Estado General:** Operativo en Producción (Matrix)
 
 ---
 
 ## 📝 Historial de Versiones
+
+### [v10.3.9] - 28/10/2026
+- **Módulos:** Grandes Eventos / Informes de Impresión (Listado de Participantes)
+- **Tipo de cambio:** PATCH
+- **Descripción:**
+  - Optimización del aprovechamiento de espacio en folio A4 en el Listado de Participantes: reducción de márgenes de página a `10mm 12mm`, ampliación del ancho de la columna de Titular al 34% para evitar saltos de línea antiestéticos en nombres y compactación del encabezado y pie.
+  - Sustitución de las etiquetas de texto en la columna de Estado por iconos discretos y elegantes (`✔` en verde para confirmado y `⏳` en ámbar para pendiente), evitando que las celdas se desborden verticalmente.
 
 ### [v10.3.8] - 28/10/2026
 - **Módulos:** Grandes Eventos / Menú Fin de Año 2026 & WhatsApp
