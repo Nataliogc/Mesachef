@@ -13,13 +13,22 @@ Este documento mantiene el registro y control de versiones **único y global** p
 
 ## 📌 Versión Actual del Sistema
 
-- **Versión:** `v10.3.3`
+- **Versión:** `v10.3.4`
 - **Última Actualización:** 28/10/2026
 - **Estado General:** Operativo en Producción (Matrix)
 
 ---
 
 ## 📝 Historial de Versiones
+
+### [v10.3.4] - 28/10/2026
+- **Módulos:** Grandes Eventos / Informes de Impresión
+- **Tipo de cambio:** PATCH
+- **Descripción:**
+  - Rediseño de los informes de impresión según su propósito operativo y confidencialidad:
+    - **Lista de Participantes:** Eliminadas las columnas y cifras económicas (`Pagado` / `Pendiente` en €) para el personal de sala y puerta; sustituidas por columna de estado operativo (`✅ Confirmado` / `⏳ Pendiente`), total de comensales por reserva, mesa y observaciones/alérgenos, con bloque de resumen de asistencia al inicio y pie de tabla.
+    - **Distribución de Mesas:** Incorporación de desglose de adultos/niños y observaciones de sala por comensal.
+    - **Informe Económico y Financiero:** Reporte exclusivo con el desglose de facturación prevista, recaudación cobrada, saldo pendiente por reserva y sumatorios totales al pie de tabla.
 
 ### [v10.3.3] - 28/10/2026
 - **Módulos:** Grandes Eventos / Manuales de Usuario

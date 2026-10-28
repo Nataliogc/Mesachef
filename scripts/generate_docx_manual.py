@@ -69,7 +69,7 @@ def create_manual_docx():
     set_cell_margins(nov_cell, top=140, bottom=140, left=180, right=180)
     np = nov_cell.paragraphs[0]
     np.paragraph_format.space_after = Pt(4)
-    nr_ver = np.add_run("✨ NOVEDADES RECIENTES DE ESTA VERSIÓN (MANUAL v10.3.3 • 28/10/2026):\n")
+    nr_ver = np.add_run("✨ NOVEDADES RECIENTES DE ESTA VERSIÓN (MANUAL v10.3.4 • 28/10/2026):\n")
     nr_ver.font.bold = True
     nr_ver.font.size = Pt(10)
     nr_ver.font.color.rgb = RGBColor(0x03, 0x69, 0xA1) # Sky 700
@@ -80,7 +80,8 @@ def create_manual_docx():
         ("🔄 Botón 'Nuevo Cód.' para Modificaciones:", " Genera sufijos (GE-XXXXXX-2) si cambian personas para evitar el Error 913 (Pedido repetido)."),
         ("💰 Copia Inteligente del Importe Pendiente:", " Si ya había un pago previo, copia solo la diferencia restante."),
         ("📋 Copia Directa de URL en el Modal:", " Botón '📋 Copiar URL Webhook' en la propia ficha para agilizar el proceso."),
-        ("🔓 Guardado Flexible de Reserva:", " Permite guardar la reserva en blanco y añadir el enlace PayGold más tarde.")
+        ("🔓 Guardado Flexible de Reserva:", " Permite guardar la reserva en blanco y añadir el enlace PayGold más tarde."),
+        ("📊 Diferenciación de Informes de Impresión:", " La 'Lista de Participantes' no muestra dinero en euros; refleja mesa, comensales, estado (✅ Confirmado / ⏳ Pendiente) y observaciones. Los importes quedan reservados para el 'Resumen Financiero'.")
     ]
     for bold_txt, norm_txt in nov_items:
         p_item = nov_cell.add_paragraph()
@@ -310,7 +311,7 @@ def create_manual_docx():
     p_foot = doc.add_paragraph()
     p_foot.paragraph_format.space_before = Pt(16)
     p_foot.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    r_foot = p_foot.add_run("MesaChef Matrix v10.3.3 • Sercotel Hotel Guadiana • Dpto. de Recepción & Administración")
+    r_foot = p_foot.add_run("MesaChef Matrix v10.3.4 • Sercotel Hotel Guadiana • Dpto. de Recepción & Administración")
     r_foot.font.size = Pt(8.5)
     r_foot.font.color.rgb = RGBColor(0x94, 0xA3, 0xB8)
 
