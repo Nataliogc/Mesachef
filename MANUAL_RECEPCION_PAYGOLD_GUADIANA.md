@@ -1,13 +1,14 @@
 # 📖 Manual Operativo para Recepción: Gestión de Pagos y Garantías PayGold (Sercotel Guadiana)
 
-> **Versión Oficial del Manual:** `v10.3.6` • **Fecha de Actualización:** 28/10/2026 • **Estado:** Operativo en Producción
+> **Versión Oficial del Manual:** `v10.3.7` • **Fecha de Actualización:** 28/10/2026 • **Estado:** Operativo en Producción
 
 Este manual detalla paso a paso el procedimiento oficial que el equipo de Recepción y Administración debe seguir para registrar reservas, generar enlaces seguros de pago en Eurocaja Rural (PayGold), configurar la notificación automática online, enviar la confirmación por WhatsApp y gestionar modificaciones o conciliaciones.
 
 ---
 
-## ✨ Novedades Recientes de esta Versión (v10.3.6)
+## ✨ Novedades Recientes de esta Versión (v10.3.7)
 
+* **✨ Ocultación Automática de PayGold en Servicio Incluido:** Al marcar la casilla *"✓ Servicio Incluido (sin cargo)"*, el bloque bancario de PayGold y tarjeta desaparece de la ficha del participante y se muestra un aviso explicativo, eliminando confusión operativa al no requerirse pasarela de pago.
 * **⚡ Notificación Automática Online (Webhook):** Integración con Eurocaja Redsys para que la reserva pase automáticamente a `🟢 Garantizado / Pagado` en tiempo real al cobrar, sin que Recepción tenga que esperar el reenvío de email de Isabel.
 * **📍 Captura Oficial del TPV (Paso 5):** Se añade la imagen exacta de la pantalla de Eurocaja donde se marca la casilla *"Notificar resultado a la siguiente URL"* y se introduce la URL de MesaChef.
 * **🔄 Botón "Nuevo Cód." para Modificaciones:** Si el cliente amplía comensales o cambia importes, este botón genera un sufijo correlativo (`GE-XXXXXX-2`) para evitar el *Error 913 (Pedido repetido)* en Redsys.

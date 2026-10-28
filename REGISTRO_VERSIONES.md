@@ -13,13 +13,21 @@ Este documento mantiene el registro y control de versiones **único y global** p
 
 ## 📌 Versión Actual del Sistema
 
-- **Versión:** `v10.3.6`
+- **Versión:** `v10.3.7`
 - **Última Actualización:** 28/10/2026
 - **Estado General:** Operativo en Producción (Matrix)
 
 ---
 
 ## 📝 Historial de Versiones
+
+### [v10.3.7] - 28/10/2026
+- **Módulos:** Grandes Eventos / Modal de Participante & PayGold
+- **Tipo de cambio:** PATCH
+- **Descripción:**
+  - Ocultación automática del bloque completo de Garantía y Pago PayGold (Eurocaja Rural) cuando la casilla *"✓ Servicio Incluido (sin cargo)"* está activada.
+  - Inclusión de aviso informativo amigable (*"Servicio Incluido (Sin Cargo) - No requiere cobro ni garantía PayGold"*) en sustitución de la sección bancaria.
+  - Asignación automática de estado `garantizado` para reservas con servicio incluido al guardar.
 
 ### [v10.3.6] - 28/10/2026
 - **Módulos:** Grandes Eventos / Informes de Impresión (Listado de Participantes)

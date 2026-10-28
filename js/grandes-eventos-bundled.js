@@ -1411,10 +1411,13 @@
 
         renderModalPayments();
         recalcModalFinancials();
-        // Toggle Guadiana Paygold Section visibility
+        // Toggle Guadiana Paygold Section vs Servicio Incluido Notice
         const isGuadianaModal = (state.hotelInfo.id || getActiveHotel()) === 'Guadiana';
+        const isIncluded = $('pServicioIncluido')?.checked || false;
         const secGuadiana = $('sectionGuadianaPaygold');
-        if (secGuadiana) secGuadiana.style.display = isGuadianaModal ? 'block' : 'none';
+        const noticeIncluded = $('noticeServicioIncluido');
+        if (secGuadiana) secGuadiana.style.display = (isGuadianaModal && !isIncluded) ? 'block' : 'none';
+        if (noticeIncluded) noticeIncluded.style.display = isIncluded ? 'block' : 'none';
         updateChargeAlertBadge();
         updatePaygoldStatusStyle();
     }
@@ -1437,6 +1440,13 @@
         $('pTotalCalc').value = total.toFixed(2);
         $('pPaidSummary').value = paid.toFixed(2);
         $('pPendingCalc').value = Math.max(0, total - paid).toFixed(2);
+
+        // Toggle Guadiana Paygold Section vs Servicio Incluido Notice
+        const isGuadianaModal = (state.hotelInfo.id || getActiveHotel()) === 'Guadiana';
+        const secGuadiana = $('sectionGuadianaPaygold');
+        const noticeIncluded = $('noticeServicioIncluido');
+        if (secGuadiana) secGuadiana.style.display = (isGuadianaModal && !isServiceIncluded) ? 'block' : 'none';
+        if (noticeIncluded) noticeIncluded.style.display = isServiceIncluded ? 'block' : 'none';
     }
 
     async function handleParticipantSubmit(e) {
@@ -1496,7 +1506,7 @@
             // Guadiana PayGold & Card fields
             paygoldRef: $('pPaygoldRef')?.value || '',
             chargeDate: $('pChargeDate')?.value || '',
-            paygoldStatus: $('pPaygoldStatus')?.value || 'pendiente',
+            paygoldStatus: $('pServicioIncluido')?.checked ? 'garantizado' : ($('pPaygoldStatus')?.value || 'pendiente'),
             cardLast4: $('pCardLast4')?.value ? $('pCardLast4').value.replace(/\D/g, '').slice(-4) : '',
             cardExpiry: $('pCardExpiry')?.value || '',
             cardBrand: $('pCardBrand')?.value || 'Visa',
