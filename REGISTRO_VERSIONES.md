@@ -13,13 +13,19 @@ Este documento mantiene el registro y control de versiones **único y global** p
 
 ## 📌 Versión Actual del Sistema
 
-- **Versión:** `v10.1.3`
+- **Versión:** `v10.2.0`
 - **Última Actualización:** 28/10/2026
 - **Estado General:** Operativo en Producción (Matrix)
 
 ---
 
 ## 📝 Historial de Versiones
+
+### [v10.2.0] - 28/10/2026
+- **Módulos:** Grandes Eventos
+- **Tipo de cambio:** MINOR
+- **Descripción:**
+  - Rediseño panorámico adaptable de 2 columnas (1040px) en modal de participante y enlace PayGold obligatorio para confirmación WhatsApp
 
 ### [v10.1.3] - 28/10/2026
 - **Módulos:** Grandes Eventos

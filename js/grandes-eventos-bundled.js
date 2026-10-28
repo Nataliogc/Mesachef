@@ -757,7 +757,12 @@
             const pending = $('pPendingCalc')?.value || '0.00';
             const chargeDate = $('pChargeDate')?.value ? formatDate($('pChargeDate').value) : '';
             const paygoldRef = $('pPaygoldRef')?.value || '';
-            const paygoldLink = $('pPaygoldLink')?.value || '';
+            const paygoldLink = ($('pPaygoldLink')?.value || '').trim();
+            if (!paygoldLink) {
+                alert('⚠️ Para enviar el WhatsApp con PayGold es OBLIGATORIO pegar el enlace generado en Eurocaja Rural.');
+                $('pPaygoldLink')?.focus();
+                return;
+            }
             const cardLast4 = $('pCardLast4')?.value || '';
 
             let msg = hasHotelInTitle
