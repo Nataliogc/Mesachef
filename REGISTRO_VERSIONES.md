@@ -13,13 +13,21 @@ Este documento mantiene el registro y control de versiones **único y global** p
 
 ## 📌 Versión Actual del Sistema
 
-- **Versión:** `v10.4.2`
-- **Última Actualización:** 09/11/2026
+- **Versión:** `v10.4.3`
+- **Última Actualización:** 10/11/2026
 - **Estado General:** Operativo en Producción (Matrix)
 
 ---
 
 ## 📝 Historial de Versiones
+
+### [v10.4.3] - 10/11/2026
+- **Módulos:** Salones (`js/salones.js`), HTMLs
+- **Tipo de cambio:** PATCH
+- **Descripción:**
+  - Corrección de `ReferenceError: existing is not defined` al guardar eventos desvinculados o existentes en la modal de Salones.
+  - Se elevó la variable `existing` al ámbito inicial de la función `saveBooking`, garantizando su disponibilidad en la verificación de salones de eventos Nexus y al guardar en Firestore.
+  - Actualizado el parámetro de versión de scripts (`?v=10.4.3`) en las plantillas HTML para forzar la recarga del script corregido sin problemas de caché.
 
 ### [v10.4.2] - 09/11/2026
 - **Módulos:** Restaurante / Salones

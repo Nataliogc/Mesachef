@@ -2053,35 +2053,33 @@
     window.saveBooking = async function () {
         const btn = document.querySelector("button[onclick='saveBooking()']");
         const originalText = btn ? btn.innerText : "GUARDAR";
+        const existing = currentBookingId ? (window._resRegistry && window._resRegistry[currentBookingId]) : null;
 
-        if (currentBookingId) {
-            const existing = window._resRegistry[currentBookingId];
-            if (isNexusLinked(existing)) {
-                const salon = document.getElementById("evt-salon").value;
-                const allowed = Array.from(document.getElementById("evt-salon").options).some(option => option.value === salon && !option.disabled);
-                if (!salon || !allowed) {
-                    alert("Selecciona un salón válido para este hotel.");
-                    return;
-                }
-                const key = prompt("Introduce la clave de seguridad:");
-                if (key === null) return;
-                if (key !== "Mreserva") { alert("Clave incorrecta (v6.0)"); return; }
-                try {
-                    if (btn) { btn.disabled = true; btn.innerText = "GUARDANDO…"; }
-                    const jornada = document.getElementById("evt-jornada").value;
-                    if (!['cancelada', 'anulada'].includes(existing.estado)) {
-                        const availability = await window.MesaChef.checkSalonAvailability(db, existing.hotel, salon, existing.fecha, jornada, currentBookingId);
-                        if (!availability.available) throw new Error(availability.reason);
-                    }
-                    await window.EventLocation.changeLinkedSalon(db, currentBookingId, salon, existing.salon, jornada, existing.detalles?.jornada || "todo");
-                    closeModal();
-                } catch (error) {
-                    alert("No se han podido guardar el salón y la jornada: " + error.message);
-                } finally {
-                    if (btn) { btn.disabled = false; btn.innerText = originalText; }
-                }
+        if (existing && isNexusLinked(existing)) {
+            const salon = document.getElementById("evt-salon").value;
+            const allowed = Array.from(document.getElementById("evt-salon").options).some(option => option.value === salon && !option.disabled);
+            if (!salon || !allowed) {
+                alert("Selecciona un salón válido para este hotel.");
                 return;
             }
+            const key = prompt("Introduce la clave de seguridad:");
+            if (key === null) return;
+            if (key !== "Mreserva") { alert("Clave incorrecta (v6.0)"); return; }
+            try {
+                if (btn) { btn.disabled = true; btn.innerText = "GUARDANDO…"; }
+                const jornada = document.getElementById("evt-jornada").value;
+                if (!['cancelada', 'anulada'].includes(existing.estado)) {
+                    const availability = await window.MesaChef.checkSalonAvailability(db, existing.hotel, salon, existing.fecha, jornada, currentBookingId);
+                    if (!availability.available) throw new Error(availability.reason);
+                }
+                await window.EventLocation.changeLinkedSalon(db, currentBookingId, salon, existing.salon, jornada, existing.detalles?.jornada || "todo");
+                closeModal();
+            } catch (error) {
+                alert("No se han podido guardar el salón y la jornada: " + error.message);
+            } finally {
+                if (btn) { btn.disabled = false; btn.innerText = originalText; }
+            }
+            return;
         }
         
         if (currentBookingId) {
@@ -2150,15 +2148,12 @@
         };
 
         // Preservar metadatos y origen de Nexus Groups al editar un evento desvinculado
-        if (currentBookingId) {
-            const existing = window._resRegistry[currentBookingId];
-            if (existing) {
-                if (existing.reservaId) payload.reservaId = existing.reservaId;
-                if (existing.origen) payload.origen = existing.origen;
-                if (existing.desvinculado) payload.desvinculado = true;
-                if (existing.vinculoRoto) payload.vinculoRoto = true;
-                if (existing.desvinculado_at) payload.desvinculado_at = existing.desvinculado_at;
-            }
+        if (existing) {
+            if (existing.reservaId) payload.reservaId = existing.reservaId;
+            if (existing.origen) payload.origen = existing.origen;
+            if (existing.desvinculado) payload.desvinculado = true;
+            if (existing.vinculoRoto) payload.vinculoRoto = true;
+            if (existing.desvinculado_at) payload.desvinculado_at = existing.desvinculado_at;
         }
 
         const visibleServicios = [];
@@ -2281,7 +2276,7 @@
 
             if (currentBookingId) {
                 // Recordar el salón para poder deshacer el traslado desde Restaurante.
-                const previous = window._resRegistry && window._resRegistry[currentBookingId];
+                const previous = existing;
                 if (window.EventLocation.isRestaurant(payload.salon) && previous && previous.salon && !window.EventLocation.isRestaurant(previous.salon)) {
                     payload.salonAnterior = previous.salon;
                 }
