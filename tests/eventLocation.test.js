@@ -21,6 +21,7 @@ function fixture(salon = 'Restaurante', fail = false) {
           const next = structuredClone(records.get(ref.key));
           for (const [key,val] of Object.entries(value)) {
             if (key === 'detalles.jornada') next.detalles = {...next.detalles,jornada:val};
+            else if (key === 'detalles.hora') next.detalles = {...next.detalles,hora:val};
             else next[key] = val;
           }
           records.set(ref.key,next);
@@ -142,4 +143,20 @@ test('cambiar jornada en Restaurante actualiza su copia', async()=>{
   const mirror=records.get('reservas_restaurante/salon_event');
   assert.equal(mirror.turno,'tarde');
   assert.equal(applyJornadaOverride({...mirror,turno:'sala'}).turno,'tarde');
+});
+
+test('cambiar fecha y hora de un servicio manteniendo el vínculo actualiza servicios y overrides', async()=>{
+  const {db,records}=linkedFixture();
+  const before=records.get('reservas_salones/event');
+  before.servicios = [{fecha:'2027-11-04', hora:'18:40', concepto:'Cena', uds:3}];
+  await changeLinkedSalon(db,'event','Marte','Marte','tarde','sala','2027-11-15','2027-11-04','21:00','18:40');
+  const e=records.get('reservas_salones/event');
+  assert.equal(e.fecha,'2027-11-15');
+  assert.equal(e.fechaOverride,'2027-11-15');
+  assert.equal(e.detalles.jornada,'tarde');
+  assert.equal(e.detalles.hora,'21:00');
+  assert.equal(e.horaOverride,'21:00');
+  assert.equal(e.desvinculado,false);
+  assert.equal(e.servicios[0].fecha,'2027-11-15');
+  assert.equal(e.servicios[0].hora,'21:00');
 });

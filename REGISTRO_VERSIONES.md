@@ -13,13 +13,23 @@ Este documento mantiene el registro y control de versiones **único y global** p
 
 ## 📌 Versión Actual del Sistema
 
-- **Versión:** `v10.4.4`
+- **Versión:** `v10.5.0`
 - **Última Actualización:** 11/11/2026
 - **Estado General:** Operativo en Producción (Matrix)
 
 ---
 
 ## 📝 Historial de Versiones
+
+### [v10.5.0] - 11/11/2026
+- **Módulos:** Salones (`js/salones.js`, `js/eventLocation.js`), HTMLs, Integración Nexus Groups
+- **Tipo de cambio:** MINOR
+- **Descripción:**
+  - Desbloqueo y soporte de edición interactiva de **Fecha**, **Hora**, **Salón** y **Jornada** en eventos vinculados a Nexus Groups directamente desde MesaChef sin necesidad de desvincularlos.
+  - Sincronización bidireccional entre la cabecera del evento (`evt-fecha`, `evt-hora`) y las líneas de la tabla de servicios (`.row-date`, `.row-time`), permitiendo cambiar la fecha u hora desde cualquier campo indistintamente.
+  - Actualizada la función transaccional `changeLinkedSalon` en `eventLocation.js` para registrar `fechaOverride` y `horaOverride` junto a los servicios sincronizados, manteniendo el vínculo intacto con Nexus Groups.
+  - Actualizado el servicio de sincronización de Nexus Groups (`mesachefService.js`) para respetar y conservar automáticamente los overrides de salón, fecha, jornada y hora realizados desde MesaChef al sincronizar.
+  - Sincronización de scripts a `?v=10.5.0` en plantillas HTML.
 
 ### [v10.4.4] - 11/11/2026
 - **Módulos:** Salones (`js/salones.js`), HTMLs

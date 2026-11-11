@@ -1345,6 +1345,22 @@
             evtFechaInput.dataset.syncBound = "true";
         }
 
+        const evtHoraInput = document.getElementById("evt-hora");
+        if (evtHoraInput && !evtHoraInput.dataset.syncBound) {
+            const syncServicesTime = () => {
+                const newTime = evtHoraInput.value;
+                document.querySelectorAll("#services-list tr").forEach(row => {
+                    const timeInput = row.querySelector(".row-time") || row.querySelector("input[type='time']");
+                    if (timeInput) {
+                        timeInput.value = newTime;
+                    }
+                });
+            };
+            evtHoraInput.addEventListener("change", syncServicesTime);
+            evtHoraInput.addEventListener("input", syncServicesTime);
+            evtHoraInput.dataset.syncBound = "true";
+        }
+
         document.getElementById("services-list").innerHTML = "";
         document.getElementById("evt-total").innerText = "0.00 €";
         document.getElementById("evt-nota-interna").value = "";
@@ -1555,7 +1571,7 @@
 
             if (isLinkedNexus) {
                 const mt = document.getElementById("modalTitle");
-                if (mt) mt.innerText = "Evento Nexus Groups (Salón y jornada)";
+                if (mt) mt.innerText = "Evento Nexus Groups (Salón, Fecha, Jornada y Hora)";
 
                 if (nexusBanner) {
                     nexusBanner.classList.remove("hidden");
@@ -1563,18 +1579,20 @@
                 }
                 if (nexusUnlinkedBadge) nexusUnlinkedBadge.classList.add("hidden");
 
-                // Lock fields and action buttons
+                // Lock fields and action buttons, but allow modifying salon, jornada, fecha, and hora
                 setModalFieldsDisabled(true);
                 document.getElementById("evt-salon").disabled = false;
                 document.getElementById("evt-jornada").disabled = false;
-                // Linked events can change location and shift without altering service rows.
+                document.getElementById("evt-fecha").disabled = false;
+                document.getElementById("evt-hora").disabled = false;
+                // Linked events can change location, schedule, date and hour without breaking link
                 document.getElementById("evt-salon").onchange = function () {};
 
                 if (btnGuardarEl) {
                     btnGuardarEl.disabled = false;
                     btnGuardarEl.classList.remove("opacity-50", "cursor-not-allowed", "pointer-events-none");
                     btnGuardarEl.style.display = 'inline-block';
-                    btnGuardarEl.title = "Guardar salón y jornada manteniendo el vínculo con Grupos.";
+                    btnGuardarEl.title = "Guardar salón, fecha, jornada y hora manteniendo el vínculo con Grupos.";
                 }
                 if (btnEliminarEl) {
                     btnEliminarEl.disabled = true;
@@ -1653,9 +1671,10 @@
                     const precioVal = s.precio !== undefined ? s.precio : 0;
                     const totalVal = (parseFloat(uds) || 0) * (parseFloat(precioVal) || 0);
                     const rowFecha = s.fecha || viewDate || existing.fecha || '';
+                    const rowHora = s.hora || (existing.detalles && existing.detalles.hora) || '';
                     row.innerHTML = `
                     <td class="p-2 border-b"><input type="date" value="${rowFecha}" class="text-xs bg-gray-50 w-24 rounded border-gray-200 row-date"></td>
-                    <td class="p-2 border-b"><input type="time" value="${s.hora || ''}" class="text-xs bg-gray-50 w-20 rounded border-gray-200 row-time"></td>
+                    <td class="p-2 border-b"><input type="time" value="${rowHora}" class="text-xs bg-gray-50 w-20 rounded border-gray-200 row-time"></td>
                     <td class="p-2 border-b"><input type="text" value="${(s.concepto || '').replace(/"/g, '&quot;')}" list="charge-options" onchange="updateRowPrice(this)" class="text-xs font-bold w-full rounded border-gray-200 row-concept"></td>
                     <td class="p-2 border-b"><input type="number" onchange="calcTotal()" value="${uds}" class="text-xs text-center row-uds w-full rounded border-gray-200"></td>
                     <td class="p-2 border-b col-price">
@@ -1669,6 +1688,25 @@
                     <td class="p-2 border-b text-right font-bold text-xs row-total text-slate-600 col-total">${window.MesaChef.formatEuroValue(totalVal)} €</td>
                     <td class="p-2 border-b text-center"><button onclick="this.closest('tr').remove(); calcTotal()" class="text-red-400 hover:text-red-600 font-bold">&times;</button></td>
                 `;
+                    const dateInp = row.querySelector(".row-date");
+                    if (dateInp) {
+                        dateInp.addEventListener("change", function () {
+                            if (this.value) {
+                                document.getElementById("evt-fecha").value = this.value;
+                                window.currentViewDate = this.value;
+                            }
+                        });
+                        if (isLinkedNexus) dateInp.disabled = false;
+                    }
+                    const timeInp = row.querySelector(".row-time");
+                    if (timeInp) {
+                        timeInp.addEventListener("change", function () {
+                            if (this.value) {
+                                document.getElementById("evt-hora").value = this.value;
+                            }
+                        });
+                        if (isLinkedNexus) timeInp.disabled = false;
+                    }
                     document.getElementById("services-list").appendChild(row);
                 });
                 calcTotal();
@@ -2096,20 +2134,38 @@
                 alert("Selecciona un salón válido para este hotel.");
                 return;
             }
+            const fecha = document.getElementById("evt-fecha").value;
+            if (!fecha) {
+                alert("Selecciona una fecha válida.");
+                return;
+            }
+            const hora = document.getElementById("evt-hora").value;
+            const jornada = document.getElementById("evt-jornada").value;
+
             const key = prompt("Introduce la clave de seguridad:");
             if (key === null) return;
             if (key !== "Mreserva") { alert("Clave incorrecta (v6.0)"); return; }
             try {
                 if (btn) { btn.disabled = true; btn.innerText = "GUARDANDO…"; }
-                const jornada = document.getElementById("evt-jornada").value;
                 if (!['cancelada', 'anulada'].includes(existing.estado)) {
-                    const availability = await window.MesaChef.checkSalonAvailability(db, existing.hotel, salon, existing.fecha, jornada, currentBookingId);
+                    const availability = await window.MesaChef.checkSalonAvailability(db, existing.hotel, salon, fecha, jornada, currentBookingId);
                     if (!availability.available) throw new Error(availability.reason);
                 }
-                await window.EventLocation.changeLinkedSalon(db, currentBookingId, salon, existing.salon, jornada, existing.detalles?.jornada || "todo");
+                await window.EventLocation.changeLinkedSalon(
+                    db,
+                    currentBookingId,
+                    salon,
+                    existing.salon,
+                    jornada,
+                    existing.detalles?.jornada || "todo",
+                    fecha,
+                    existing.fecha,
+                    hora,
+                    existing.detalles?.hora || ""
+                );
                 closeModal();
             } catch (error) {
-                alert("No se han podido guardar el salón y la jornada: " + error.message);
+                alert("No se han podido guardar los cambios del evento vinculado: " + error.message);
             } finally {
                 if (btn) { btn.disabled = false; btn.innerText = originalText; }
             }
