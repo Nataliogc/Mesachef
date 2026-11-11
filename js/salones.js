@@ -580,9 +580,15 @@
 
             let relevantDates = new Set();
             if (res.servicios && res.servicios.length > 0) {
-                res.servicios.forEach(s => { if (s.fecha) relevantDates.add(s.fecha); });
+                const distinctServiceDates = [...new Set(res.servicios.map(s => s.fecha).filter(Boolean))];
+                // Si todos los servicios comparten una única fecha que difiere de res.fecha (ej. desfase por cambio de fecha previo en cabecera)
+                if (distinctServiceDates.length === 1 && res.fecha && distinctServiceDates[0] !== res.fecha) {
+                    relevantDates.add(res.fecha);
+                } else {
+                    res.servicios.forEach(s => { if (s.fecha) relevantDates.add(s.fecha); });
+                }
             }
-            if (relevantDates.size === 0) relevantDates.add(res.fecha);
+            if (relevantDates.size === 0 && res.fecha) relevantDates.add(res.fecha);
 
             const rawName = normalize(res.salon);
             let canonicalName = salonMap[rawName];
@@ -1318,6 +1324,27 @@
             telInput.dataset.masked = "true"; // Prevent duplicate listeners
         }
 
+        // Date Change Synchronizer: Automatically align service rows and currentViewDate
+        const evtFechaInput = document.getElementById("evt-fecha");
+        if (evtFechaInput && !evtFechaInput.dataset.syncBound) {
+            const syncServicesDate = () => {
+                const newDate = evtFechaInput.value;
+                if (!newDate) return;
+                const oldDate = window.currentViewDate;
+                
+                document.querySelectorAll("#services-list tr").forEach(row => {
+                    const dateInput = row.querySelector(".row-date") || row.querySelector("input[type='date']");
+                    if (dateInput && (!dateInput.value || dateInput.value === oldDate)) {
+                        dateInput.value = newDate;
+                    }
+                });
+                window.currentViewDate = newDate;
+            };
+            evtFechaInput.addEventListener("change", syncServicesDate);
+            evtFechaInput.addEventListener("input", syncServicesDate);
+            evtFechaInput.dataset.syncBound = "true";
+        }
+
         document.getElementById("services-list").innerHTML = "";
         document.getElementById("evt-total").innerText = "0.00 €";
         document.getElementById("evt-nota-interna").value = "";
@@ -1612,15 +1639,22 @@
 
                 // Filter: Show only services for the clicked date (or all if no date provided)
                 const viewDate = window.currentViewDate;
-                const visibleServices = viewDate ? existing.servicios.filter(s => s.fecha === viewDate) : existing.servicios;
+                const distinctDates = [...new Set(existing.servicios.map(s => s.fecha).filter(Boolean))];
+                let visibleServices = viewDate ? existing.servicios.filter(s => s.fecha === viewDate) : existing.servicios;
+
+                // Si se cambió la fecha del evento pero los servicios conservaban la fecha única previa, sincronizarlos
+                if (visibleServices.length === 0 && viewDate && distinctDates.length <= 1) {
+                    visibleServices = existing.servicios.map(s => ({ ...s, fecha: viewDate }));
+                }
 
                 visibleServices.forEach(s => {
                     const row = document.createElement("tr");
                     const uds = s.uds !== undefined ? s.uds : 1;
                     const precioVal = s.precio !== undefined ? s.precio : 0;
                     const totalVal = (parseFloat(uds) || 0) * (parseFloat(precioVal) || 0);
+                    const rowFecha = s.fecha || viewDate || existing.fecha || '';
                     row.innerHTML = `
-                    <td class="p-2 border-b"><input type="date" value="${s.fecha || ''}" class="text-xs bg-gray-50 w-24 rounded border-gray-200 row-date"></td>
+                    <td class="p-2 border-b"><input type="date" value="${rowFecha}" class="text-xs bg-gray-50 w-24 rounded border-gray-200 row-date"></td>
                     <td class="p-2 border-b"><input type="time" value="${s.hora || ''}" class="text-xs bg-gray-50 w-20 rounded border-gray-200 row-time"></td>
                     <td class="p-2 border-b"><input type="text" value="${(s.concepto || '').replace(/"/g, '&quot;')}" list="charge-options" onchange="updateRowPrice(this)" class="text-xs font-bold w-full rounded border-gray-200 row-concept"></td>
                     <td class="p-2 border-b"><input type="number" onchange="calcTotal()" value="${uds}" class="text-xs text-center row-uds w-full rounded border-gray-200"></td>
@@ -1835,7 +1869,7 @@
             }
         }
         const row = document.createElement("tr");
-        const defaultDate = window.currentViewDate || document.getElementById("evt-fecha").value;
+        const defaultDate = document.getElementById("evt-fecha")?.value || window.currentViewDate || new Date().toISOString().split('T')[0];
         row.innerHTML = `
             <td class="p-2 border-b"><input type="date" value="${defaultDate}" class="text-xs bg-gray-50 w-24 rounded border-gray-200 row-date"></td>
             <td class="p-2 border-b"><input type="time" value="" class="text-xs bg-gray-50 w-20 rounded border-gray-200 row-time"></td>
@@ -2157,6 +2191,10 @@
         }
 
         const visibleServicios = [];
+        const newFecha = document.getElementById("evt-fecha").value;
+        const oldViewDate = window.currentViewDate;
+        const oldEventDate = existing?.fecha;
+
         document.querySelectorAll("#services-list tr").forEach(row => {
             const dateInput = row.querySelector(".row-date") || row.querySelector("input[type='date']");
             const timeInput = row.querySelector(".row-time") || row.querySelector("input[type='time']");
@@ -2164,7 +2202,12 @@
             const udsInput = row.querySelector(".row-uds") || row.querySelector("input[type='number']");
             const priceInput = row.querySelector(".row-price");
 
-            const fecha = dateInput ? dateInput.value : "";
+            let fecha = dateInput ? dateInput.value : "";
+            // Si la fecha principal del evento se cambió y la línea de servicio mantiene la fecha previa o está vacía, sincronizarla
+            if (newFecha && (!fecha || fecha === oldViewDate || fecha === oldEventDate)) {
+                fecha = newFecha;
+                if (dateInput) dateInput.value = newFecha;
+            }
             const hora = timeInput ? timeInput.value : "";
             const concepto = conceptInput ? conceptInput.value : "";
             const uds = udsInput ? (parseFloat(udsInput.value) || 0) : 0;
@@ -2182,14 +2225,18 @@
         });
 
         // MERGE: Keep invisible services from other dates, replace visible ones
-        const viewDate = window.currentViewDate;
-        if (viewDate && window.currentFullServices.length > 0) {
-            // Keep all services NOT for this date
-            const otherServices = window.currentFullServices.filter(s => s.fecha !== viewDate);
+        const baseViewDate = oldViewDate || oldEventDate;
+        if (baseViewDate && window.currentFullServices && window.currentFullServices.length > 0) {
+            // Keep all services NOT for the previous date being moved
+            const otherServices = window.currentFullServices.filter(s => s.fecha && s.fecha !== baseViewDate && s.fecha !== newFecha);
             // Add the current visible ones (which are for this date, or edited to be)
             payload.servicios = [...otherServices, ...visibleServicios];
         } else {
             payload.servicios = visibleServicios;
+        }
+
+        if (newFecha) {
+            window.currentViewDate = newFecha;
         }
 
         console.log("Validating Event:", payload);

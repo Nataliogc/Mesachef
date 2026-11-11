@@ -13,13 +13,22 @@ Este documento mantiene el registro y control de versiones **único y global** p
 
 ## 📌 Versión Actual del Sistema
 
-- **Versión:** `v10.4.3`
-- **Última Actualización:** 10/11/2026
+- **Versión:** `v10.4.4`
+- **Última Actualización:** 11/11/2026
 - **Estado General:** Operativo en Producción (Matrix)
 
 ---
 
 ## 📝 Historial de Versiones
+
+### [v10.4.4] - 11/11/2026
+- **Módulos:** Salones (`js/salones.js`), HTMLs
+- **Tipo de cambio:** PATCH
+- **Descripción:**
+  - Sincronización automática en tiempo real de fecha entre la cabecera de la modal (`evt-fecha`) y todas las líneas de la tabla de servicios (`.row-date`).
+  - Corrección en `saveBooking` para actualizar automáticamente las fechas de las líneas de servicio al cambiar la fecha general del evento, garantizando que el evento se posicione y renderice en el día seleccionado (ej. mover de viernes al domingo).
+  - Mecanismo de autorreparación en `renderBookings` y `openBooking`: si una reserva en Firestore tiene actualizada su fecha principal pero sus servicios conservaban la fecha previa desfasada, el cuadrante la posiciona de forma correcta en la nueva fecha y normaliza los servicios al abrir o guardar.
+  - Actualizado el parámetro de versión de scripts (`?v=10.4.4`) en `salones.html`.
 
 ### [v10.4.3] - 10/11/2026
 - **Módulos:** Salones (`js/salones.js`), HTMLs
