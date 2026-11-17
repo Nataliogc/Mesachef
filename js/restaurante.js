@@ -566,74 +566,46 @@
           campoBono.value = voucher;
         }
 
-        // Clear and highlight Fecha & Hora to draw attention
-        const campoFecha = document.getElementById("campoFecha");
-        const campoHora = document.getElementById("campoHora");
-
-        if (campoFecha) {
-          campoFecha.value = "";
-          campoFecha.style.setProperty("border", "2px solid #ef4444", "important");
-          campoFecha.style.setProperty("background-color", "#fee2e2", "important");
-          
-          const labelFecha = campoFecha.previousElementSibling;
-          if (labelFecha && labelFecha.tagName === 'LABEL') {
-            labelFecha.innerHTML = 'Fecha <span class="text-red-500 font-bold">* Obligatorio</span>';
-            labelFecha.classList.remove("text-slate-400");
-            labelFecha.classList.add("text-red-500");
-          }
-
-          campoFecha.addEventListener("change", function() {
-            if (this.value) {
-              this.style.border = "";
-              this.style.backgroundColor = "";
-              if (labelFecha && labelFecha.tagName === 'LABEL') {
-                labelFecha.innerHTML = 'Fecha';
-                labelFecha.classList.remove("text-red-500");
-                labelFecha.classList.add("text-slate-400");
+        // Clear and highlight Fecha, Hora & Turno to draw attention
+        const markRequiredSpaField = (el, labelText) => {
+          if (!el) return;
+          const label = el.previousElementSibling;
+          const applyStyle = (isEmpty) => {
+            if (isEmpty) {
+              el.style.setProperty("border", "2px solid #ef4444", "important");
+              el.style.setProperty("background-color", "#fee2e2", "important");
+              if (label && label.tagName === 'LABEL') {
+                label.innerHTML = `${labelText} <span class="text-red-500 font-bold">* Obligatorio</span>`;
+                label.classList.remove("text-slate-400");
+                label.classList.add("text-red-500");
               }
             } else {
-              this.style.setProperty("border", "2px solid #ef4444", "important");
-              this.style.setProperty("background-color", "#fee2e2", "important");
-              if (labelFecha && labelFecha.tagName === 'LABEL') {
-                labelFecha.innerHTML = 'Fecha <span class="text-red-500 font-bold">* Obligatorio</span>';
-                labelFecha.classList.remove("text-slate-400");
-                labelFecha.classList.add("text-red-500");
+              el.style.border = "";
+              el.style.backgroundColor = "";
+              if (label && label.tagName === 'LABEL') {
+                label.innerHTML = labelText;
+                label.classList.remove("text-red-500");
+                label.classList.add("text-slate-400");
               }
             }
-          });
-        }
+          };
+          el.value = "";
+          applyStyle(true);
+          el.addEventListener("change", function () { applyStyle(!this.value); });
+        };
 
-        if (campoHora) {
-          campoHora.value = "";
-          campoHora.style.setProperty("border", "2px solid #ef4444", "important");
-          campoHora.style.setProperty("background-color", "#fee2e2", "important");
+        markRequiredSpaField(document.getElementById("campoFecha"), "Fecha");
+        markRequiredSpaField(document.getElementById("campoHora"), "Hora");
 
-          const labelHora = campoHora.previousElementSibling;
-          if (labelHora && labelHora.tagName === 'LABEL') {
-            labelHora.innerHTML = 'Hora <span class="text-red-500 font-bold">* Obligatorio</span>';
-            labelHora.classList.remove("text-slate-400");
-            labelHora.classList.add("text-red-500");
+        const campoTurno = document.getElementById("campoTurno");
+        if (campoTurno) {
+          if (!Array.from(campoTurno.options).some(o => o.value === "")) {
+            const emptyOpt = document.createElement("option");
+            emptyOpt.value = "";
+            emptyOpt.textContent = "-- Elegir --";
+            campoTurno.insertBefore(emptyOpt, campoTurno.firstChild);
           }
-
-          campoHora.addEventListener("change", function() {
-            if (this.value) {
-              this.style.border = "";
-              this.style.backgroundColor = "";
-              if (labelHora && labelHora.tagName === 'LABEL') {
-                labelHora.innerHTML = 'Hora';
-                labelHora.classList.remove("text-red-500");
-                labelHora.classList.add("text-slate-400");
-              }
-            } else {
-              this.style.setProperty("border", "2px solid #ef4444", "important");
-              this.style.setProperty("background-color", "#fee2e2", "important");
-              if (labelHora && labelHora.tagName === 'LABEL') {
-                labelHora.innerHTML = 'Hora <span class="text-red-500 font-bold">* Obligatorio</span>';
-                labelHora.classList.remove("text-slate-400");
-                labelHora.classList.add("text-red-500");
-              }
-            }
-          });
+          markRequiredSpaField(campoTurno, "Turno");
         }
 
         // Notes
@@ -1826,9 +1798,10 @@
     // 1. Date is strictly in the past (< Today)
     // 2. Date is Today AND Now >= 18:00 AND Reservation Time < 18:00 (Lunch passed)
 
-    let isReadOnly = dateStr < todayIso;
+    const isNewBonoRedirect = !data?.id && new URLSearchParams(window.location.search).get('source') === 'bono';
+    let isReadOnly = isNewBonoRedirect ? false : (dateStr < todayIso);
 
-    if (dateStr === todayIso && now.getHours() >= 18) {
+    if (!isNewBonoRedirect && dateStr === todayIso && now.getHours() >= 18) {
       // Check reservation time
       if (data && data.hora) {
         const [h, m] = data.hora.split(':').map(Number);
