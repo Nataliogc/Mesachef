@@ -155,6 +155,207 @@
     }
   };
 
+  function escapeHtml(str) {
+    return String(str || '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
+  function findLocksForSlot(space, dateStr, turno, hotel) {
+    const targetHotel = hotel || localStorage.getItem(STORAGE_KEY) || "Guadiana";
+    const targetSpace = space || "Restaurante";
+    const targetTurno = (turno || "almuerzo").toLowerCase();
+    return loadedReservations.filter(r => {
+      if (r.type !== 'lock') return false;
+      if (r.hotel && r.hotel !== targetHotel) return false;
+      if ((r.espacio || 'Restaurante') !== targetSpace) return false;
+      if ((r.turno || 'almuerzo').toLowerCase() !== targetTurno) return false;
+      let rDate = "";
+      if (r.fecha && r.fecha.toDate) rDate = utils.toIsoDate(r.fecha.toDate());
+      else if (typeof r.fecha === 'string') rDate = r.fecha;
+      return rDate === dateStr;
+    });
+  }
+
+  let pendingLockContext = null;
+
+  function setBlockModalBusy(isBusy) {
+    const btnSave = document.getElementById("btnGuardarBloqueo");
+    const btnUnlock = document.getElementById("btnDesbloquearTurno");
+    const btnCancel = document.getElementById("btnCancelarModalBloqueo");
+    const btnClose = document.getElementById("btnCerrarModalBloqueo");
+    [btnSave, btnUnlock, btnCancel, btnClose].forEach(btn => {
+      if (btn) btn.disabled = !!isBusy;
+    });
+    if (btnSave) btnSave.classList.toggle("opacity-60", !!isBusy);
+    if (btnUnlock) btnUnlock.classList.toggle("opacity-60", !!isBusy);
+  }
+
+  function closeBlockModal() {
+    const modal = document.getElementById("modalBloqueo");
+    if (modal) modal.classList.add("hidden");
+    pendingLockContext = null;
+  }
+
+  function openBlockModal(space, dateStr, turno) {
+    const modal = document.getElementById("modalBloqueo");
+    if (!modal) return;
+
+    const currentHotel = localStorage.getItem(STORAGE_KEY) || "Guadiana";
+    const existingLocks = findLocksForSlot(space, dateStr, turno, currentHotel);
+    const existingLockIds = existingLocks.map(l => l.id).filter(Boolean);
+    const currentMotivo = (existingLocks.find(l => typeof l.motivo === 'string' && l.motivo.trim())?.motivo || "").trim();
+    const isCurrentlyLocked = existingLockIds.length > 0;
+
+    pendingLockContext = {
+      hotel: currentHotel,
+      space: space || "Restaurante",
+      dateStr,
+      turno: (turno || "almuerzo").toLowerCase(),
+      existingLockIds,
+      currentMotivo
+    };
+
+    const titleEl = document.getElementById("modalBloqueoTitle");
+    const subtitleEl = document.getElementById("modalBloqueoSubtitle");
+    const statusEl = document.getElementById("modalBloqueoStatus");
+    const inputEl = document.getElementById("inputMotivoBloqueo");
+    const btnUnlock = document.getElementById("btnDesbloquearTurno");
+    const btnSave = document.getElementById("btnGuardarBloqueo");
+
+    const turnoLabel = pendingLockContext.turno === 'cena' ? '🌙 Cena' : '☀️ Almuerzo';
+    const parsedDate = new Date(dateStr + 'T12:00:00');
+    const datePretty = isNaN(parsedDate.getTime()) ? dateStr : utils.formatDateES(parsedDate);
+
+    if (subtitleEl) {
+      subtitleEl.textContent = `${pendingLockContext.space} · ${datePretty} · ${turnoLabel}`;
+    }
+
+    if (isCurrentlyLocked) {
+      if (titleEl) titleEl.textContent = "🔓 Gestionar Bloqueo";
+      if (statusEl) statusEl.classList.remove("hidden");
+      if (btnUnlock) btnUnlock.classList.remove("hidden");
+      if (inputEl) inputEl.value = currentMotivo;
+      if (btnSave) {
+        btnSave.textContent = "Guardar motivo";
+        btnSave.className = "px-4 py-2 text-xs font-bold bg-slate-800 hover:bg-slate-700 text-white rounded-lg shadow-sm transition";
+      }
+    } else {
+      if (titleEl) titleEl.textContent = "🔒 Bloquear Fecha / Turno";
+      if (statusEl) statusEl.classList.add("hidden");
+      if (btnUnlock) btnUnlock.classList.add("hidden");
+      if (inputEl) inputEl.value = "";
+      if (btnSave) {
+        btnSave.textContent = "🔒 Bloquear turno";
+        btnSave.className = "px-4 py-2 text-xs font-bold bg-red-600 hover:bg-red-700 text-white rounded-lg shadow-sm transition";
+      }
+    }
+
+    setBlockModalBusy(false);
+    modal.classList.remove("hidden");
+    if (inputEl) {
+      setTimeout(() => {
+        inputEl.focus();
+        inputEl.select();
+      }, 10);
+    }
+  }
+
+  function initBlockModalListeners() {
+    const modal = document.getElementById("modalBloqueo");
+    if (!modal) return;
+    const form = document.getElementById("formBloqueo");
+    const input = document.getElementById("inputMotivoBloqueo");
+    const btnClose = document.getElementById("btnCerrarModalBloqueo");
+    const btnCancel = document.getElementById("btnCancelarModalBloqueo");
+    const btnUnlock = document.getElementById("btnDesbloquearTurno");
+
+    modal.querySelectorAll(".chip-motivo-bloqueo").forEach(chip => {
+      chip.addEventListener("click", () => {
+        if (input) {
+          input.value = chip.dataset.motivo || "";
+          input.focus();
+        }
+      });
+    });
+
+    if (btnClose) btnClose.addEventListener("click", closeBlockModal);
+    if (btnCancel) btnCancel.addEventListener("click", closeBlockModal);
+    modal.addEventListener("click", (e) => {
+      if (e.target === modal) closeBlockModal();
+    });
+
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && !modal.classList.contains("hidden")) {
+        closeBlockModal();
+      }
+    });
+
+    if (form) {
+      form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        if (!pendingLockContext) return;
+        const { hotel, space, dateStr, turno, existingLockIds } = pendingLockContext;
+        const motivo = (input?.value || "").trim();
+
+        setBlockModalBusy(true);
+        try {
+          if (existingLockIds.length > 0) {
+            await Promise.all(
+              existingLockIds.map(id =>
+                db.collection("reservas_restaurante").doc(id).update({
+                  motivo,
+                  updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                })
+              )
+            );
+          } else {
+            await db.collection("reservas_restaurante").add({
+              hotel,
+              espacio: space,
+              fecha: firebase.firestore.Timestamp.fromDate(new Date(dateStr + 'T12:00:00')),
+              turno,
+              type: 'lock',
+              estado: 'COMPLETO',
+              motivo,
+              createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+              updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+          }
+          closeBlockModal();
+        } catch (err) {
+          console.error(err);
+          alert("Error al cambiar bloqueo: " + err.message);
+        } finally {
+          setBlockModalBusy(false);
+        }
+      });
+    }
+
+    if (btnUnlock) {
+      btnUnlock.addEventListener("click", async () => {
+        if (!pendingLockContext || pendingLockContext.existingLockIds.length === 0) return;
+        const { existingLockIds } = pendingLockContext;
+
+        setBlockModalBusy(true);
+        try {
+          await Promise.all(
+            existingLockIds.map(id => db.collection("reservas_restaurante").doc(id).delete())
+          );
+          closeBlockModal();
+        } catch (err) {
+          console.error(err);
+          alert("Error al desbloquear: " + err.message);
+        } finally {
+          setBlockModalBusy(false);
+        }
+      });
+    }
+  }
+
   let restaurantConfig = {}; // Global Config
   let specialDatesConfig = []; // [NEW] Special Capacity Dates
   let closureRules = []; // [NEW] Automatic Closure Rules
@@ -314,6 +515,8 @@
     document.getElementById("btnCerrarModal").addEventListener("click", closeModal);
     document.getElementById("btnAnular").addEventListener("click", anularReservation);
     document.getElementById("formReserva").addEventListener("submit", saveReservation);
+    initBlockModalListeners();
+    initDayNoteListeners();
 
     document.getElementById("btnPrev").addEventListener("click", () => changeWeek(-1));
     document.getElementById("btnNext").addEventListener("click", () => changeWeek(1));
@@ -650,12 +853,35 @@
       // [FIX] Show current SELECTED date in input, not just Monday
       if (inputSemana) inputSemana.value = utils.toIsoDate(currentWeekStart);
 
+      let activeDayNoteDraft = null;
+      const activeEl = document.activeElement;
+      if (activeEl && grid.contains(activeEl) && activeEl.classList?.contains("day-note-input")) {
+        activeDayNoteDraft = {
+          date: activeEl.dataset.date,
+          value: activeEl.value,
+          start: activeEl.selectionStart,
+          end: activeEl.selectionEnd
+        };
+      }
+
       console.log("DEBUG: Building HTML...");
 
       let html = ``;
       html += `<div class="grid-header-cell">ESPACIO</div>`;
       dates.forEach(d => {
-        html += `<div class="grid-header-cell">${utils.formatDateShort(d)}</div>`;
+        const dateStr = utils.toIsoDate(d);
+        const noteText = dailyNotesByDate[dateStr] || "";
+        html += `<div class="grid-header-cell grid-header-day">
+          <div class="grid-header-date">${utils.formatDateShort(d)}</div>
+          <input type="text"
+            class="day-note-input ${noteText ? 'has-note' : ''}"
+            data-date="${dateStr}"
+            value="${escapeHtml(noteText)}"
+            placeholder="Ej: Hoy menú 25 €"
+            maxlength="80"
+            title="${escapeHtml(noteText || 'Añadir nota del día (ej: Hoy menú 25 €)')}"
+            autocomplete="off" />
+        </div>`;
       });
 
       SPACES.forEach(space => {
@@ -682,8 +908,8 @@
             const t = (r.turno || 'almuerzo').toLowerCase();
 
             if (r.type === 'lock') {
-              if (t === 'almuerzo') lockLunch = r;
-              if (t === 'cena') lockDinner = r;
+              if (t === 'almuerzo') lockLunch = (!lockLunch || r.motivo) ? r : lockLunch;
+              if (t === 'cena') lockDinner = (!lockDinner || r.motivo) ? r : lockDinner;
               return;
             }
 
@@ -692,7 +918,14 @@
             if (t === 'cena') dinnerPax += p;
           });
 
-          const renderHeader = (isLocked, turno, paxCount, icon) => {
+          const statusLunch = getShiftStatus(currentHotel, space, 'almuerzo', dateStr);
+          const statusDinner = getShiftStatus(currentHotel, space, 'cena', dateStr);
+          const isFullDayClosed = (!!lockLunch || statusLunch.closed) && (!!lockDinner || statusDinner.closed);
+
+          const renderHeader = (lockObj, turno, paxCount, icon, status) => {
+            const isLocked = !!lockObj;
+            const lockReason = (lockObj && typeof lockObj.motivo === 'string') ? lockObj.motivo.trim() : '';
+            const isDarkCell = isLocked || status.closed;
             const tName = (turno || 'almuerzo').toLowerCase();
             const special = specialDatesConfig.find(sd => sd.date === dateStr);
             let maxCap = 0;
@@ -704,10 +937,14 @@
               }
             }
 
-            let paxDisplay = paxCount > 0 ? `<span class="ml-1 font-bold text-slate-600">${paxCount} 👥</span>` : '';
+            let paxDisplay = paxCount > 0
+              ? `<span class="ml-1 font-bold ${isDarkCell ? 'text-white' : 'text-slate-600'}">${paxCount} 👥</span>`
+              : '';
             if (maxCap > 0) {
               const remaining = maxCap - paxCount;
-              const capColor = remaining <= 0 ? 'text-red-600' : (remaining <= maxCap * 0.2 ? 'text-amber-600' : 'text-blue-600');
+              const capColor = isDarkCell
+                ? (remaining <= 0 ? 'text-red-300' : (remaining <= maxCap * 0.2 ? 'text-amber-300' : 'text-sky-200'))
+                : (remaining <= 0 ? 'text-red-600' : (remaining <= maxCap * 0.2 ? 'text-amber-600' : 'text-blue-600'));
 
               const remainingText = remaining <= 0 ? 'AFORO COMPLETO' : `Quedan ${remaining} pers.`;
               paxDisplay = `
@@ -717,9 +954,14 @@
                 </div>`;
             }
 
-            const lockIcon = isLocked
-              ? `<button onclick="toggleLock('${space}', '${dateStr}', '${turno}')" class="text-red-500 hover:text-red-700 p-0.5" title="Desbloquear"><svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"></path></svg></button>`
-              : `<button onclick="toggleLock('${space}', '${dateStr}', '${turno}')" class="text-slate-300 hover:text-slate-500 opacity-0 group-hover:opacity-100 transition p-0.5" title="Bloquear (Completo)"><svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path d="M10 2a5 5 0 00-5 5v2a2 2 0 00-2 2v5a2 2 0 002 2h10a2 2 0 002-2v-5a2 2 0 00-2-2H7V7a3 3 0 016 0v2h-1V7a2 2 0 00-2-2z"></path></svg></button>`;
+            let lockIcon = "";
+            if (isLocked) {
+              lockIcon = `<button type="button" onclick="toggleLock('${space}', '${dateStr}', '${turno}')" class="bg-red-600 hover:bg-red-500 text-white rounded p-1 shadow-sm transition" title="Bloqueado · Clic para editar motivo o desbloquear"><svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"></path></svg></button>`;
+            } else if (status.closed) {
+              lockIcon = `<button type="button" onclick="toggleLock('${space}', '${dateStr}', '${turno}')" class="text-slate-200 hover:text-white opacity-60 group-hover:opacity-100 transition p-0.5" title="Bloquear con motivo"><svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path d="M10 2a5 5 0 00-5 5v2a2 2 0 00-2 2v5a2 2 0 002 2h10a2 2 0 002-2v-5a2 2 0 00-2-2H7V7a3 3 0 016 0v2h-1V7a2 2 0 00-2-2z"></path></svg></button>`;
+            } else {
+              lockIcon = `<button type="button" onclick="toggleLock('${space}', '${dateStr}', '${turno}')" class="text-slate-300 hover:text-slate-500 opacity-0 group-hover:opacity-100 transition p-0.5" title="Bloquear turno"><svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path d="M10 2a5 5 0 00-5 5v2a2 2 0 00-2 2v5a2 2 0 002 2h10a2 2 0 002-2v-5a2 2 0 00-2-2H7V7a3 3 0 016 0v2h-1V7a2 2 0 00-2-2z"></path></svg></button>`;
+            }
 
             // [MODIFIED] Logic for Past/Blocked
             // Check if it is "Lunch" today and time is past 18:00
@@ -734,47 +976,69 @@
             }
 
             const isPast = dateStr < todayIso || istimeBlocked;
-            const currentHotel = localStorage.getItem(STORAGE_KEY) || "Guadiana"; // Ensure it's inside or accessible
-            const status = getShiftStatus(currentHotel, space, turno, dateStr);
 
-            const shadeClass = (isPast || status.closed) && !isLocked ? "bg-slate-100 text-slate-400" : "";
-            const bgClass = isLocked ? "bg-slate-50 border-red-100" : shadeClass;
+            const shadeClass = isPast && !isDarkCell ? "bg-slate-100 text-slate-400" : "";
+            const bgClass = isLocked
+              ? "turn-cell-locked"
+              : (status.closed ? "turn-cell-closed" : shadeClass);
 
             let addBtn = "";
             if (isLocked) {
-              addBtn = `<span class="text-[10px] font-bold text-red-500 bg-red-50 px-1.5 rounded border border-red-100 uppercase">Completo</span>`;
+              addBtn = `<button type="button" onclick="toggleLock('${space}', '${dateStr}', '${turno}')" class="text-[10px] font-bold text-white bg-red-600 hover:bg-red-500 px-1.5 py-0.5 rounded border border-red-400/60 uppercase shadow-sm transition cursor-pointer" title="Clic para editar motivo o desbloquear">${lockReason ? 'Cerrado' : 'Completo'}</button>`;
             } else if (status.closed) {
-              addBtn = `<button onclick="openPunctually('${space}', '${dateStr}', '${turno}')" class="text-[9px] font-bold text-red-600 bg-red-50 hover:bg-red-100 px-1.5 rounded border border-red-200 transition">ABRIR 🔓</button>`;
+              addBtn = `<button type="button" onclick="openPunctually('${space}', '${dateStr}', '${turno}')" class="text-[9px] font-bold text-red-700 bg-white hover:bg-red-50 px-1.5 py-0.5 rounded border border-red-300 shadow-sm transition">ABRIR 🔓</button>`;
             } else if (!isPast) {
-              addBtn = `<button onclick="openBooking('${space}', '${dateStr}', '${turno}')" class="opacity-0 group-hover:opacity-100 text-blue-600 font-bold bg-blue-50 px-1.5 rounded text-[10px] transition">+</button>`;
+              addBtn = `<button type="button" onclick="openBooking('${space}', '${dateStr}', '${turno}')" class="opacity-0 group-hover:opacity-100 text-blue-600 font-bold bg-blue-50 px-1.5 rounded text-[10px] transition">+</button>`;
             }
 
-            const closureReason = status.closed ? `<div class="text-[9px] font-bold text-red-500/70 italic mt-0.5">${status.reason}</div>` : '';
+            let reasonHtml = "";
+            if (isLocked && lockReason) {
+              reasonHtml = `<div onclick="toggleLock('${space}', '${dateStr}', '${turno}')" class="mt-0.5 px-2 py-1 rounded bg-slate-900/50 border border-white/15 text-[11px] font-semibold text-white leading-snug break-words cursor-pointer hover:bg-slate-900/70 transition flex items-start gap-1" title="Clic para editar motivo o desbloquear"><span>🔒</span><span>${escapeHtml(lockReason)}</span></div>`;
+            } else if (status.closed) {
+              reasonHtml = `<div class="mt-0.5 px-2 py-1 rounded bg-slate-900/35 border border-white/15 text-[10px] font-semibold text-rose-100 italic leading-snug break-words">${escapeHtml(status.reason)}</div>`;
+            }
+
+            const turnIconColor = turno === 'almuerzo' ? 'text-amber-400' : (isDarkCell ? 'text-slate-200' : 'text-slate-400');
 
             return `
                             <div class="turn-cell group ${bgClass} relative">
                                 <div class="flex justify-between items-center mb-1">
                                     <div class="flex items-center gap-1">
                                         ${lockIcon}
-                                        <span class="text-xs ${turno === 'almuerzo' ? 'text-amber-500' : 'text-slate-400'}">${icon}</span>
+                                        <span class="text-xs ${turnIconColor}">${icon}</span>
                                         ${paxDisplay}
                                     </div>
                                     ${addBtn}
                                 </div>
-                                ${closureReason}
-                                <div id="zone_${space}_${dateStr}_${turno}" class="flex flex-col gap-2 ${isLocked || status.closed ? 'opacity-75 blur-[0.5px]' : ''}"></div>
+                                ${reasonHtml}
+                                <div id="zone_${space}_${dateStr}_${turno}" class="flex flex-col gap-2 ${isDarkCell ? 'opacity-90' : ''}"></div>
                             </div>`;
           };
 
-          html += `<div class="day-column">
-                            ${renderHeader(!!lockLunch, 'almuerzo', lunchPax, '☀️')}
-                            ${renderHeader(!!lockDinner, 'cena', dinnerPax, '🌙')}
+          html += `<div class="day-column ${isFullDayClosed ? 'day-column-closed' : ''}">
+                            ${renderHeader(lockLunch, 'almuerzo', lunchPax, '☀️', statusLunch)}
+                            ${renderHeader(lockDinner, 'cena', dinnerPax, '🌙', statusDinner)}
                         </div>`;
         });
       });
 
       console.log("DEBUG: Setting grid innerHTML. Length:", html.length);
       grid.innerHTML = html;
+
+      if (activeDayNoteDraft && activeDayNoteDraft.date) {
+        const restoredInput = Array.from(grid.querySelectorAll(".day-note-input"))
+          .find(el => el.dataset.date === activeDayNoteDraft.date);
+        if (restoredInput) {
+          restoredInput.value = activeDayNoteDraft.value;
+          restoredInput.classList.toggle("has-note", !!activeDayNoteDraft.value.trim());
+          restoredInput.focus();
+          if (typeof activeDayNoteDraft.start === "number" && typeof activeDayNoteDraft.end === "number") {
+            try {
+              restoredInput.setSelectionRange(activeDayNoteDraft.start, activeDayNoteDraft.end);
+            } catch (_) {}
+          }
+        }
+      }
 
       if (loadedReservations.length > 0) {
         console.log("DEBUG: Calling paintReservations");
@@ -811,8 +1075,108 @@
 
   let unsubscribeRestaurante = null;
   let unsubscribeSalones = null;
+  let unsubscribeDayNotes = null;
   let rawRestauranteDocs = [];
   let rawSalonesDocs = [];
+  let dailyNotesByDate = {};
+
+  function syncDayNoteInputs() {
+    const inputs = document.querySelectorAll("#gridRestaurante .day-note-input[data-date]");
+    inputs.forEach(input => {
+      if (document.activeElement === input) return;
+      const dateStr = input.dataset.date;
+      const val = dailyNotesByDate[dateStr] || "";
+      if (input.value !== val) input.value = val;
+      input.classList.toggle("has-note", !!val);
+      input.title = val || "Añadir nota del día (ej: Hoy menú 25 €)";
+    });
+  }
+
+  async function saveDayNote(dateStr, rawText, inputEl) {
+    if (!dateStr) return;
+    const hotel = localStorage.getItem(STORAGE_KEY) || "Guadiana";
+    const text = String(rawText || "").trim();
+    const prev = dailyNotesByDate[dateStr] || "";
+
+    if (inputEl) {
+      inputEl.value = text;
+      inputEl.classList.toggle("has-note", !!text);
+      inputEl.title = text || "Añadir nota del día (ej: Hoy menú 25 €)";
+    }
+
+    if (text === prev) return;
+
+    if (text) dailyNotesByDate[dateStr] = text;
+    else delete dailyNotesByDate[dateStr];
+
+    const docRef = db.collection("restaurante_notas_dia").doc(`${hotel}_${dateStr}`);
+    try {
+      if (text) {
+        await docRef.set({
+          hotel,
+          fecha: dateStr,
+          texto: text,
+          updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        }, { merge: true });
+      } else {
+        await docRef.delete();
+      }
+      if (inputEl && document.body.contains(inputEl)) {
+        inputEl.classList.add("is-saved");
+        setTimeout(() => {
+          inputEl.classList.remove("is-saved");
+        }, 900);
+      }
+    } catch (err) {
+      console.error("Error saving day note:", err);
+      if (prev) dailyNotesByDate[dateStr] = prev;
+      else delete dailyNotesByDate[dateStr];
+      if (inputEl && document.body.contains(inputEl)) {
+        inputEl.value = prev;
+        inputEl.classList.toggle("has-note", !!prev);
+        inputEl.title = prev || "Añadir nota del día (ej: Hoy menú 25 €)";
+      }
+      alert("Error al guardar la nota del día: " + err.message);
+    }
+  }
+
+  function initDayNoteListeners() {
+    const grid = document.getElementById("gridRestaurante");
+    if (!grid) return;
+
+    grid.addEventListener("input", (e) => {
+      const input = e.target.closest(".day-note-input");
+      if (!input) return;
+      input.classList.toggle("has-note", !!input.value.trim());
+    });
+
+    grid.addEventListener("keydown", (e) => {
+      const input = e.target.closest(".day-note-input");
+      if (!input) return;
+      if (e.key === "Enter") {
+        e.preventDefault();
+        input.blur();
+      } else if (e.key === "Escape") {
+        const dateStr = input.dataset.date;
+        const prev = dailyNotesByDate[dateStr] || "";
+        input.value = prev;
+        input.dataset.skipSave = "1";
+        input.classList.toggle("has-note", !!prev);
+        input.title = prev || "Añadir nota del día (ej: Hoy menú 25 €)";
+        input.blur();
+      }
+    });
+
+    grid.addEventListener("focusout", (e) => {
+      const input = e.target.closest(".day-note-input");
+      if (!input) return;
+      if (input.dataset.skipSave === "1") {
+        delete input.dataset.skipSave;
+        return;
+      }
+      saveDayNote(input.dataset.date, input.value, input);
+    });
+  }
 
   function mapSalonDocToRestaurante(d) {
     const paxA = parseInt(d.detalles?.pax_adultos) || 0;
@@ -942,9 +1306,31 @@
   function loadReservations() {
     if (unsubscribeRestaurante) unsubscribeRestaurante();
     if (unsubscribeSalones) unsubscribeSalones();
+    if (unsubscribeDayNotes) unsubscribeDayNotes();
     console.log("DEBUG: loadReservations started");
 
     const hotel = localStorage.getItem(STORAGE_KEY) || "Guadiana";
+
+    unsubscribeDayNotes = db.collection("restaurante_notas_dia")
+      .where("hotel", "==", hotel)
+      .onSnapshot(snapshot => {
+        const nextNotes = {};
+        snapshot.forEach(doc => {
+          const d = doc.data() || {};
+          let dateKey = typeof d.fecha === 'string' ? d.fecha : "";
+          if (!dateKey && doc.id.includes('_')) {
+            dateKey = doc.id.slice(doc.id.lastIndexOf('_') + 1);
+          }
+          const texto = typeof d.texto === 'string' ? d.texto.trim() : "";
+          if (dateKey && texto) {
+            nextNotes[dateKey] = texto;
+          }
+        });
+        dailyNotesByDate = nextNotes;
+        syncDayNoteInputs();
+      }, err => {
+        console.error("DEBUG: Load Error restaurante_notas_dia", err);
+      });
 
     unsubscribeRestaurante = db.collection("reservas_restaurante")
       .where("hotel", "==", hotel)
@@ -1369,8 +1755,12 @@
       const dateStr = utils.toIsoDate(dateObj);
       const dayName = utils.formatDateES(dateObj);
       const dayNameCap = dayName.charAt(0).toUpperCase() + dayName.slice(1);
+      const dayNotePrint = dailyNotesByDate[dateStr] || "";
+      const dayNoteBadge = dayNotePrint
+        ? ` <span style="font-size: 12px; font-weight: 600; background: #fef3c7; color: #92400e; padding: 2px 8px; border-radius: 6px; border: 1px solid #f59e0b; margin-left: 8px;">${escapeHtml(dayNotePrint)}</span>`
+        : "";
 
-      html += `<h3 style="font-size: 16px; font-weight: bold; margin-top: 20px; margin-bottom: 10px; color: #2c3e50; border-bottom: 1px solid #ddd; padding-bottom: 5px;">📅 ${dayNameCap}</h3>`;
+      html += `<h3 style="font-size: 16px; font-weight: bold; margin-top: 20px; margin-bottom: 10px; color: #2c3e50; border-bottom: 1px solid #ddd; padding-bottom: 5px;">📅 ${dayNameCap}${dayNoteBadge}</h3>`;
 
       if (!groups[dateStr] || groups[dateStr].length === 0) {
         html += `<p style="font-size: 11px; color: #94a3b8; font-style: italic; margin-bottom: 20px;">No hay reservas programadas.</p>`;
@@ -1569,14 +1959,11 @@
     }
 
     if (!data) {
-      const isLocked = loadedReservations.some(r =>
-        r.type === 'lock' &&
-        r.espacio === space &&
-        r.turno === turno &&
-        (r.fecha && (r.fecha.toDate ? utils.toIsoDate(r.fecha.toDate()) : r.fecha) === dateStr)
-      );
-      if (isLocked) {
-        alert("⛔ Este turno está BLOQUEADO (Completo). No se pueden añadir más reservas.");
+      const locks = findLocksForSlot(space, dateStr, turno, currentHotel);
+      if (locks.length > 0) {
+        const lockMotivo = (locks.find(l => typeof l.motivo === 'string' && l.motivo.trim())?.motivo || "").trim();
+        const motivoMsg = lockMotivo ? `\nMotivo: ${lockMotivo}` : "";
+        alert(`⛔ Este turno está BLOQUEADO (${lockMotivo || 'Completo'}).${motivoMsg}\n\nNo se pueden añadir más reservas.`);
         return;
       }
     }
@@ -2071,20 +2458,12 @@
       // Uses same defaults as Grid Render to ensure consistency
       console.log(`Checking Lock Client-Side: Date=${fecha} Space=${targetSpace} Turn=${targetTurn}`);
 
-      const localLock = loadedReservations.find(r => {
-        if (r.type !== 'lock') return false;
+      const localLocks = findLocksForSlot(targetSpace, fecha, targetTurn, currentHotel);
 
-        const rDate = (r.fecha && r.fecha.toDate ? utils.toIsoDate(r.fecha.toDate()) : r.fecha);
-        const rSpace = r.espacio || 'Restaurante';
-        const rTurno = (r.turno || 'almuerzo').toLowerCase();
-
-        return rSpace === targetSpace &&
-          rTurno === targetTurn.toLowerCase() &&
-          rDate === fecha;
-      });
-
-      if (localLock) {
-        alert(`⛔ EL TURNO ESTÁ CERRADO (COMPLETO).\nNo se admiten nuevas reservas.`);
+      if (localLocks.length > 0) {
+        const lockMotivo = (localLocks.find(l => typeof l.motivo === 'string' && l.motivo.trim())?.motivo || "").trim();
+        const motivoLine = lockMotivo ? `\nMotivo: ${lockMotivo}` : "";
+        alert(`⛔ EL TURNO ESTÁ CERRADO (${lockMotivo || 'COMPLETO'}).${motivoLine}\nNo se admiten nuevas reservas.`);
         return;
       }
 
@@ -2101,6 +2480,7 @@
           .get();
 
         let isLocked = false;
+        let serverMotivo = "";
         lockSnap.forEach(doc => {
           const data = doc.data();
           let dateStr = "";
@@ -2108,12 +2488,18 @@
           else if (typeof data.fecha === 'string') dateStr = data.fecha;
 
           // Manual Date Check
-          if (dateStr === fecha) isLocked = true;
+          if (dateStr === fecha) {
+            isLocked = true;
+            if (!serverMotivo && typeof data.motivo === 'string' && data.motivo.trim()) {
+              serverMotivo = data.motivo.trim();
+            }
+          }
         });
 
 
         if (isLocked) {
-          alert(`⛔ EL TURNO ESTÁ CERRADO (COMPLETO).\nNo se permiten nuevas reservas en este turno.`);
+          const motivoLine = serverMotivo ? `\nMotivo: ${serverMotivo}` : "";
+          alert(`⛔ EL TURNO ESTÁ CERRADO (${serverMotivo || 'COMPLETO'}).${motivoLine}\nNo se permiten nuevas reservas en este turno.`);
           return;
         }
       } catch (err) {
@@ -2391,6 +2777,7 @@
 
     const q = query.toLowerCase();
     const results = loadedReservations.filter(r => {
+      if (r.type === 'lock') return false;
       const combined = `${r.nombre || ''} ${r.cliente || ''} ${r.telefono || ''} ${r.email || ''} ${r.id || ''} ${r.espacio || ''} `.toLowerCase();
       const dateStr = r.fecha && r.fecha.toDate ? utils.toIsoDate(r.fecha.toDate()) : (r.fecha || "");
       return combined.includes(q) || dateStr.includes(q);
@@ -2398,39 +2785,8 @@
     renderSearchResults(results);
   }
 
-  window.toggleLock = async function (space, dateStr, turno) {
-    if (!confirm(`¿Cambiar estado de BLOQUEO para ${space} - ${dateStr} - ${turno}?`)) return;
-    const currentHotel = localStorage.getItem(STORAGE_KEY) || "Guadiana";
-
-    let existingLockId = null;
-    loadedReservations.forEach(r => {
-      if (r.type !== 'lock') return;
-      if (r.espacio !== space) return;
-      if (r.turno !== turno) return;
-      let rDate = "";
-      if (r.fecha && r.fecha.toDate) rDate = utils.toIsoDate(r.fecha.toDate());
-      else if (typeof r.fecha === 'string') rDate = r.fecha;
-      if (rDate === dateStr) existingLockId = r.id;
-    });
-
-    try {
-      if (existingLockId) {
-        await db.collection("reservas_restaurante").doc(existingLockId).delete();
-      } else {
-        await db.collection("reservas_restaurante").add({
-          hotel: currentHotel,
-          espacio: space,
-          fecha: firebase.firestore.Timestamp.fromDate(new Date(dateStr)),
-          turno: turno,
-          type: 'lock',
-          estado: 'COMPLETO',
-          createdAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
-      }
-    } catch (err) {
-      console.error(err);
-      alert("Error al cambiar bloqueo: " + err.message);
-    }
+  window.toggleLock = function (space, dateStr, turno) {
+    openBlockModal(space, dateStr, turno);
   };
 
   function renderSearchResults(results) {

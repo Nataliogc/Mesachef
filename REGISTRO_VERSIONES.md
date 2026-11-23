@@ -13,13 +13,33 @@ Este documento mantiene el registro y control de versiones **único y global** p
 
 ## 📌 Versión Actual del Sistema
 
-- **Versión:** `v10.5.0`
-- **Última Actualización:** 11/11/2026
+- **Versión:** `v10.7.0`
+- **Última Actualización:** 23/11/2026
 - **Estado General:** Operativo en Producción (Matrix)
 
 ---
 
 ## 📝 Historial de Versiones
+
+### [v10.7.0] - 23/11/2026
+- **Módulos:** Restaurante (`js/restaurante.js`, `css/restaurante.css`, `restaurante.html`), Service Worker (`sw.js`), HTMLs
+- **Tipo de cambio:** MINOR
+- **Descripción:**
+  - Añadido un campo de texto editable (`.day-note-input`, placeholder `"Ej: Hoy menú 25 €"`) directamente debajo de cada cabecera de fecha en el cuadrante semanal de Restaurante (`renderGridStructure`).
+  - Persistencia y sincronización en tiempo real en Firestore mediante la colección `restaurante_notas_dia` (documento `${hotel}_${dateStr}`), guardando al salir del campo (`focusout`) o pulsar `Enter` (con confirmación visual `.is-saved`), cancelando cambios con `Escape` y manteniendo el borrador/foco si llegan actualizaciones concurrentes.
+  - Nuevos estilos en `css/restaurante.css` (`.grid-header-cell.grid-header-day`, `.grid-header-date`, `.day-note-input`, `.has-note`, `.is-saved`) destacando en ámbar los días con nota configurada y respetando el texto exacto introducido.
+  - Inclusión de la nota diaria como insignia en la cabecera de cada día dentro de los informes impresos (`printReport`).
+  - Actualización de parámetros de caché a `?v=10.7.0` en `restaurante.html` y `CACHE_NAME` a `mesachef-matrix-v10.7.0` en `sw.js`.
+
+### [v10.6.0] - 23/11/2026
+- **Módulos:** Restaurante (`restaurante.html`, `js/restaurante.js`, `css/restaurante.css`), Service Worker (`sw.js`), HTMLs
+- **Tipo de cambio:** MINOR
+- **Descripción:**
+  - Sustituida la confirmación nativa (`confirm`) de bloqueo en Restaurante por el nuevo modal `#modalBloqueo` con campo de texto opcional para indicar el **motivo del cierre/bloqueo** (`motivo` guardado en Firestore en `reservas_restaurante` con `type: 'lock'`) y botones de motivos rápidos (`Completo`, `Evento privado`, `Cierre por descanso`, `Mantenimiento`, `Festivo`).
+  - Soporte para **editar el motivo** o **desbloquear** turnos ya bloqueados haciendo clic en el icono de candado, en la etiqueta `Cerrado`/`Completo` o directamente sobre la caja del motivo en el cuadrante.
+  - Oscurecimiento visual de alto contraste en `css/restaurante.css` y `js/restaurante.js` para fechas y turnos cerrados o bloqueados (`.turn-cell.turn-cell-locked`, `.turn-cell.turn-cell-closed` con trama diagonal y `.day-column.day-column-closed` cuando ambos turnos están cerrados/bloqueados), con texto legible y visibilidad de tarjetas existentes sin desenfoque.
+  - Inclusión del motivo del bloqueo en las alertas al intentar crear reservas sobre un turno cerrado (`openBooking` y `saveReservation`) y exclusión de los documentos `type: 'lock'` en los resultados del buscador (`doSearch`).
+  - Actualización de parámetros de caché a `?v=10.6.0` en `restaurante.html` y `CACHE_NAME` a `mesachef-matrix-v10.6.0` en `sw.js`.
 
 ### [v10.5.0] - 11/11/2026
 - **Módulos:** Salones (`js/salones.js`, `js/eventLocation.js`), HTMLs, Integración Nexus Groups

@@ -16,7 +16,7 @@
     <!-- DESIGN LOCKED: DO NOT EDIT WITHOUT AUTHORIZATION -->
     <!-- This module uses a specific copy of styles to prevent regressions -->
     <link rel="stylesheet" href="css/styles_restaurante.css?v=9.6" />
-    <link rel="stylesheet" href="css/restaurante.css?v=9.6" />
+    <link rel="stylesheet" href="css/restaurante.css?v=10.7.0" />
     <script src="https://cdn.tailwindcss.com"></script>
 
     <style>
@@ -136,7 +136,7 @@
                             <div class="flex flex-col leading-none">
                                 <h1 class="text-slate-800 font-bold text-lg tracking-tight">MesaChef</h1>
                                 <span
-                                    class="text-[10px] text-blue-600 font-bold uppercase tracking-widest -mt-0.5">Matrix v10.5.0</span>
+                                    class="text-[10px] text-blue-600 font-bold uppercase tracking-widest -mt-0.5">Matrix v10.7.0</span>
                             </div>
                         </div>
 
@@ -649,6 +649,63 @@
         </div>
     </div>
 
+    <!-- MODAL BLOQUEO DE FECHA / TURNO -->
+    <div id="modalBloqueo"
+        class="fixed inset-0 z-[60] hidden flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden border border-slate-200">
+            <div class="bg-slate-800 text-white px-5 py-3.5 flex items-start justify-between gap-3">
+                <div>
+                    <h3 id="modalBloqueoTitle" class="font-bold text-sm flex items-center gap-2">🔒 Bloquear Fecha / Turno</h3>
+                    <p id="modalBloqueoSubtitle" class="text-xs text-slate-300 mt-0.5"></p>
+                    <span id="modalBloqueoStatus"
+                        class="hidden inline-block mt-1.5 text-[10px] font-bold uppercase tracking-wide bg-red-600/90 text-white px-2 py-0.5 rounded">Bloqueado actualmente</span>
+                </div>
+                <button type="button" id="btnCerrarModalBloqueo" aria-label="Cerrar"
+                    class="text-slate-300 hover:text-white transition p-1 rounded hover:bg-white/10">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+
+            <form id="formBloqueo" class="p-5 space-y-4 bg-slate-50">
+                <div>
+                    <label for="inputMotivoBloqueo"
+                        class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">Motivo del cierre o bloqueo</label>
+                    <input type="text" id="inputMotivoBloqueo" maxlength="120"
+                        placeholder="Ej: Completo, Evento privado, Festivo, Obras..."
+                        class="w-full border border-slate-300 bg-white rounded-lg px-3 py-2 text-sm text-slate-800 focus:ring-2 focus:ring-red-500/30 focus:border-red-500 outline-none" />
+                    <div class="flex flex-wrap gap-1.5 mt-2">
+                        <button type="button" data-motivo="Completo"
+                            class="chip-motivo-bloqueo text-[11px] font-semibold px-2.5 py-1 rounded-full bg-white border border-slate-300 text-slate-700 hover:bg-slate-100 hover:border-slate-400 transition">Completo</button>
+                        <button type="button" data-motivo="Evento privado"
+                            class="chip-motivo-bloqueo text-[11px] font-semibold px-2.5 py-1 rounded-full bg-white border border-slate-300 text-slate-700 hover:bg-slate-100 hover:border-slate-400 transition">Evento privado</button>
+                        <button type="button" data-motivo="Cierre por descanso"
+                            class="chip-motivo-bloqueo text-[11px] font-semibold px-2.5 py-1 rounded-full bg-white border border-slate-300 text-slate-700 hover:bg-slate-100 hover:border-slate-400 transition">Cierre por descanso</button>
+                        <button type="button" data-motivo="Mantenimiento"
+                            class="chip-motivo-bloqueo text-[11px] font-semibold px-2.5 py-1 rounded-full bg-white border border-slate-300 text-slate-700 hover:bg-slate-100 hover:border-slate-400 transition">Mantenimiento</button>
+                        <button type="button" data-motivo="Festivo"
+                            class="chip-motivo-bloqueo text-[11px] font-semibold px-2.5 py-1 rounded-full bg-white border border-slate-300 text-slate-700 hover:bg-slate-100 hover:border-slate-400 transition">Festivo</button>
+                    </div>
+                    <p class="text-[11px] text-slate-500 mt-2">Opcional: si lo dejas vacío se marcará como COMPLETO. El motivo se mostrará en el cuadrante.</p>
+                </div>
+
+                <div class="flex items-center justify-between gap-2 pt-3 border-t border-slate-200">
+                    <div>
+                        <button type="button" id="btnDesbloquearTurno"
+                            class="hidden px-3.5 py-2 text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg shadow-sm transition">🔓 Desbloquear</button>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button type="button" id="btnCancelarModalBloqueo"
+                            class="px-4 py-2 text-xs font-semibold text-slate-600 hover:text-slate-800 transition">Cancelar</button>
+                        <button type="submit" id="btnGuardarBloqueo"
+                            class="px-4 py-2 text-xs font-bold bg-red-600 hover:bg-red-700 text-white rounded-lg shadow-sm transition">🔒 Bloquear turno</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- Firebase Init (Compat Mode) -->
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
@@ -659,7 +716,7 @@
     <script src="js/app-common.js?v=10.3.13"></script>
     <script src="js/eventLocation.js?v=10.3.13"></script>
     <script src="js/paygold-service.js?v=10.4.3"></script>
-    <script src="js/restaurante.js?v=10.4.3"></script>
+    <script src="js/restaurante.js?v=10.7.0"></script>
 
     <script>
         if ('serviceWorker' in navigator) {
