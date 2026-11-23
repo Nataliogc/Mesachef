@@ -217,7 +217,7 @@
   border-color: #64748b;
 }
 
-/* Cabecera de fecha con campo editable diario (ej. Hoy menú 25 €) */
+/* Cabecera de fecha con campo editable de observaciones diarias */
 .grid-header-cell.grid-header-day {
   display: flex;
   flex-direction: column;

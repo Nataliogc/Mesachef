@@ -13,13 +13,20 @@ Este documento mantiene el registro y control de versiones **único y global** p
 
 ## 📌 Versión Actual del Sistema
 
-- **Versión:** `v10.7.0`
+- **Versión:** `v10.7.1`
 - **Última Actualización:** 23/11/2026
 - **Estado General:** Operativo en Producción (Matrix)
 
 ---
 
 ## 📝 Historial de Versiones
+
+### [v10.7.1] - 23/11/2026
+- **Módulos:** Restaurante (`js/restaurante.js`, `css/restaurante.css`, `restaurante.html`), Service Worker (`sw.js`), HTMLs
+- **Tipo de cambio:** PATCH
+- **Descripción:**
+  - Cambio del placeholder y tooltip por defecto del campo de notas diarias (`.day-note-input`) en Restaurante de `"Ej: Hoy menú 25 €"` a `"Observaciones"`.
+  - Actualización de parámetros de caché a `?v=10.7.1` en `restaurante.html` y `CACHE_NAME` a `mesachef-matrix-v10.7.1` en `sw.js`.
 
 ### [v10.7.0] - 23/11/2026
 - **Módulos:** Restaurante (`js/restaurante.js`, `css/restaurante.css`, `restaurante.html`), Service Worker (`sw.js`), HTMLs

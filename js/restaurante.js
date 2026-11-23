@@ -877,9 +877,9 @@
             class="day-note-input ${noteText ? 'has-note' : ''}"
             data-date="${dateStr}"
             value="${escapeHtml(noteText)}"
-            placeholder="Ej: Hoy menú 25 €"
+            placeholder="Observaciones"
             maxlength="80"
-            title="${escapeHtml(noteText || 'Añadir nota del día (ej: Hoy menú 25 €)')}"
+            title="${escapeHtml(noteText || 'Observaciones')}"
             autocomplete="off" />
         </div>`;
       });
@@ -1088,7 +1088,7 @@
       const val = dailyNotesByDate[dateStr] || "";
       if (input.value !== val) input.value = val;
       input.classList.toggle("has-note", !!val);
-      input.title = val || "Añadir nota del día (ej: Hoy menú 25 €)";
+      input.title = val || "Observaciones";
     });
   }
 
@@ -1101,7 +1101,7 @@
     if (inputEl) {
       inputEl.value = text;
       inputEl.classList.toggle("has-note", !!text);
-      inputEl.title = text || "Añadir nota del día (ej: Hoy menú 25 €)";
+      inputEl.title = text || "Observaciones";
     }
 
     if (text === prev) return;
@@ -1134,7 +1134,7 @@
       if (inputEl && document.body.contains(inputEl)) {
         inputEl.value = prev;
         inputEl.classList.toggle("has-note", !!prev);
-        inputEl.title = prev || "Añadir nota del día (ej: Hoy menú 25 €)";
+        inputEl.title = prev || "Observaciones";
       }
       alert("Error al guardar la nota del día: " + err.message);
     }
@@ -1162,7 +1162,7 @@
         input.value = prev;
         input.dataset.skipSave = "1";
         input.classList.toggle("has-note", !!prev);
-        input.title = prev || "Añadir nota del día (ej: Hoy menú 25 €)";
+        input.title = prev || "Observaciones";
         input.blur();
       }
     });
