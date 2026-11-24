@@ -13,13 +13,22 @@ Este documento mantiene el registro y control de versiones **único y global** p
 
 ## 📌 Versión Actual del Sistema
 
-- **Versión:** `v10.7.1`
-- **Última Actualización:** 23/11/2026
+- **Versión:** `v10.7.2`
+- **Última Actualización:** 24/11/2026
 - **Estado General:** Operativo en Producción (Matrix)
 
 ---
 
 ## 📝 Historial de Versiones
+
+### [v10.7.2] - 24/11/2026
+- **Módulos:** Grandes Eventos (`js/grandes-eventos-bundled.js`, `grandes-eventos.html`), Service Worker (`sw.js`), HTMLs
+- **Tipo de cambio:** PATCH
+- **Descripción:**
+  - Restringida la insignia `🛡️ PayGold` en la tabla de participantes de Grandes Eventos (`renderParticipantsTable` mediante `hasPaidWithPaygold` e `isPaygoldPaymentEntry`) para mostrarla únicamente cuando existe un pago real realizado a través del sistema PayGold, excluyendo reservas con *Servicio Incluido*, pagos manuales registrados con `+ Añadir` o `⚡ Todo` y registros sin pago efectivo.
+  - Corregido `handleParticipantSubmit()` y `openParticipantModal()` para no asignar ni mantener el estado `garantizado` en reservas con *Servicio Incluido* o sin evidencia real de pago PayGold.
+  - Desacoplado el botón genérico `⚡ Todo` (`payFullPendingToModal`) del método `PayGold Eurocaja` y del cambio automático de `#pPaygoldStatus`, conservando la etiqueta PayGold exclusivamente para confirmaciones de PayGold y mostrándola de forma transparente en las filas del historial de pagos de la modal (`renderModalPayments`).
+  - Aclarados los textos de etiqueta y opción en `grandes-eventos.html` (`Estado PayGold`, `✅ Pagado por PayGold`), actualizado el parámetro de caché a `?v=10.7.2` y `CACHE_NAME` a `mesachef-matrix-v10.7.2` en `sw.js`.
 
 ### [v10.7.1] - 23/11/2026
 - **Módulos:** Restaurante (`js/restaurante.js`, `css/restaurante.css`, `restaurante.html`), Service Worker (`sw.js`), HTMLs

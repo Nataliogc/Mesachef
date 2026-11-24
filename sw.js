@@ -1,4 +1,4 @@
-const CACHE_NAME = 'mesachef-matrix-v10.7.1';
+const CACHE_NAME = 'mesachef-matrix-v10.7.2';
 const ASSETS_TO_CACHE = [
     './',
     './index.html',

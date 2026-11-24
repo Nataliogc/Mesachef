@@ -784,14 +784,28 @@
         $('pChargeDate')?.addEventListener('change', updateChargeAlertBadge);
         $('pPaygoldStatus')?.addEventListener('change', () => {
             updatePaygoldStatusStyle();
-            if ($('pPaygoldStatus')?.value === 'garantizado') {
+            const statusVal = $('pPaygoldStatus')?.value;
+            if (statusVal === 'garantizado') {
                 const pending = parseFloat($('pPendingCalc')?.value || 0);
                 if (pending > 0) {
-                    const confirmAdd = confirm("Has marcado la reserva como 'Garantizado / Pagado'.\n\n¿Deseas registrar automáticamente el abono del importe pendiente (" + pending.toFixed(2) + " €) en el Historial de Pagos?");
+                    const confirmAdd = confirm("Has marcado el estado como 'Pagado por PayGold'.\n\n¿Deseas registrar automáticamente el abono del importe pendiente (" + pending.toFixed(2) + " €) como pago PayGold en el Historial de Pagos?");
                     if (confirmAdd) {
-                        payFullPendingToModal();
+                        payFullPendingToModal({ isPaygold: true });
                     }
+                } else if (state.modalPagos.length > 0 && !state.modalPagos.some(isPaygoldPaymentEntry)) {
+                    const lastPay = state.modalPagos[state.modalPagos.length - 1];
+                    lastPay.method = 'PayGold Eurocaja';
+                    lastPay.source = 'paygold_manual';
+                    renderModalPayments();
                 }
+            } else {
+                state.modalPagos.forEach(pay => {
+                    if (!pay.authCode && !pay.order && (pay.source === 'paygold_manual' || String(pay.method || '').toLowerCase().includes('paygold'))) {
+                        delete pay.method;
+                        delete pay.source;
+                    }
+                });
+                renderModalPayments();
             }
         });
 
@@ -966,7 +980,7 @@
 
         $('btnCloseCancelForm')?.addEventListener('click', () => window.toggleCancelForm());
         $('btnAddPayment')?.addEventListener('click', addPaymentToModal);
-        $('btnPayFullPending')?.addEventListener('click', payFullPendingToModal);
+        $('btnPayFullPending')?.addEventListener('click', () => payFullPendingToModal({ isPaygold: false }));
         $('paymentsList')?.addEventListener('click', handlePaymentListClick);
         $('btnConfirmCancel')?.addEventListener('click', confirmCancel);
         $('btnShowCancel')?.addEventListener('click', () => {
@@ -1240,6 +1254,39 @@
         updateDashboard();
     }
 
+    function isPaygoldPaymentEntry(pay) {
+        if (!pay || !(parseFloat(pay.amount) > 0)) return false;
+        if (pay.authCode || pay.order || pay.source === 'paygold_manual') return true;
+        const method = String(pay.method || '').toLowerCase();
+        if (!method.includes('paygold')) return false;
+        // Excluir registros antiguos del botón genérico "⚡ Todo" sin datos reales de PayGold
+        if (pay.notes === 'Abono total registrado') return false;
+        return true;
+    }
+
+    function hasPaidWithPaygold(p, paid) {
+        if (!p || p.servicioIncluido) return false;
+        if (!(paid > 0)) return false;
+
+        const pagos = Array.isArray(p.pagos) ? p.pagos : [];
+
+        // 1. Pago confirmado por PayGold en el historial (webhook Redsys con authCode/order, manual PayGold u otro método PayGold explícito)
+        if (pagos.some(isPaygoldPaymentEntry)) return true;
+
+        // 2. Confirmación de webhook Redsys registrada en el documento con pago real > 0 y estado garantizado
+        const hasWebhookMeta = Boolean(
+            p.paygoldConfirmedAt ||
+            (p.lastPaygoldResult && (p.lastPaygoldResult.order || p.lastPaygoldResult.authCode))
+        );
+        if (hasWebhookMeta && p.paygoldStatus === 'garantizado') return true;
+
+        // 3. Confirmación manual en panel PayGold respaldada por enlace PayGold o referencia de tarjeta (compatibilidad histórica)
+        const hasPaygoldEvidence = Boolean((p.paygoldLink || '').trim() || (p.cardLast4 || '').trim());
+        if (p.paygoldStatus === 'garantizado' && hasPaygoldEvidence) return true;
+
+        return false;
+    }
+
     function renderParticipantsTable() {
         const tbody = $('participantsTableBody');
         tbody.innerHTML = '';
@@ -1293,8 +1340,8 @@
                 if (isFullyPaid) {
                     chargeBadges += '<span class="inline-flex items-center gap-1 px-1.5 py-0.5 text-[9px] font-bold rounded bg-emerald-100 text-emerald-800 border border-emerald-200">🟢 Pagado</span>';
                 }
-                if (p.paygoldStatus === 'garantizado') {
-                    chargeBadges += '<span class="inline-flex items-center gap-1 px-1.5 py-0.5 text-[9px] font-bold rounded bg-emerald-50 text-emerald-700 border border-emerald-200" title="Garantía bancaria confirmada">🛡️ PayGold</span>';
+                if (hasPaidWithPaygold(p, paid)) {
+                    chargeBadges += '<span class="inline-flex items-center gap-1 px-1.5 py-0.5 text-[9px] font-bold rounded bg-emerald-50 text-emerald-700 border border-emerald-200" title="Pagado mediante sistema PayGold">🛡️ PayGold</span>';
                 }
                 if (p.chargeDate && pending > 0) {
                     const todayStr = new Date().toISOString().split('T')[0];
@@ -1471,7 +1518,13 @@
                 $('pPaygoldRef').value = finalRef;
             }
             if ($('pChargeDate')) $('pChargeDate').value = participant.chargeDate || '';
-            if ($('pPaygoldStatus')) $('pPaygoldStatus').value = participant.paygoldStatus || 'pendiente';
+            if ($('pPaygoldStatus')) {
+                const rawPaid = (participant.pagos || []).reduce((acc, pay) => acc + (parseFloat(pay.amount) || 0), 0) + (parseFloat(participant.pagado) || 0);
+                const effectivePaygoldStatus = participant.servicioIncluido
+                    ? 'pendiente'
+                    : (participant.paygoldStatus === 'garantizado' && !hasPaidWithPaygold(participant, rawPaid) ? 'pendiente' : (participant.paygoldStatus || 'pendiente'));
+                $('pPaygoldStatus').value = effectivePaygoldStatus;
+            }
             if ($('pCardLast4')) $('pCardLast4').value = participant.cardLast4 || '';
             if ($('pCardExpiry')) $('pCardExpiry').value = participant.cardExpiry || '';
             if ($('pCardBrand')) $('pCardBrand').value = participant.cardBrand || 'Visa';
@@ -1612,7 +1665,7 @@
             // Guadiana PayGold & Card fields
             paygoldRef: $('pPaygoldRef')?.value || '',
             chargeDate: $('pChargeDate')?.value || '',
-            paygoldStatus: $('pServicioIncluido')?.checked ? 'garantizado' : ($('pPaygoldStatus')?.value || 'pendiente'),
+            paygoldStatus: $('pServicioIncluido')?.checked ? 'pendiente' : ($('pPaygoldStatus')?.value || 'pendiente'),
             cardLast4: $('pCardLast4')?.value ? $('pCardLast4').value.replace(/\D/g, '').slice(-4) : '',
             cardExpiry: $('pCardExpiry')?.value || '',
             cardBrand: $('pCardBrand')?.value || 'Visa',
@@ -1633,27 +1686,34 @@
         state.modalPagos.forEach((p, idx) => {
             const div = document.createElement('div');
             div.className = "flex justify-between items-center bg-white p-2 border border-slate-200 rounded text-xs";
-            div.innerHTML = `<span>${formatDate(p.date)}</span><span class="font-bold text-slate-700">${formatCurrency(p.amount)}</span><button type="button" class="text-red-500 hover:text-red-700 btn-remove-pay" data-idx="${idx}">&times;</button>`;
+            const paygoldTag = isPaygoldPaymentEntry(p)
+                ? '<span class="ml-1.5 inline-flex items-center px-1.5 py-0.5 text-[9px] font-bold rounded bg-emerald-50 text-emerald-700 border border-emerald-200">🛡️ PayGold</span>'
+                : '';
+            div.innerHTML = `<span>${formatDate(p.date)}${paygoldTag}</span><span class="font-bold text-slate-700">${formatCurrency(p.amount)}</span><button type="button" class="text-red-500 hover:text-red-700 btn-remove-pay" data-idx="${idx}">&times;</button>`;
             container.appendChild(div);
         });
     }
 
-    function payFullPendingToModal() {
+    function payFullPendingToModal({ isPaygold = false } = {}) {
         const pending = parseFloat($('pPendingCalc')?.value || 0);
         if (pending > 0) {
             const date = $('newPayDate')?.value || new Date().toISOString().split('T')[0];
-            state.modalPagos.push({
+            const entry = {
                 date,
                 amount: pending,
-                method: 'PayGold Eurocaja',
-                notes: 'Abono total registrado'
-            });
+                notes: isPaygold ? 'Abono PayGold registrado' : 'Abono total registrado'
+            };
+            if (isPaygold) {
+                entry.method = 'PayGold Eurocaja';
+                entry.source = 'paygold_manual';
+            }
+            state.modalPagos.push(entry);
             $('newPayDate').value = new Date().toISOString().split('T')[0];
             $('newPayAmount').value = '';
             renderModalPayments();
             recalcModalFinancials();
 
-            if ($('pPaygoldStatus') && $('pPaygoldStatus').value !== 'garantizado') {
+            if (isPaygold && $('pPaygoldStatus') && $('pPaygoldStatus').value !== 'garantizado') {
                 $('pPaygoldStatus').value = 'garantizado';
                 updatePaygoldStatusStyle();
             }
