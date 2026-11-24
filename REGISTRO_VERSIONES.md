@@ -13,13 +13,22 @@ Este documento mantiene el registro y control de versiones **único y global** p
 
 ## 📌 Versión Actual del Sistema
 
-- **Versión:** `v10.7.2`
+- **Versión:** `v10.7.3`
 - **Última Actualización:** 24/11/2026
 - **Estado General:** Operativo en Producción (Matrix)
 
 ---
 
 ## 📝 Historial de Versiones
+
+### [v10.7.3] - 24/11/2026
+- **Módulos:** Grandes Eventos (`js/grandes-eventos-bundled.js`, `grandes-eventos.html`), Service Worker (`sw.js`), HTMLs
+- **Tipo de cambio:** PATCH
+- **Descripción:**
+  - Añadido el helper `hasSentPaygold(p, pending)` y la insignia visual azul `📤 PayGold enviado` en la tabla de participantes de Grandes Eventos (`renderParticipantsTable`) cuando el enlace PayGold ha sido enviado (`paygoldStatus === 'enlace_enviado'`), existe importe pendiente y no es un *Servicio Incluido*.
+  - Adaptada la insignia de fecha límite (`p.chargeDate`) junto a `📤 PayGold enviado` para mostrar `📅 Límite: DD/MM/AAAA`, `🔔 Límite HOY` o `⚠️ Vencido: DD/MM/AAAA`, con alineación uniforme (`inline-flex items-center gap-1`) entre las insignias.
+  - Actualizado el botón `📱 WhatsApp PayGold` (`#btnSendWhatsAppPaygold`) para cambiar `#pPaygoldStatus` a `'enlace_enviado'` cuando no sea `'garantizado'` (incluyendo reenvíos desde `'denegado'`) y refrescar el estilo visual mediante `updatePaygoldStatusStyle()`.
+  - Actualizado el parámetro de caché a `?v=10.7.3` en `grandes-eventos.html` y `CACHE_NAME` a `mesachef-matrix-v10.7.3` en `sw.js`.
 
 ### [v10.7.2] - 24/11/2026
 - **Módulos:** Grandes Eventos (`js/grandes-eventos-bundled.js`, `grandes-eventos.html`), Service Worker (`sw.js`), HTMLs

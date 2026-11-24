@@ -968,8 +968,9 @@
             const url = 'https://api.whatsapp.com/send?phone=' + phone + '&text=' + encodeURIComponent(msg);
             window.open(url, '_blank');
 
-            if ($('pPaygoldStatus') && $('pPaygoldStatus').value === 'pendiente') {
+            if ($('pPaygoldStatus') && $('pPaygoldStatus').value !== 'garantizado') {
                 $('pPaygoldStatus').value = 'enlace_enviado';
+                updatePaygoldStatusStyle();
             }
         });
 
@@ -1287,6 +1288,12 @@
         return false;
     }
 
+    function hasSentPaygold(p, pending) {
+        if (!p || p.servicioIncluido) return false;
+        if (!(pending > 0)) return false;
+        return p.paygoldStatus === 'enlace_enviado';
+    }
+
     function renderParticipantsTable() {
         const tbody = $('participantsTableBody');
         tbody.innerHTML = '';
@@ -1337,24 +1344,36 @@
             const isGuadiana = (state.hotelInfo.id || getActiveHotel()) === 'Guadiana';
             let chargeBadges = '';
             if (isGuadiana && !isAnulado) {
+                const paygoldSent = hasSentPaygold(p, pending);
                 if (isFullyPaid) {
                     chargeBadges += '<span class="inline-flex items-center gap-1 px-1.5 py-0.5 text-[9px] font-bold rounded bg-emerald-100 text-emerald-800 border border-emerald-200">🟢 Pagado</span>';
                 }
                 if (hasPaidWithPaygold(p, paid)) {
                     chargeBadges += '<span class="inline-flex items-center gap-1 px-1.5 py-0.5 text-[9px] font-bold rounded bg-emerald-50 text-emerald-700 border border-emerald-200" title="Pagado mediante sistema PayGold">🛡️ PayGold</span>';
                 }
+                if (paygoldSent) {
+                    const sentTitle = p.chargeDate
+                        ? 'Enlace PayGold enviado · Fecha límite: ' + formatDate(p.chargeDate)
+                        : 'Enlace PayGold enviado al cliente';
+                    chargeBadges += '<span class="inline-flex items-center gap-1 px-1.5 py-0.5 text-[9px] font-bold rounded bg-blue-50 text-blue-700 border border-blue-200" title="' + sentTitle + '">📤 PayGold enviado</span>';
+                }
                 if (p.chargeDate && pending > 0) {
                     const todayStr = new Date().toISOString().split('T')[0];
                     if (p.chargeDate < todayStr) {
-                        chargeBadges += '<span class="inline-block mt-0.5 px-1.5 py-0.5 text-[9px] font-bold rounded bg-red-100 text-red-700 border border-red-200" title="Cargo vencido el ' + formatDate(p.chargeDate) + '">⚠️ Vencido: ' + formatDate(p.chargeDate) + '</span>';
+                        const expiredTitle = (paygoldSent ? 'Fecha límite vencida el ' : 'Cargo vencido el ') + formatDate(p.chargeDate);
+                        chargeBadges += '<span class="inline-flex items-center gap-1 px-1.5 py-0.5 text-[9px] font-bold rounded bg-red-100 text-red-700 border border-red-200" title="' + expiredTitle + '">⚠️ Vencido: ' + formatDate(p.chargeDate) + '</span>';
                     } else if (p.chargeDate === todayStr) {
-                        chargeBadges += '<span class="inline-block mt-0.5 px-1.5 py-0.5 text-[9px] font-bold rounded bg-amber-100 text-amber-800 border border-amber-300 animate-pulse" title="Cargo programado para HOY">🔔 Cobrar HOY</span>';
+                        const todayText = paygoldSent ? '🔔 Límite HOY' : '🔔 Cobrar HOY';
+                        const todayTitle = paygoldSent ? 'Fecha límite de pago PayGold HOY' : 'Cargo programado para HOY';
+                        chargeBadges += '<span class="inline-flex items-center gap-1 px-1.5 py-0.5 text-[9px] font-bold rounded bg-amber-100 text-amber-800 border border-amber-300 animate-pulse" title="' + todayTitle + '">' + todayText + '</span>';
                     } else {
-                        chargeBadges += '<span class="inline-block mt-0.5 px-1.5 py-0.5 text-[9px] font-medium rounded bg-emerald-50 text-emerald-700 border border-emerald-200" title="Fecha prevista de cargo">📅 Cargo: ' + formatDate(p.chargeDate) + '</span>';
+                        const dateLabel = paygoldSent ? 'Límite' : 'Cargo';
+                        const dateTitle = paygoldSent ? 'Fecha límite de pago PayGold' : 'Fecha prevista de cargo';
+                        chargeBadges += '<span class="inline-flex items-center gap-1 px-1.5 py-0.5 text-[9px] font-medium rounded bg-emerald-50 text-emerald-700 border border-emerald-200" title="' + dateTitle + '">📅 ' + dateLabel + ': ' + formatDate(p.chargeDate) + '</span>';
                     }
                 }
                 if (p.cardLast4) {
-                    chargeBadges += '<span class="inline-block mt-0.5 px-1.5 py-0.5 text-[9px] font-mono rounded bg-slate-100 text-slate-700 border border-slate-200">💳 •••• ' + p.cardLast4 + '</span>';
+                    chargeBadges += '<span class="inline-flex items-center gap-1 px-1.5 py-0.5 text-[9px] font-mono rounded bg-slate-100 text-slate-700 border border-slate-200">💳 •••• ' + p.cardLast4 + '</span>';
                 }
             }
 
