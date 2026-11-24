@@ -2662,7 +2662,9 @@
 
                 let statusFull = r.estado || "";
                 let statusAbbr = (statusFull === 'confirmada' || statusFull === 'confirmed') ? 'Conf' : 'Pend';
-                let notesText = r.notas?.interna || "";
+                let notesText = window.PrintNotes
+                    ? window.PrintNotes.stripNexusGroupsMetadata(r.notas?.interna || "")
+                    : (r.notas?.interna || "").trim();
 
                 // Add a top border only if it's not the first item, to separate groups
                 const borderStyle = index > 0 ? "border-top: 1px solid #ddd;" : "";

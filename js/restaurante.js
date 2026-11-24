@@ -1796,11 +1796,18 @@
         let statusFull = r.estado || "confirmada";
         let statusAbbr = (statusFull === 'confirmada' || statusFull === 'confirmed') ? 'Conf' : 'Pend';
         const spaceAbbr = space.substring(0, 8) + (space.length > 8 ? '.' : '');
+        const cleanPrintNote = (text) => window.PrintNotes
+          ? window.PrintNotes.stripNexusGroupsMetadata(text)
+          : String(text || "").trim();
         let notesText = "";
         if (r.notas) {
-          if (typeof r.notas === 'string') notesText = r.notas;
+          if (typeof r.notas === 'string') notesText = cleanPrintNote(r.notas);
           else if (typeof r.notas === 'object') {
-            notesText = Object.values(r.notas).filter(v => v && typeof v === 'string').join(". ");
+            notesText = Object.values(r.notas)
+              .filter(v => v && typeof v === 'string')
+              .map(cleanPrintNote)
+              .filter(Boolean)
+              .join(". ");
           }
         }
         if (r.servicioIncluido) {

@@ -13,13 +13,21 @@ Este documento mantiene el registro y control de versiones **único y global** p
 
 ## 📌 Versión Actual del Sistema
 
-- **Versión:** `v10.7.3`
+- **Versión:** `v10.7.4`
 - **Última Actualización:** 24/11/2026
 - **Estado General:** Operativo en Producción (Matrix)
 
 ---
 
 ## 📝 Historial de Versiones
+
+### [v10.7.4] - 24/11/2026
+- **Módulos:** Salones (`js/salones.js`, `salones.html`), Restaurante (`js/restaurante.js`, `restaurante.html`), Utilidad de Impresión (`js/printNotes.js`), Tests (`tests/printNotes.test.js`), Service Worker (`sw.js`), HTMLs
+- **Tipo de cambio:** PATCH
+- **Descripción:**
+  - Creación de `js/printNotes.js` (`stripNexusGroupsMetadata`) e integración en `printReport` de Salones y Restaurante para omitir al imprimir la etiqueta automática `[Nexus Groups] Ref: ... | ... | Pax: ...` conservando las observaciones reales del evento (y ocultando la fila de observaciones si queda vacía).
+  - Añadidas pruebas unitarias en `tests/printNotes.test.js`.
+  - Actualización de parámetros de caché a `?v=10.7.4` en `salones.html` y `restaurante.html`, y `CACHE_NAME` a `mesachef-matrix-v10.7.4` en `sw.js`.
 
 ### [v10.7.3] - 24/11/2026
 - **Módulos:** Grandes Eventos (`js/grandes-eventos-bundled.js`, `grandes-eventos.html`), Service Worker (`sw.js`), HTMLs
