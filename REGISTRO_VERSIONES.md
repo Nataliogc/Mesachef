@@ -13,13 +13,16 @@ Este documento mantiene el registro y control de versiones **único y global** p
 
 ## 📌 Versión Actual del Sistema
 
-- **Versión:** `v10.7.4`
-- **Última Actualización:** 24/11/2026
+- **Versión:** `v10.7.5`
+- **Última Actualización:** 25/11/2026
 - **Estado General:** Operativo en Producción (Matrix)
 
 ---
 
 ## 📝 Historial de Versiones
+
+### [v10.7.5] - 25/11/2026
+- **Salones:** los picnics de Nexus Groups (recogida en recepción, `recogidaRecepcion: true`) no ocupan salón en el cuadrante ni disparan el aviso CRÍTICO; salen en los informes diario y semanal como "🧺 Recepción".
 
 ### [v10.7.4] - 24/11/2026
 - **Módulos:** Salones (`js/salones.js`, `salones.html`), Restaurante (`js/restaurante.js`, `restaurante.html`), Utilidad de Impresión (`js/printNotes.js`), Tests (`tests/printNotes.test.js`), Service Worker (`sw.js`), HTMLs

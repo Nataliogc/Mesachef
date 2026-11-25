@@ -565,6 +565,8 @@
         loadedReservations.forEach(res => {
             // Restaurante se gestiona en su propio cuadrante, también si procede de Nexus.
             if (window.EventLocation.isRestaurant(res.salon)) return;
+            // Picnics de Nexus Groups: se recogen en recepción, no ocupan salón (solo salen en los informes).
+            if (res.recogidaRecepcion === true) return;
             const st = (res.estado || "").toLowerCase();
             const isConfirmed = st === 'confirmada' || st === 'confirmed';
             const isPending = st === 'provisional' || st === 'pendiente' || st === 'pending' || st === 'presupuesto';
@@ -2654,7 +2656,7 @@
                 eventCount++;
 
                 const time = r.detalles?.hora || "--:--";
-                let space = r.salon || "Salon";
+                let space = r.recogidaRecepcion === true ? "🧺 Recepción" : (r.salon || "Salon");
                 const spaceAbbr = space.substring(0, 15) + (space.length > 15 ? '.' : '');
                 const clientName = r.cliente || "Sin Nombre";
                 const montaje = r.detalles?.montaje || "-";
